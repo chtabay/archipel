@@ -141,9 +141,16 @@ function placer(m, occ, a, r) {
     cand.push([i, j, d]);
   }
   cand.sort((p, q) => p[2] - q[2]);
-  const libre = cand.find(([i, j]) => !occ.has(i * N + j)) || cand[0];
-  if (!libre) { for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) if (m.land[i * N + j] && !occ.has(i * N + j)) return [i, j]; return [Math.floor(N / 2), Math.floor(N / 2)]; }
-  return [libre[0], libre[1]];
+  const libre = cand.find(([i, j]) => !occ.has(i * N + j));
+  if (libre) return [libre[0], libre[1]];
+  if (cand.length && zone !== 'rive') { // le quartier est plein : la case libre la plus proche, plutôt que deux choses l’une sur l’autre
+    let proche = null, dp = Infinity;
+    for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) { const d = Math.hypot(i - centre[0], j - centre[1]); if (m.land[i * N + j] && !occ.has(i * N + j) && d < dp) { dp = d; proche = [i, j]; } }
+    if (proche) return proche;
+  }
+  if (cand.length) return [cand[0][0], cand[0][1]]; // les barques se serrent au rivage ; ou l’île est pleine
+  for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) if (m.land[i * N + j] && !occ.has(i * N + j)) return [i, j];
+  return [Math.floor(N / 2), Math.floor(N / 2)];
 }
 const bout = (m, occ) => { // la pointe de sable la plus au sud-est, libre : la place du phare
   let best = null, bd = -1;
