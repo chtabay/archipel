@@ -80,6 +80,14 @@ Sans WebGL, la page reste utilisable : l’île et l’archipel ne s’affichent
 - Site 100 % statique : pas de serveur, pas de cookie, pas de traceur, aucune requête externe. La police et la bibliothèque 3D sont dans le dépôt.
 - Ce qu’on dépose reste sur le téléphone. Le texte y est lu, pour y trouver des sujets, et n’en sort jamais.
 
+## Sécurité et solidité
+
+- **Quitter vite.** Le bouton « quitter » reste en haut à droite de chaque écran, même par-dessus une feuille ouverte. Il vide l’écran aussitôt, remonte les écrans de l’app dans l’historique, puis les remplace par une page neutre : le bouton retour ne ramène pas ici. L’historique du navigateur garde quand même la visite ; seule la navigation privée l’évite.
+- **Si l’app ne se lance pas**, la page affiche quand même les numéros d’écoute. Si un écran échoue, un écran de secours le remplace, jamais une page vide.
+- **Si la 3D refuse de démarrer**, l’app continue sans elle, et l’île se dit en mots.
+- **Les données du téléphone** sont vérifiées à la lecture : ce qui est abîmé est laissé de côté, l’app s’ouvre quand même.
+- **Une question de plus qui ne se pose plus**, parce qu’on a décoché ce qui l’ouvrait, ne compte plus pour l’île. Pour proposer de l’aide, on reste prudent : toute case cochée compte.
+
 ## Les fichiers
 
 | Fichier | Rôle |
@@ -98,15 +106,27 @@ Sans WebGL, la page reste utilisable : l’île et l’archipel ne s’affichent
 | `vendor/` | three.js 0.186, réduit aux pièces utilisées (licence MIT) |
 | `fonts/` | Nunito (licence SIL OFL 1.1) |
 | `404.html` | Page introuvable ; les anciennes adresses des maquettes et de `limbes/` mènent à l’accueil |
+| `tests/` | Les tests, dans Chromium avec une 3D logicielle : le parcours, l’intro, le retour, la stabilité |
+| `package.json` | Seulement pour les tests ; le site n’a besoin de rien |
 | `.nojekyll` | Sert les fichiers tels quels sur GitHub Pages |
 
 Le stockage local utilise le préfixe `archipel:`. Au premier passage, l’île gardée sous un ancien nom du projet est reprise, sans rien effacer. `archipel:intro` retient que l’intro a été vue ou passée.
 
 Chaque fichier est appelé avec un numéro de version, comme `?v=1`. Après une modification, on augmente le numéro de ce fichier là où il est appelé, pour qu’un téléphone ne mélange pas deux versions en cache.
 
-Tester en local, depuis la racine du dépôt :
+Voir le site en local, depuis la racine du dépôt :
 
 ```sh
 python3 -m http.server
 # puis http://localhost:8000/
 ```
+
+Lancer les tests, qui servent eux-mêmes le site, en une dizaine de minutes :
+
+```sh
+npm install
+npm test            # toutes les suites
+npm test -- stabilite   # une seule : parcours, intro, retour ou stabilite
+```
+
+Les captures d’écran des tests vont dans un dossier temporaire, ou dans celui que désigne `CAPTURES`. Sur GitHub, les tests tournent à chaque proposition de changement.

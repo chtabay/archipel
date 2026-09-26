@@ -3,7 +3,7 @@
 // La carte et les dépôts viennent de ile.js : l’île est recalculée à partir de ses dépôts.
 
 import * as THREE from './vendor/three.min.js?v=1';
-import { N, CLIMATS, eauDe, sol, carte, deriver, etape } from './ile.js?v=4';
+import { N, CLIMATS, eauDe, sol, carte, deriver, etape } from './ile.js?v=5';
 import { biomeDe, BIOMES } from './biomes.js?v=1';
 import { hash, melange, versHex, nuance } from './outils.js?v=1';
 import { Bati, MAT, modeleChose, modelePhare, decor, halo, nuageBati, F, G, cone, cyl, baton } from './modeles.js?v=5';
@@ -14,9 +14,9 @@ const YS = .82, MARGE = 2.5, ECH = 1.35, NIV = .02, lerp = (a, b, t) => a + (b -
 const pop = (t, T) => { if (t == null || reduit) return 1; const p = Math.max(0, Math.min(1, (T - t) / .7)) - 1; return 1 + 2.7 * p * p * p + 1.7 * p * p; };
 const tirer = (table, r) => { const tot = table.reduce((s, [, w]) => s + w, 0); let t = r * tot; for (const [k, w] of table) { if (t < w) return k; t -= w; } return table[0]?.[0]; };
 const mobile = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
-function liberer(racine) { racine.traverse(o => { if (o.geometry && !o.geometry._partage) o.geometry.dispose(); const ms = Array.isArray(o.material) ? o.material : o.material ? [o.material] : []; for (const m of ms) if (!m._partage) { m.map?.dispose?.(); m.dispose(); } }); }
+function liberer(racine) { racine.traverse(o => { if (o.isLight) o.shadow?.dispose?.(); /* la carte d’ombre du soleil */ if (o.geometry && !o.geometry._partage) o.geometry.dispose(); const ms = Array.isArray(o.material) ? o.material : o.material ? [o.material] : []; for (const m of ms) if (!m._partage) { m.map?.dispose?.(); m.dispose(); } }); }
 
-export function disponible() { try { const c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); } catch { return false; } }
+export function disponible() { try { const gl = document.createElement('canvas').getContext('webgl2') || document.createElement('canvas').getContext('webgl'); gl?.getExtension('WEBGL_lose_context')?.loseContext(); return !!gl; } catch { return false; } } // le contexte d’essai est rendu aussitôt
 function creerRendu(canvas, { alpha = false, ombres = true } = {}) {
   const r = new THREE.WebGLRenderer({ canvas, antialias: true, alpha, powerPreference: 'default' });
   r.setPixelRatio(Math.min(devicePixelRatio || 1, 2));

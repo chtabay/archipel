@@ -461,3 +461,24 @@ body.en-intro main { display: flex; flex-direction: column; padding-bottom: .3re
 .ilewrap.mer.intro-vue.fixe { min-height: 10rem; } /* une image fixe : elle laisse la place aux phrases */
 .intro-tout p { margin: .5rem .1rem 0; font-size: 1.04rem; font-weight: 700; line-height: 1.4; }
 .sr { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+/* ───────── Quitter vite, et le secours ───────── */
+
+.sortie { /* toujours à portée, en haut à droite, même par-dessus une feuille ouverte */
+  position: fixed;
+  top: max(.75rem, env(safe-area-inset-top));
+  right: max(.75rem, calc(50vw - 16rem + .75rem));
+  z-index: 30;
+  padding: .45rem .95rem;
+  border: 1.5px solid var(--line-hi);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .94);
+  color: var(--ink);
+  font: 700 .92rem/1 var(--sans);
+  text-decoration: none;
+  box-shadow: 0 .15rem .6rem rgba(43, 39, 35, .15);
+  -webkit-tap-highlight-color: transparent;
+}
+.sortie:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.secours p { color: var(--muted); }
+.secours a { color: var(--accent-ink); font-weight: 700; }

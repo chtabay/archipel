@@ -3,8 +3,8 @@
 
 import { SUBJECTS, QUESTIONS, KEYS, BASE, LEX, HUMANS, MOCK } from './contenu.js?v=2';
 import { graines, quadDe, nomDe, phrasesDe, casesDe, sujetLabel, listeDe, listeGraines, FAMILLES, ESPECES, NOMS } from './grammaire.js?v=3';
-import { nouvelleIle, deriver, resume, archipelInvente, ileInventee, BIOMES, BIOME_IDS, biomeDe } from './ile.js?v=4';
-import { Vue3D, Ilot3D, apercu, disponible, ECH_ARCH, ILE_INTRO } from './monde.js?v=6';
+import { nouvelleIle, deriver, resume, archipelInvente, ileInventee, BIOMES, BIOME_IDS, biomeDe } from './ile.js?v=5';
+import { Vue3D, Ilot3D, apercu, disponible, ECH_ARCH, ILE_INTRO } from './monde.js?v=7';
 import { lire } from './lexique.js?v=2';
 
 const $ = s => document.querySelector(s);
@@ -24,14 +24,16 @@ const state = { answers: emptyAnswers(), text: '', short: false, help: 0, helpKi
 const trace = []; // ce qui serait compté (jamais le texte)
 const note = s => trace.push(s);
 const app = $('#app');
-const checked = k => QUESTIONS[k].items.filter(it => state.answers[k].has(it.id));
+// une question de plus qui ne se pose plus (on a décoché ce qui l’ouvrait) ne compte plus ; ses réponses restent gardées, sans effet
+const actives = a => Object.fromEntries(KEYS.map(k => [k, QUESTIONS[k].extra && !QUESTIONS[k].when(a) ? new Set() : a[k]]));
+const checked = k => QUESTIONS[k].items.filter(it => actives(state.answers)[k].has(it.id));
 const has = (k, id) => state.answers[k].has(id);
-const anyChecked = () => KEYS.some(k => state.answers[k].size);
+const anyChecked = () => { const a = actives(state.answers); return KEYS.some(k => a[k].size); };
 const pack = answers => Object.fromEntries(KEYS.map(k => [k, [...answers[k]]]));
-const unpack = obj => Object.fromEntries(KEYS.map(k => [k, new Set(obj?.[k] || [])]));
+const unpack = obj => Object.fromEntries(KEYS.map(k => [k, new Set(Array.isArray(obj?.[k]) ? obj[k].filter(v => typeof v === 'string') : [])]));
 const sequence = () => [...BASE, ...KEYS.filter(k => QUESTIONS[k].extra && QUESTIONS[k].when(state.answers))];
-const signals = () => {
-  const items = KEYS.flatMap(k => checked(k));
+const signals = () => { // pour l’aide, on reste prudent : toute case cochée compte, même celle d’une question qui ne se pose plus
+  const items = KEYS.flatMap(k => QUESTIONS[k].items.filter(it => state.answers[k].has(it.id)));
   return { strong: items.some(it => it.strong), soft: items.some(it => it.soft), other: has('situ', 'mal') || has('sujets', 's11') || state.answers.subi.size > 0 };
 };
 const PREFIXE = 'archipel:';
@@ -52,7 +54,7 @@ function saveDraft() { store.set('draft', { answers: pack(state.answers), text: 
 function loadDraft() {
   const d = store.get('draft', null);
   if (!d) return;
-  state.answers = unpack(d.answers); state.text = d.text || ''; state.short = !!d.short;
+  state.answers = unpack(d.answers); state.text = typeof d.text === 'string' ? d.text : ''; state.short = !!d.short;
 }
 function clearDraft() {
   state.answers = emptyAnswers(); state.text = ''; state.path = null;
@@ -62,22 +64,35 @@ function clearDraft() {
 
 /* ───────── L’île, et celles d’avant ───────── */
 
-let ile = store.get('ile', null) || nouvelleIle(); // celle qui pousse
-let iles = store.get('iles', []); // celles d’avant, gardées ici
+function saine(x) { // une île relue sur ce téléphone : sa forme est vérifiée, et ce qui est abîmé est laissé de côté
+  if (!x || typeof x !== 'object' || Array.isArray(x)) return null;
+  const depots = (Array.isArray(x.depots) ? x.depots : []).filter(d => d && typeof d === 'object').map((d, i) => {
+    const r = { ...d, id: d.id ?? i + 1, answers: pack(unpack(d.answers && typeof d.answers === 'object' ? d.answers : {})) };
+    if (typeof r.contenu !== 'string') delete r.contenu;
+    if (!Array.isArray(r.duTexte)) delete r.duTexte;
+    return r;
+  });
+  return { ...x, id: x.id ?? Date.now(), seed: Number.isFinite(x.seed) ? x.seed : 1, biome: BIOMES[x.biome] ? x.biome : 'prairie', depots };
+}
+let ile = saine(store.get('ile', null)) || nouvelleIle(); // celle qui pousse
+let iles = [].concat(store.get('iles', [])).map(saine).filter(Boolean); // celles d’avant, gardées ici
 const saveIle = () => store.set('ile', ile);
 const saveIles = () => store.set('iles', iles);
 const vie = new Map(); // clé → instant d’apparition, pour le petit rebond
-let courant = deriver(ile); // ce que l’île montre
+let courant; // ce que l’île montre
+try { courant = deriver(ile); } catch (e) { console.error(e); ile = nouvelleIle(); courant = deriver(ile); } // une île illisible : on repart d’une île vide plutôt que de ne rien montrer
 let regard = null; // une île d’avant qu’on regarde, sinon null
 const t0 = performance.now();
 const now = () => (performance.now() - t0) / 1000;
 
 /* ───────── Les graines, en compagnie ───────── */
 
-const companion = $('#companion'), entCanvas = $('#ent'), en3D = disponible();
-if (!en3D) { entCanvas.hidden = true; $('#ent-hint').hidden = true; } // sans 3D, pas d’îlot : les graines restent dites en mots
+const companion = $('#companion'), entCanvas = $('#ent');
 let preview = [], signes = {}; // les graines, et ce que l’îlot montre en plus : le phare, le ciel lourd
-const ilot = en3D ? new Ilot3D(entCanvas) : null, vue = en3D ? new Vue3D() : null; // l’îlot des graines ; la vue de l’île et de l’archipel
+let ilot = null, vue = null; // l’îlot des graines ; la vue de l’île et de l’archipel
+if (disponible()) try { ilot = new Ilot3D(entCanvas); vue = new Vue3D(); } catch (e) { console.error(e); ilot?.rendu.dispose(); ilot = vue = null; } // la 3D peut refuser de démarrer : on continue sans
+const en3D = !!vue;
+if (!en3D) { entCanvas.hidden = true; $('#ent-hint').hidden = true; } // sans 3D, pas d’îlot : les graines restent dites en mots
 if (ilot) ilot.vieT = now;
 if (vue) vue.vieT = now;
 
@@ -88,7 +103,7 @@ function derive() { // ce que la confession en cours ferait pousser
   const before = new Set(preview.map(a => a.key));
   lu = lire(state.text);
   proposes = lu.sujets.map(([id]) => id).filter(id => !state.answers.sujets.has(id));
-  const r = anyChecked() || state.text.trim() ? graines(avecTexte(), state.text.trim(), state.answers.mots.size ? null : { quad: lu.quad }) : null, g = r ? r.graines : [];
+  const r = anyChecked() || state.text.trim() ? graines(actives(avecTexte()), state.text.trim(), state.answers.mots.size ? null : { quad: lu.quad }) : null, g = r ? r.graines : [];
   signes = { phare: !!r?.phare, lourd: !!r?.lourd };
   preview = g;
   for (const a of preview) if (!before.has(a.key)) vie.set(a.key, now());
@@ -106,7 +121,7 @@ let titre = null; // ce qui vient de pousser, pour le titre de l’écran
 function renderIle() {
   const d = regard ? deriver(regard) : courant, mine = !regard;
   const wrap = el('div', { className: 'ilewrap' });
-  const invite = d.assets.length ? 'Touche ce qui a poussé. Tourne l’île du doigt, écarte deux doigts pour zoomer.' : 'Rien n’a encore poussé. Ça viendra avec ta première confession.';
+  const invite = d.assets.length ? 'Touche ce qui a poussé. Tourne l’île du doigt, écarte deux doigts pour zoomer.' : 'Rien n’a encore poussé. Ça viendra avec ce que tu déposeras.';
   const caption = el('p', { className: 'ile-caption', id: 'ile-caption', textContent: invite });
   const excerpt = el('p', { className: 'excerpt', id: 'ile-excerpt', hidden: true });
   const line = el('p', { className: 'ile-line', id: 'ile-line' });
@@ -294,7 +309,7 @@ function finIntro(comment) {
   store.set('intro', 1); note(`intro : ${comment}`);
   if (revue && comment === 'passée') { revue = false; history.back(); return; } // revue puis passée : on revient où l’on était
   revue = false;
-  history.replaceState({ screen: 'q:situ' }, '', ''); render('q:situ'); // sans retour possible vers l’intro
+  history.replaceState({ screen: 'q:situ', n: history.state?.n || 0 }, '', ''); render('q:situ'); // sans retour possible vers l’intro
 }
 function renderIntro() {
   const tout = !vue || reduced; // sans 3D, ou sans mouvement : tout se lit d’un coup
@@ -327,13 +342,24 @@ function renderIntro() {
   if (typeof ResizeObserver === 'function') { suivi = new ResizeObserver(() => vue.redim()); suivi.observe(wrap); }
 }
 
+/* ───────── Secours ───────── */
+
+function secours(screen) { // un écran qui a échoué : jamais de page vide, toujours de quoi parler à quelqu’un
+  const ailleurs = screen === 'q:situ' ? ['Voir ton île', 'ile'] : ['Revenir aux premières cases', 'q:situ'];
+  app.replaceChildren(
+    el('h1', { textContent: 'Quelque chose s’est mal passé' }),
+    el('p', { className: 'hint', textContent: 'Ce que tu as déposé est toujours sur ce téléphone.' }),
+    el('nav', { className: 'actions' }, bouton(ailleurs[0], () => go(ailleurs[1])), quiet('parler à quelqu’un', () => humansSheet())),
+  );
+}
+
 /* ───────── Navigation ───────── */
 
 const bouton = (text, fn) => { const b = el('button', { type: 'button', className: 'btn', textContent: text }); b.addEventListener('click', fn); return b; };
 const ICONE_TOURNER = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3"/><path d="M19.5 4.5v4.2h-4.2"/></svg>';
 const quiet = (text, fn) => { const b = el('button', { type: 'button', className: 'quiet', textContent: text }); b.addEventListener('click', fn); return b; };
 
-function go(screen) { history.pushState({ screen }, '', ''); render(screen); }
+function go(screen) { history.pushState({ screen, n: (history.state?.n || 0) + 1 }, '', ''); render(screen); } // n : combien d’écrans de l’app le précèdent
 
 let ecran = 'q:situ';
 const ongletDe = screen => (screen === 'ile' || screen === 'archipel' ? screen : 'deposer');
@@ -351,12 +377,14 @@ function render(screen) {
   document.body.classList.toggle('en-intro', screen === 'intro');
   companion.hidden = ['ile', 'archipel', 'intro'].includes(screen);
   if (!companion.hidden) ilot?.redim();
-  if (screen === 'orient') renderOrient();
-  else if (screen === 'page') renderPage();
-  else if (screen === 'ile') renderIle();
-  else if (screen === 'archipel') renderArchipel();
-  else if (screen === 'intro') renderIntro();
-  else renderQ(QUESTIONS[screen.slice(2)] ? screen.slice(2) : 'situ');
+  try {
+    if (screen === 'orient') renderOrient();
+    else if (screen === 'page') renderPage();
+    else if (screen === 'ile') renderIle();
+    else if (screen === 'archipel') renderArchipel();
+    else if (screen === 'intro') renderIntro();
+    else renderQ(QUESTIONS[screen.slice(2)] ? screen.slice(2) : 'situ');
+  } catch (e) { console.error(e); secours(screen); } // un écran qui échoue laisse place au secours, jamais à une page vide
   scrollTo(0, 0);
   const h = app.querySelector('h1, .big');
   if (h) { h.setAttribute('tabindex', '-1'); h.focus({ preventScroll: true }); }
@@ -575,7 +603,7 @@ function humansSheet(first = 'self') {
 }
 
 function finishSheet() { // ce qui a été déposé pousse sur l’île, texte compris ; s’il y a un texte, on choisit de le garder ou de le brûler
-  const texte = state.text.trim(), g = preview.length ? preview : graines(state.answers, '').graines;
+  const texte = state.text.trim(), g = preview.length ? preview : graines(actives(state.answers), '').graines;
   const body = el('div', {}, el('h2', { textContent: 'Et maintenant ?' }));
   const guillemets = ids => ids.map(id => `«${NB}${sujetLabel(id)}${NB}»`).reduce((t, x, i, l) => (i ? t + (i === l.length - 1 ? ' et ' : ', ') : '') + x, '');
   let dit = `${texte ? '' : 'Juste tes cases, sans texte. Ça suffit. '}Sur ton île, ça va faire pousser ${listeGraines(g)}.`;
@@ -604,7 +632,7 @@ const APERCU = [{ id: 1, quad: 'N', texte: false, answers: { situ: [], mots: [],
 function dessinerApercu(c, id) { // un aperçu du paysage : une île d’exemple, en 3D, rendue une fois
   const dpr = Math.min(devicePixelRatio || 1, 2), w = c.clientWidth || 132, h = c.clientHeight || 119;
   c.width = Math.round(w * dpr); c.height = Math.round(h * dpr);
-  if (en3D) apercu(c, id, APERCU);
+  if (en3D) try { apercu(c, id, APERCU); } catch (e) { console.error(e); } // sans aperçu, le paysage se choisit quand même
 }
 function choixPaysage(depart, onPick) {
   const wrap = el('div', { className: 'paysages' }), boutons = [];
@@ -690,7 +718,8 @@ function poser(garderTexte, brule = false) {
   const texte = state.text.trim();
   const ok = [...proposes];
   for (const id of ok) state.answers.sujets.add(id);
-  const depot = { id: Date.now(), date: new Date().toISOString(), quad: quadDe(state.answers), texte: !!texte, answers: pack(state.answers) };
+  const a = actives(state.answers); // une question de plus qui ne se pose plus n’est pas déposée
+  const depot = { id: Date.now(), date: new Date().toISOString(), quad: quadDe(a), texte: !!texte, answers: pack(a) };
   if (ok.length) { depot.duTexte = ok; note(`texte : lu ici, fait pousser ${ok.map(sujetLabel).join(', ')}`); }
   if (!state.answers.mots.size && lu.quad !== 'N') { depot.quadTexte = lu.quad; depot.quad = lu.quad; note('texte : donne la sensation, aucun mot coché'); }
   if (texte && garderTexte) depot.contenu = texte;
@@ -721,12 +750,11 @@ function bruler() { // le texte brûle sous tes yeux ; ce qu’il a fait pousser
 
 /* ───────── Boucle et départ ───────── */
 
+let pannes = 0; // si la 3D échoue sans cesse, elle s’arrête ; le reste de l’app continue
 function frame() {
-  if (!document.hidden) {
-    if (!companion.hidden) drawCompanion();
-    if (vue?.actif) vue.frame();
-  }
   requestAnimationFrame(frame);
+  if (document.hidden || pannes > 5) return;
+  try { if (!companion.hidden) drawCompanion(); if (vue?.actif) vue.frame(); } catch (e) { if (++pannes > 5) console.error(e); }
 }
 
 addEventListener('resize', () => { if (!companion.hidden) ilot?.redim(); vue?.redim(); });
@@ -735,11 +763,17 @@ loadDraft();
 derive();
 for (const b of document.querySelectorAll('.onglets button')) b.addEventListener('click', () => ONGLETS[b.dataset.onglet]());
 $('#humans').addEventListener('click', () => humansSheet());
-$('#exit').addEventListener('click', e => { e.preventDefault(); location.replace(e.currentTarget.href); });
-addEventListener('popstate', e => render(e.state?.screen || 'q:situ'));
+let fuite = false; // on part : plus rien ne s’affiche
+function quitter(url) { // partir vite : l’écran se vide, on remonte l’historique de l’app, puis on le remplace. « Retour » ne ramène plus ici.
+  fuite = true; document.body.style.visibility = 'hidden'; closeSheet();
+  const n = history.state?.n || 0;
+  if (n > 0) { history.go(-n); setTimeout(() => location.replace(url), 700); } else location.replace(url);
+}
+$('#exit').addEventListener('click', e => { e.preventDefault(); quitter(e.currentTarget.href); });
+addEventListener('popstate', e => { if (fuite) { location.replace($('#exit').href); return; } closeSheet(); render(e.state?.screen || 'q:situ'); });
 const premiere = !store.get('intro', false) && !ile.depots.length && !iles.length && !anyChecked() && !state.text.trim(); // la toute première fois : rien encore sur ce téléphone
 const depart = premiere ? 'intro' : ile.depots.length || iles.length ? 'ile' : 'q:situ'; // au retour, une île déjà commencée : on la retrouve d’abord
-history.replaceState({ screen: depart }, '', '');
+history.replaceState({ screen: depart, n: history.state?.n || 0 }, '', ''); // après un rechargement, les écrans d’avant sont toujours là
 render(depart);
 requestAnimationFrame(frame);
 window.archipel = { state, get ile() { return ile; }, get iles() { return iles; }, get courant() { return courant; }, get preview() { return preview; }, arch, vie, vue, ilot }; // pour les tests
