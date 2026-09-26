@@ -87,10 +87,11 @@ export function graines(a, texte, lu = null) {
   if (quad === 'N' && lu?.quad && lu.quad !== 'N') { quad = lu.quad; quadDuTexte = true; }
   const out = [], graine = (key, famille, espece, st = stade, sujet = null) => out.push({ key, sujet, famille, espece, quad, stade: st, etats: { ...etats } });
   for (const it of QUESTIONS.sujets.items) if (a.sujets.has(it.id)) { const f = familleDe(it.id, a); graine(it.id, f, ESPECES[f][quad], stade, it.id); }
-  if (!out.length) { // pas de sujet : la situation seule fait déjà quelque chose
-    if (a.situ.has('mal') || a.subi.size) graine('situ:mal', 'arbre', ESPECES.arbre[quad]);
-    else if (a.situ.has('regret') || a.fait.size) graine('situ:regret', 'pierre', ESPECES.pierre[quad]);
-  }
+  // la situation laisse toujours sa trace : si aucun sujet ne la porte déjà, elle fait pousser sa propre chose.
+  // « On m’a fait du mal » et « je regrette », cochées ensemble, font un arbre et une pierre : l’une n’efface pas l’autre.
+  const porte = f => out.some(g => g.famille === f);
+  if ((a.situ.has('mal') || a.subi.size) && !porte('arbre')) graine('situ:mal', 'arbre', ESPECES.arbre[quad]);
+  if ((a.situ.has('regret') || a.fait.size) && !porte('pierre')) graine('situ:regret', 'pierre', ESPECES.pierre[quad]);
   // la sensation : quand rien d’autre ne la porte, le quadrant principal fait le temps ; les autres quadrants laissent chacun leur trace
   const restants = out.length ? qs.slice(1) : qs;
   for (const [q, n] of restants) { const e = ESPECES.meteo[q]; out.push({ key: `meteo:${e}`, sujet: null, famille: 'meteo', espece: e, quad: q, stade: Math.min(2, n - 1 + (stade === 2 ? 1 : 0)), etats: { ...etats } }); }

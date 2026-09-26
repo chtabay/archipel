@@ -2,9 +2,9 @@
 // Tout reste sur cet appareil ; rien ne part. Pour l’instant, les îles des autres sont inventées.
 
 import { SUBJECTS, QUESTIONS, KEYS, BASE, LEX, HUMANS, MOCK } from './contenu.js?v=2';
-import { graines, quadDe, nomDe, phrasesDe, casesDe, sujetLabel, listeDe, listeGraines, FAMILLES, ESPECES, NOMS } from './grammaire.js?v=2';
-import { nouvelleIle, deriver, resume, archipelInvente, ileInventee, BIOMES, BIOME_IDS, biomeDe } from './ile.js?v=3';
-import { Vue3D, Ilot3D, apercu, disponible, ECH_ARCH } from './monde.js?v=4';
+import { graines, quadDe, nomDe, phrasesDe, casesDe, sujetLabel, listeDe, listeGraines, FAMILLES, ESPECES, NOMS } from './grammaire.js?v=3';
+import { nouvelleIle, deriver, resume, archipelInvente, ileInventee, BIOMES, BIOME_IDS, biomeDe } from './ile.js?v=4';
+import { Vue3D, Ilot3D, apercu, disponible, ECH_ARCH } from './monde.js?v=5';
 import { lire } from './lexique.js?v=2';
 
 const $ = s => document.querySelector(s);
@@ -178,7 +178,7 @@ function legende() {
   ul.append(el('li', {}, el('b', { textContent: 'Le paysage et les variantes. ' }), 'Tu choisis le paysage en commençant une île : la prairie, la forêt d’automne, l’île tropicale, l’île enneigée ou la lande. Il change les couleurs du sol, les essences, les maisons, les cultures et le petit décor. Chaque chose a aussi plusieurs formes. Ni le paysage ni les formes ne disent quelque chose : ils rendent chaque île différente.'));
   ul.append(el('li', {}, el('b', { textContent: 'Qui le sait, l’état. ' }), 'Jamais dit, c’est fermé. Un texte allume des lanternes au-dessus de ce qu’il fait pousser, jamais ses mots. En boucle, un sentier usé. Plus d’une fois, en deux. Ça continue, il pleut dessus. Regret, la mousse reprend la pierre. Jamais réparé, elle est fendue. Un danger, c’est un phare, pour parler à quelqu’un.'));
   ul.append(el('li', {}, el('b', { textContent: 'Ton texte. ' }), 'Il est lu ici, sur ce téléphone, jamais ailleurs. Les sujets dont il parle poussent comme des cases cochées, et s’il n’y a aucun mot coché, il donne la sensation. Sur l’île, il allume une lanterne au-dessus de ce qu’il fait pousser, une de plus à chaque texte, jusqu’à trois. À la fin, tu le gardes sur ce téléphone, ou tu le brûles : il n’en reste alors que ses lanternes.'));
-  ul.append(el('li', {}, el('b', { textContent: 'Le temps qu’il fait. ' }), 'Le ciel de l’île suit ta dernière confession. Chaque sensation cochée en plus de la principale laisse un temps qu’il fait : un nuage d’orage, un nuage de pluie, des fleurs, un étang. Sans sujet, la situation suffit : on m’a fait du mal, un arbre ; je regrette, une pierre. Rien du tout : un caillou posé.'));
+  ul.append(el('li', {}, el('b', { textContent: 'Le temps qu’il fait. ' }), 'Le ciel de l’île suit ta dernière confession. Chaque sensation cochée en plus de la principale laisse un temps qu’il fait : un nuage d’orage, un nuage de pluie, des fleurs, un étang. Sans sujet, la situation suffit : on m’a fait du mal, un arbre ; je regrette, une pierre ; les deux, un arbre et une pierre. Rien du tout : un caillou posé.'));
   return ul;
 }
 
@@ -530,7 +530,12 @@ function finishSheet() { // ce qui a été déposé pousse sur l’île, texte c
     gesture('Garder le texte', 'sur ce téléphone seulement ; en touchant ce qu’il a fait pousser, tu le reliras', () => poser(true));
     gesture('Brûler le texte', 'il n’en restera que ce qu’il a fait pousser', bruler);
   } else gesture('Poser sur l’île', 'ça restera sur ce téléphone, et ça poussera', () => poser(false));
-  body.append(footRow(quiet('pas maintenant', closeSheet), quiet('voir l’île', () => { closeSheet(); regard = null; go('ile'); })));
+  const effacer = el('p', { className: 'effacer' }); // abandonner, sans rien poser : une seconde touche pour confirmer
+  const lien = quiet('tout effacer, sans rien poser', () => effacer.replaceChildren(
+    texte ? 'Tes cases et ton texte vont disparaître, et rien ne poussera. ' : 'Tes cases vont disparaître, et rien ne poussera. ',
+    quiet('tout effacer', () => { closeSheet(); clearDraft(); note('geste : tout effacer, sans rien poser'); go('q:situ'); }), ' · ', quiet('non', () => effacer.replaceChildren(lien))));
+  effacer.append(lien);
+  body.append(effacer, footRow(quiet('pas maintenant', closeSheet), quiet('voir l’île', () => { closeSheet(); regard = null; go('ile'); })));
   openSheet(body);
 }
 

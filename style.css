@@ -96,6 +96,8 @@ main { flex: 1; padding-top: 1.4rem; padding-bottom: 1.5rem; }
 
 /* une action principale, et les autres à côté */
 .actions { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem 1.1rem; margin-top: 1.2rem; }
+.effacer { margin: .9rem 0 0; color: var(--muted); font-size: .92rem; }
+.effacer .quiet { padding: .2rem 0; color: var(--muted); font-size: .92rem; text-decoration: underline; text-underline-offset: .2em; }
 
 .quiet {
   padding: .4rem .1rem;
