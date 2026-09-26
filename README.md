@@ -73,7 +73,7 @@ Sans WebGL, la page reste utilisable : l’île et l’archipel ne s’affichent
 ## Confidentialité
 
 - Site 100 % statique : pas de serveur, pas de cookie, pas de traceur, aucune requête externe. La police et la bibliothèque 3D sont dans le dépôt.
-- Ce qu’on dépose reste sur le téléphone. Le texte y est lu, pour proposer des sujets, et n’en sort jamais.
+- Ce qu’on dépose reste sur le téléphone. Le texte y est lu, pour y trouver des sujets, et n’en sort jamais.
 
 ## Les fichiers
 
@@ -84,7 +84,7 @@ Sans WebGL, la page reste utilisable : l’île et l’archipel ne s’affichent
 | `app.js` | Les écrans, les feuilles, les gestes, le stockage local |
 | `contenu.js` | Les cases, les sujets et leurs poids, les mots-clés d’alerte, les numéros |
 | `grammaire.js` | Les familles par sujet, les espèces, les états, la composition, les phrases |
-| `lexique.js` | Les mots qui font proposer un sujet ou une sensation, lus sur l’appareil |
+| `lexique.js` | Les mots qui font pousser un sujet ou donnent une sensation, lus sur l’appareil |
 | `biomes.js` | Les paysages : couleurs, essences, maisons, cultures, décor |
 | `ile.js` | La carte, les quartiers, l’île recalculée depuis ses dépôts, les îles inventées |
 | `monde.js` | Le relief, la mer, le ciel, la lumière, la caméra, l’île, l’archipel, l’îlot, les aperçus |
