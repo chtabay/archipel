@@ -4,7 +4,7 @@
 import { SUBJECTS, QUESTIONS, KEYS, BASE, LEX, HUMANS, MOCK } from './contenu.js?v=2';
 import { graines, quadDe, nomDe, phrasesDe, casesDe, sujetLabel, listeDe, listeGraines, FAMILLES, ESPECES, NOMS } from './grammaire.js?v=3';
 import { nouvelleIle, deriver, resume, archipelInvente, ileInventee, BIOMES, BIOME_IDS, biomeDe } from './ile.js?v=4';
-import { Vue3D, Ilot3D, apercu, disponible, ECH_ARCH } from './monde.js?v=5';
+import { Vue3D, Ilot3D, apercu, disponible, ECH_ARCH, ILE_INTRO } from './monde.js?v=6';
 import { lire } from './lexique.js?v=2';
 
 const $ = s => document.querySelector(s);
@@ -207,6 +207,16 @@ function ecarter(items, fixes = []) { // les îles ne se chevauchent pas : on le
     if (!bouge) break;
   }
 }
+function placeLibre(it, fixes, [px, pz]) { // une île qui arrive : l’eau libre la plus proche de sa place, pour ne jamais se poser sur une autre
+  const R = x => (x.d || (x.d = deriver(x.ile))).m.rayon * ECH_ARCH + .15, r = R(it);
+  let libre = null, pres = Infinity, secours = null, jeuMax = -Infinity;
+  for (let x = -LARG * .6; x <= LARG * .6; x += .5) for (let z = -PROF * .62; z <= PROF * .62; z += .5) {
+    const jeu = fixes.reduce((m, f) => Math.min(m, Math.hypot(f.x - x, f.z - z) - R(f) - r - .5), Infinity), loin = Math.hypot(x - px, z - pz);
+    if (jeu >= 0 && loin < pres) { pres = loin; libre = [x, z]; }
+    if (jeu > jeuMax) { jeuMax = jeu; secours = [x, z]; } // l’archipel est plein : la place la moins serrée
+  }
+  [it.x, it.z] = libre || secours || [px, pz];
+}
 
 function placerArchipel() {
   const items = arch.autres.map(o => ({ ...o, d: o.d || (o.d = deriver(o.ile)), mine: false }));
@@ -216,12 +226,11 @@ function placerArchipel() {
   arch.items = items;
 }
 
-function nouvelleAutre() { // une île de quelqu’un d’autre (inventée) arrive depuis l’horizon
+function nouvelleAutre(fixes = arch.items) { // une île de quelqu’un d’autre (inventée) arrive depuis l’horizon
   const r = Math.random(), q = r < .27 ? 'AD' : r < .68 ? 'ED' : r < .82 ? 'AS' : 'ES';
   const a = (q[0] === 'A' ? .5 : 0) + Math.random() * .5, v = (q[1] === 'S' ? .5 : 0) + Math.random() * .5;
   const it = { ile: ileInventee(5000 + Math.floor(Math.random() * 1e6), q), a, v, mine: false, born: now() };
-  [it.x, it.z] = posArch(a, v);
-  ecarter([it], arch.items);
+  placeLibre(it, fixes, posArch(a, v));
   arch.arrivals++;
   updateArchLine();
   return it;
@@ -251,6 +260,7 @@ function renderArchipel() {
   const caption = el('p', { className: 'ile-caption', id: 'arch-caption', textContent: INVITE_ARCH });
   const nav = el('nav', { className: 'actions' });
   if (!ile.envoyee && ile.depots.length) { const b = bouton('Y mettre ton île', envoyerSheet); b.id = 'mettre-ile'; nav.append(b); }
+  if (vue) nav.append(quiet('revoir l’intro', () => { revue = true; go('intro'); }));
   app.replaceChildren(
     el('p', { className: 'step', textContent: 'L’archipel' }),
     el('h1', { textContent: 'L’archipel, ce soir' }),
@@ -267,6 +277,54 @@ function renderArchipel() {
   vue.canvas.setAttribute('aria-label', 'L’archipel en 3D : les îles des autres, et les tiennes');
   montrerArchipel(caption);
   updateArchLine();
+}
+
+/* ───────── L’intro, au premier passage ───────── */
+// Elle montre l’archipel, puis une île qui pousse quand on parle, qui porte ce qu’on a dit, et qui rejoint les autres.
+// Aucun exemple : les mots sont des formes de lumière. Elle se passe, et se revoit depuis l’archipel.
+
+const LEGENDES = [
+  'Voici l’archipel. Chaque île y a poussé avec ce que quelqu’un a confié.',
+  'Quand tu parles, ton île pousse.',
+  'Elle porte ce que tu as dit, sans jamais montrer tes mots.',
+  'Quand tu le veux, elle rejoint l’archipel. Sans ton nom.',
+];
+let revue = false, suivi = null; // revue : l’intro revue depuis l’archipel ; suivi : la taille de sa vue, suivie tant qu’elle est là
+function finIntro(comment) {
+  store.set('intro', 1); note(`intro : ${comment}`);
+  if (revue && comment === 'passée') { revue = false; history.back(); return; } // revue puis passée : on revient où l’on était
+  revue = false;
+  history.replaceState({ screen: 'q:situ' }, '', ''); render('q:situ'); // sans retour possible vers l’intro
+}
+function renderIntro() {
+  const tout = !vue || reduced; // sans 3D, ou sans mouvement : tout se lit d’un coup
+  const wrap = el('div', { className: 'ilewrap mer intro-vue' }), nav = el('nav', { className: 'nav intro-nav' });
+  const commencer = () => bouton('Commencer', () => finIntro('vue')), titre = el('h1', { className: 'sr', textContent: 'Bienvenue dans l’archipel' });
+  let suite = null; // ce que font les légendes, au fil de l’intro
+  if (tout) {
+    nav.append(el('span', { className: 'spacer' }), commencer()); wrap.classList.add('fixe');
+    app.replaceChildren(titre, ...(vue ? [wrap] : []), el('div', { className: 'intro-tout' }, ...LEGENDES.map(t => el('p', { textContent: t }))), nav);
+  } else {
+    const ligne = el('p', { className: 'intro-ligne' }), points = el('span', { className: 'dots intro-points' }, ...LEGENDES.map(() => el('i')));
+    ligne.setAttribute('aria-live', 'polite'); points.setAttribute('aria-hidden', 'true');
+    const enCours = () => nav.replaceChildren(points, el('span', { className: 'spacer' }), quiet('passer', () => finIntro('passée')));
+    let fondu;
+    suite = { // une légende à la fois, en fondu ; à la fin, commencer
+      etape: i => { clearTimeout(fondu); ligne.classList.remove('vue'); [...points.children].forEach((p, j) => { p.className = j === i ? 'now' : j < i ? 'done' : ''; }); fondu = setTimeout(() => { ligne.textContent = LEGENDES[i]; ligne.classList.add('vue'); }, 220); },
+      fin: () => nav.replaceChildren(quiet('revoir', () => { note('geste : revoir l’intro'); vue.introAller(0); enCours(); }), el('span', { className: 'spacer' }), commencer()),
+    };
+    enCours();
+    app.replaceChildren(titre, wrap, ligne, nav);
+  }
+  if (!vue) return;
+  vue.attacher(wrap);
+  vue.canvas.setAttribute('aria-label', 'Une île pousse quand on parle, garde la lumière de ce qui a été dit, puis rejoint l’archipel');
+  if (!arch.autres.length) arch.autres = archipelInvente(26);
+  placerArchipel();
+  const demo = { ile: ILE_INTRO, mine: false };
+  placeLibre(demo, arch.items, [1.5, PROF * .3]); // sa place : au premier plan de l’archipel, dans l’eau libre
+  vue.montrerIntro(arch.items, demo, { onEtape: i => suite?.etape(i), onFin: () => suite?.fin(), nouvelle: () => nouvelleAutre([...arch.items, demo]) });
+  if (typeof ResizeObserver === 'function') { suivi = new ResizeObserver(() => vue.redim()); suivi.observe(wrap); }
 }
 
 /* ───────── Navigation ───────── */
@@ -288,13 +346,16 @@ function updateOnglets() {
 
 function render(screen) {
   ecran = screen;
+  suivi?.disconnect(); suivi = null;
   document.body.classList.toggle('short', state.short && screen === 'page');
-  companion.hidden = ['ile', 'archipel'].includes(screen);
+  document.body.classList.toggle('en-intro', screen === 'intro');
+  companion.hidden = ['ile', 'archipel', 'intro'].includes(screen);
   if (!companion.hidden) ilot?.redim();
   if (screen === 'orient') renderOrient();
   else if (screen === 'page') renderPage();
   else if (screen === 'ile') renderIle();
   else if (screen === 'archipel') renderArchipel();
+  else if (screen === 'intro') renderIntro();
   else renderQ(QUESTIONS[screen.slice(2)] ? screen.slice(2) : 'situ');
   scrollTo(0, 0);
   const h = app.querySelector('h1, .big');
@@ -676,7 +737,8 @@ for (const b of document.querySelectorAll('.onglets button')) b.addEventListener
 $('#humans').addEventListener('click', () => humansSheet());
 $('#exit').addEventListener('click', e => { e.preventDefault(); location.replace(e.currentTarget.href); });
 addEventListener('popstate', e => render(e.state?.screen || 'q:situ'));
-history.replaceState({ screen: 'q:situ' }, '', '');
-render('q:situ');
+const premiere = !store.get('intro', false) && !ile.depots.length && !iles.length && !anyChecked() && !state.text.trim(); // la toute première fois : rien encore sur ce téléphone
+history.replaceState({ screen: premiere ? 'intro' : 'q:situ' }, '', '');
+render(premiere ? 'intro' : 'q:situ');
 requestAnimationFrame(frame);
 window.archipel = { state, get ile() { return ile; }, get iles() { return iles; }, get courant() { return courant; }, get preview() { return preview; }, arch, vie, vue, ilot }; // pour les tests

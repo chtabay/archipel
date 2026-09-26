@@ -8,13 +8,15 @@ Un endroit où l’on peut tout déposer, sans jugement. On coche quelques cases
 
 En bas de l’écran, trois onglets restent toujours à portée de pouce : **Déposer**, **Ton île** et **L’archipel**. Chaque écran n’a qu’une action principale.
 
+**La première fois**, une courte intro, d’une quinzaine de secondes, montre l’idée sans aucun exemple. D’abord l’archipel au soir. Puis un îlot au premier plan, au-dessus duquel flottent des mots sans lettres, des pastilles de lumière. Ils tombent un à un : à chacun, la terre monte de l’eau et une chose pousse. Leur lumière reste au-dessus, en lanternes. Enfin l’île rejoint sa place parmi les autres, et « ton île » s’affiche. Quatre phrases l’accompagnent. On peut la passer à tout moment, puis la revoir depuis l’archipel. « Parler à quelqu’un » et « quitter » restent visibles. Sans mouvement ou sans 3D, les quatre phrases se lisent d’un coup.
+
 1. **Les questions.** Quelques cases à cocher. En haut, un îlot montre en direct ce que les cases feraient pousser. Chaque case de la première question s’y voit : la terre qui recouvre ce qui n’a jamais été dit, le sentier de ce qui tourne en boucle, la taille selon l’ancienneté, un nuage gris quand on ne va pas bien du tout, un phare quand il y a un danger.
 2. **Par où aller ?** Parler à quelqu’un, écrire, le dire en trois lignes, juste le poser, ou voir son île.
 3. **La page.** Des débuts de phrases tirés des cases. Le texte est lu sur le téléphone : les sujets dont il parle s’ajoutent aux graines, et des lanternes s’allument sur l’îlot pendant qu’on écrit. Si des mots inquiètent, des numéros d’écoute s’affichent.
 4. **Terminer.** Tout ce qui a été déposé pousse sur l’île, texte compris : on ne choisit pas ce que le texte fait pousser. S’il y a un texte, le seul choix porte sur lui : le garder sur le téléphone, pour le relire en touchant ce qu’il a fait pousser, ou le brûler sous ses yeux. Il n’en reste alors que ses lanternes. Un lien discret permet aussi de tout effacer sans rien poser, après confirmation.
 5. **L’île.** Ce qui vient de pousser, avec une phrase. On la fait tourner du doigt, ou avec le bouton posé sur la vue, et on zoome en écartant deux doigts. Toucher une chose dit ce qu’elle est, d’après quelles cases, et depuis quand. L’action principale est « Déposer autre chose ».
 6. **Changer d’île.** Celle-ci reste sur le téléphone et se revoit. Elle peut rejoindre l’archipel sans nom : les autres verraient « une île avec deux arbres nus, une pierre et une maison », rien d’autre.
-7. **L’archipel.** Une mer au soir, avec des voiliers. Les îles des autres y arrivent depuis l’horizon, placées par sensation. Toucher une île fait s’en approcher.
+7. **L’archipel.** Une mer au soir, avec des voiliers. Les îles des autres y arrivent depuis l’horizon, placées par sensation, dans l’eau libre la plus proche de leur place. Toucher une île fait s’en approcher.
 
 ## La grammaire : quatre axes lus dans les cases
 
@@ -59,6 +61,7 @@ La personne choisit le **paysage** en commençant une île, avec un aperçu en 3
 - **La mer.** Transparente, claire près de l’île, bleue au large. Elle garde son bleu sous les lumières du soir.
 - **La lumière.** Un soleil aux ombres douces, une lumière du ciel et une brume, réglés pour chaque climat.
 - **Le mouvement.** L’île tourne du doigt, et seule quand on la laisse. Des nuages passent, des oiseaux tournent, le phare balaie, les moulins tournent, les barques tanguent.
+- **L’intro.** Tout ce qu’elle montre se déduit de son temps. Elle se revoit donc depuis le début, et elle s’arrête quand la page est cachée. L’îlot grandit de trois tuiles par mot, depuis sous l’eau.
 - **L’archipel.** Cadré pour un téléphone tenu droit. Toutes les îles y ont la même échelle, pour que leurs tailles se comparent. Il n’a pas d’ombres, pour rester léger.
 - **Toujours clair.** L’application garde ses couleurs claires, même quand le téléphone est en mode sombre.
 
@@ -87,7 +90,7 @@ Sans WebGL, la page reste utilisable : l’île et l’archipel ne s’affichent
 | `lexique.js` | Les mots qui font pousser un sujet ou donnent une sensation, lus sur l’appareil |
 | `biomes.js` | Les paysages : couleurs, essences, maisons, cultures, décor |
 | `ile.js` | La carte, les quartiers, l’île recalculée depuis ses dépôts, les îles inventées |
-| `monde.js` | Le relief, la mer, le ciel, la lumière, la caméra, l’île, l’archipel, l’îlot, les aperçus |
+| `monde.js` | Le relief, la mer, le ciel, la lumière, la caméra, l’île, l’archipel, l’intro, l’îlot, les aperçus |
 | `modeles.js` | Les choses en 3D, leurs formes, leurs états, le petit décor |
 | `outils.js` | Les nombres stables et le mélange des couleurs |
 | `vendor/` | three.js 0.186, réduit aux pièces utilisées (licence MIT) |
@@ -95,7 +98,7 @@ Sans WebGL, la page reste utilisable : l’île et l’archipel ne s’affichent
 | `404.html` | Page introuvable ; les anciennes adresses des maquettes et de `limbes/` mènent à l’accueil |
 | `.nojekyll` | Sert les fichiers tels quels sur GitHub Pages |
 
-Le stockage local utilise le préfixe `archipel:`. Au premier passage, l’île gardée sous un ancien nom du projet est reprise, sans rien effacer.
+Le stockage local utilise le préfixe `archipel:`. Au premier passage, l’île gardée sous un ancien nom du projet est reprise, sans rien effacer. `archipel:intro` retient que l’intro a été vue ou passée.
 
 Chaque fichier est appelé avec un numéro de version, comme `?v=1`. Après une modification, on augmente le numéro de ce fichier là où il est appelé, pour qu’un téléphone ne mélange pas deux versions en cache.
 

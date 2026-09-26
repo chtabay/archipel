@@ -413,7 +413,7 @@ function lanternes(a, k) {
     const [x, dy, z] = PLACES_LANTERNE[i], y = h0 + dy;
     if (!k.grp) { FL(k, G.box, '#ffc870', { x, y, z, sx: .2, sy: .22, sz: .2, ao: 0 }); continue; } // immobile, fondue dans l’île
     const grp = new THREE.Group(), corps = new THREE.Mesh(LANTERNE.corps, MAT_LANTERNE.corps), chapeau = new THREE.Mesh(LANTERNE.chapeau, MAT_LANTERNE.bois), fond = new THREE.Mesh(LANTERNE.fond, MAT_LANTERNE.bois), h = halo('#ffbe5c', .8, .95);
-    chapeau.position.y = .095; fond.position.y = -.078; grp.add(corps, chapeau, fond, h);
+    chapeau.position.y = .095; fond.position.y = -.078; grp.add(corps, chapeau, fond, h); grp.userData.lanterne = true; // l’intro les fait se lever
     const X = x * s + (k.dx || 0), Y = y * s + (k.dy || 0), Z = z * s + (k.dz || 0), ph = i * 2.1 + X * 3 + Z * 5;
     grp.scale.setScalar(s * TAILLE_LANTERNE); grp.position.set(X, Y, Z); k.grp.add(grp);
     k.anims?.push(T => { grp.position.y = Y + Math.sin(T * .8 + ph) * .07 * s; grp.rotation.y = T * .3 + ph; grp.rotation.z = Math.sin(T * .6 + ph) * .06; h.material.opacity = .78 + .18 * Math.sin(T * 2.2 + ph); });

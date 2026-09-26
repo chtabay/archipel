@@ -446,3 +446,18 @@ main { padding-top: .6rem; }
 details { margin-top: 1.2rem; padding-top: .9rem; border-top: 1.5px solid var(--line); color: var(--muted); }
 summary { cursor: pointer; font-weight: 700; }
 details ul { margin: .4rem 0 0; padding-left: 1.1rem; font-size: .95rem; }
+
+/* ───────── L’intro, au premier passage ───────── */
+
+body.en-intro .onglets { display: none; } /* l’intro d’abord ; les onglets viennent après */
+body.en-intro .foot { padding-bottom: max(.9rem, env(safe-area-inset-bottom)); }
+body.en-intro main { display: flex; flex-direction: column; padding-bottom: .3rem; }
+.ilewrap.mer.intro-vue { flex: 1 1 auto; width: 100%; min-height: 15rem; max-height: none; aspect-ratio: auto; }
+.intro-vue canvas.vue3d { position: absolute; inset: 0; cursor: default; }
+.intro-ligne { min-height: calc(3 * 1.35em); margin: .8rem .1rem 0; font-size: 1.2rem; font-weight: 800; line-height: 1.35; opacity: 0; transform: translateY(.35rem); transition: opacity .45s ease, transform .45s ease; }
+.intro-ligne.vue { opacity: 1; transform: none; }
+.intro-nav { min-height: 3rem; margin-top: .3rem; }
+.intro-points { margin: 0; }
+.ilewrap.mer.intro-vue.fixe { min-height: 10rem; } /* une image fixe : elle laisse la place aux phrases */
+.intro-tout p { margin: .5rem .1rem 0; font-size: 1.04rem; font-weight: 700; line-height: 1.4; }
+.sr { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
