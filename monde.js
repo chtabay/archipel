@@ -3,10 +3,10 @@
 // La carte et les dépôts viennent de ile.js : l’île est recalculée à partir de ses dépôts.
 
 import * as THREE from './vendor/three.min.js?v=1';
-import { N, CLIMATS, eauDe, sol, carte, deriver } from './ile.js?v=4';
+import { N, CLIMATS, eauDe, sol, carte, deriver, etape } from './ile.js?v=4';
 import { biomeDe, BIOMES } from './biomes.js?v=1';
 import { hash, melange, versHex, nuance } from './outils.js?v=1';
-import { Bati, MAT, modeleChose, modelePhare, decor, halo, nuageBati, F, G, cone, cyl, baton } from './modeles.js?v=4';
+import { Bati, MAT, modeleChose, modelePhare, decor, halo, nuageBati, F, G, cone, cyl, baton } from './modeles.js?v=5';
 
 const reduit = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 export const ECH_ARCH = .45; // la taille des îles dans l’archipel : la même pour toutes, pour que leurs tailles se comparent
@@ -242,6 +242,29 @@ function voilier() {
   return b.maillage();
 }
 
+/* ───────── L’intro : parler fait pousser l’île, elle en garde la lumière, puis rejoint l’archipel ───────── */
+// Rien de littéral : les mots sont des pastilles de lumière, sans lettres. Tout ce que l’intro montre se déduit
+// de son temps, en secondes : on peut la revoir, ou la montrer d’emblée terminée quand le mouvement est réduit.
+
+export const INTRO = { descente: 3.4, mots: 5.2, pas: .16, chute: 6.8, intervalle: .26, vol: .55, lanternes: 9.3, depart: 12.6, arrivee: 16.2, fin: 16.5, legendes: [.3, 4.6, 9.3, 12.6] };
+// l’île d’exemple : un arbre, une maison, un champ, une pierre, chacun dit avec un texte, donc chacun sous sa lanterne
+export const ILE_INTRO = { id: 'intro', seed: 5821, nee: '', biome: 'prairie', envoyee: true, quittee: null, depots: ['s11', 's4', 's3', 's0'].map((s, i) => ({ id: i + 1, quad: 'N', texte: true, answers: { situ: [], mots: [], sujets: [s], fait: [], subi: [] } })) };
+const MOTS = [[1, 0, 2, 1], [2, 0, 1, 0]]; // deux lignes, des longueurs de mots, comme un texte qu’on ne lit pas
+let _mots = null;
+function texturesMots() { // trois longueurs de pastilles : un cœur clair, un halo doré
+  if (_mots) return _mots;
+  _mots = [1.5, 2.3, 3.2].map(r => {
+    const h = 32, w = Math.round(h * r), m = 20, c = document.createElement('canvas'); c.width = w + 2 * m; c.height = h + 2 * m;
+    const x = c.getContext('2d'), pastille = () => { x.beginPath(); x.arc(m + h / 2, m + h / 2, h / 2, Math.PI / 2, Math.PI * 1.5); x.arc(m + w - h / 2, m + h / 2, h / 2, -Math.PI / 2, Math.PI / 2); x.closePath(); };
+    x.shadowColor = 'rgba(255, 168, 58, 1)'; x.shadowBlur = 18; x.fillStyle = '#ffd98c'; pastille(); x.fill(); x.fill();
+    x.shadowBlur = 0; x.fillStyle = '#fffaf0'; pastille(); x.fill();
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+    return { t, r: c.width / c.height, long: r, gauche: m / c.width, haut: c.height / h };
+  });
+  return _mots;
+}
+const borne = x => Math.max(0, Math.min(1, x)), sortie = x => 1 - (1 - borne(x)) ** 3; // sortie : un départ vif, une arrivée douce
+
 export class Vue3D {
   constructor() {
     this.canvas = document.createElement('canvas'); this.canvas.className = 'vue3d';
@@ -302,8 +325,8 @@ export class Vue3D {
     this.anneau.visible = !!o; if (o) this.anneau.position.set(o.position.x, o.position.y + .03, o.position.z);
   }
 
-  montrerArchipel(items, opts = {}) {
-    this.mode = 'archipel'; this.cle = ''; this.vider(); this.items = items; this.focus = null; this.onArrivee = opts.onArrivee; this.nouvelle = opts.nouvelle;
+  baseArchipel(items) { // la mer du soir, ses îles, ses nuages, ses oiseaux et ses voiliers : pour l’archipel, et pour l’intro
+    this.cle = ''; this.vider(); this.items = items; this.focus = null;
     const s = this.scene, T = teintes('ES', BIOMES.tropique);
     this.redim(); const D = this.distArch, [L, P] = this.dimsArch;
     s.background = fondCiel('ES'); s.fog = new THREE.Fog(T.brume, D * .95, D * 2.4);
@@ -314,6 +337,10 @@ export class Vue3D {
     const oi = oiseaux(4, 16); s.add(oi.grp); this.anims.push(oi.anim);
     for (let k = 0; k < 3; k++) { const v = voilier(), r = 14 + k * 5, ph = k * 2.2; s.add(v); this.anims.push(T => { const a = T * (.025 + k * .008) + ph; v.position.set(Math.cos(a) * r, Math.sin(T + k) * .03, Math.sin(a) * r * .75); v.rotation.y = -a - Math.PI / 2; }); }
     this.anneau = new THREE.Mesh(new THREE.TorusGeometry(2.6, .06, 4, 48), new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: .9 })); this.anneau.rotation.x = Math.PI / 2; this.anneau.visible = false; s.add(this.anneau);
+  }
+  montrerArchipel(items, opts = {}) {
+    this.mode = 'archipel'; this.baseArchipel(items); this.onArrivee = opts.onArrivee; this.nouvelle = opts.nouvelle;
+    const D = this.distArch;
     this.orbite.limites = { elev: [.35, 1.2], dist: [8, D * 1.4] }; this.orbite.auto = false;
     Object.assign(this.orbite.but, { azim: 0, elev: .72, dist: this.distArch }); this.orbite.but.cible.set(0, 0, -1);
     this.orbite.azim = 0; this.orbite.dist = this.distArch * 1.15; this.orbite.cible.set(0, 0, -1);
@@ -336,7 +363,102 @@ export class Vue3D {
     else { this.orbite.but.cible.set(0, 0, -1); this.orbite.but.dist = this.distArch; this.orbite.but.elev = .72; this.anneau.visible = false; }
   }
 
+  // L’intro : l’archipel, puis un îlot au premier plan. Des mots s’y posent un à un : à chacun la terre monte,
+  // et une chose pousse. Leur lumière reste en lanternes. Puis l’île rejoint sa place dans l’archipel.
+  // demo : { ile, x, z }, l’île d’exemple et sa place ; opts : { onEtape(i), onFin(), nouvelle }
+  montrerIntro(items, demo, opts = {}) {
+    this.mode = 'intro'; this.baseArchipel(items); this.nouvelle = opts.nouvelle; this.onArrivee = null; this.prochaine = Infinity;
+    const s = this.scene, B = biomeDe(demo.ile.biome), E = ECH_ARCH, seed = demo.ile.seed, eau = eauDe('N', B), [, P] = this.dimsArch;
+    const x0 = demo.x + 1.5, z0 = Math.max(demo.z + 8, P / 2 + 6), az = .3; // l’îlot pousse devant l’archipel, puis le rejoint
+    const ile = new THREE.Group(); ile.scale.setScalar(E); ile.position.set(x0, 0, z0); s.add(ile);
+    const etapes = []; // la terre : l’îlot vide a 12 tuiles, chaque mot en ajoute 3
+    for (let q = 0; q <= MOTS.flat().length; q++) {
+      const m = etape(seed, 12 + 3 * q), b = new Bati(seed % 997 + 1), dessous = sol3d(b, m, B, this.fondArch, 3); decor3d(b, m, B, .8);
+      const g = new THREE.Group(); g.add(b.maillage(), dessous); g.visible = !q; ile.add(g);
+      etapes.push({ m, g, h: relief(m) });
+    }
+    const d = deriver(demo.ile), choses = d.assets.map(a => { // la chose de chaque dépôt ; elle paraît quand son mot touche l’île
+      const k = demo.ile.depots.findIndex(x => x.id === a.ne), r = modeleChose(a, B, hash(`${a.key}:${seed}`), { eauHex: eau }), o = r.objet, [x, , z] = posTuile(d.m, a.tile);
+      o.position.set(x, 0, z); o.rotation.y = (hash(`rot:${a.key}:${seed}`) - .5) * .8; o.visible = false; ile.add(o); this.anims.push(...r.anims);
+      const lanternes = []; o.traverse(c => { if (c.userData.lanterne) lanternes.push({ o: c, s: c.scale.x, halos: [] }); });
+      for (const l of lanternes) l.o.traverse(c => { if (c.isSprite) l.halos.push(c); });
+      return { o, k, tile: a.tile, lanternes, y: etapes.map(e => e.h(a.tile[0] + .5, a.tile[1] + .5)) };
+    });
+    const tex = texturesMots(), H = .19, ESP = .1, droite = new THREE.Vector3(Math.cos(az), 0, -Math.sin(az));
+    const larg = l => l.reduce((t, i) => t + H * tex[i].long, 0) + ESP * (l.length - 1), W = Math.max(...MOTS.map(larg)), mots = [];
+    MOTS.forEach((ligne, li) => { // les mots flottent au-dessus de l’îlot, tournés vers nous, alignés comme un texte
+      let u = -W / 2;
+      for (const i of ligne) {
+        const T = tex[i], w = H * T.long, sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: T.t, transparent: true, depthWrite: false, fog: false, toneMapped: false, opacity: 0 }));
+        const p0 = new THREE.Vector3(x0, 1.95 - li * .34, z0).addScaledVector(droite, u);
+        sp.center.set(T.gauche, .5); sp.renderOrder = 4; sp.position.copy(p0); sp.visible = false; s.add(sp);
+        const goutte = halo('#ffd27a', .34, 0); goutte.renderOrder = 4; goutte.visible = false; s.add(goutte);
+        const rond = new THREE.Mesh(new THREE.RingGeometry(.8, 1, 32).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: '#fff6dc', transparent: true, opacity: 0, depthWrite: false })); rond.visible = false; rond.renderOrder = 2; s.add(rond);
+        mots.push({ sp, goutte, rond, plein: [H * T.haut * T.r, H * T.haut], y0: p0.y, depart: p0.clone().addScaledVector(droite, w / 2) });
+        u += w + ESP;
+      }
+    });
+    mots.forEach((mt, j) => { // où tombe chaque mot : sur la chose qu’il fait pousser, ou sur l’eau, là où la terre va monter
+      const avant = etapes[j], apres = etapes[j + 1];
+      let t = j % 2 ? choses.find(c => c.k === (j - 1) / 2)?.tile : null, best = -Infinity;
+      if (!t) for (let i = 0; i < N; i++) for (let jj = 0; jj < N; jj++) { const kk = i * N + jj, v = (i - N / 2) * Math.sin(az) + (jj - N / 2) * Math.cos(az); if (apres.m.land[kk] && !avant.m.land[kk] && v > best) { best = v; t = [i, jj]; } }
+      t = t || [N / 2, N / 2];
+      mt.cible = new THREE.Vector3(x0 + (t[0] + .5 - N / 2) * E, Math.max(0, avant.h(t[0] + .5, t[1] + .5)) * E + .02, z0 + (t[1] + .5 - N / 2) * E);
+    });
+    const vague = new THREE.Mesh(new THREE.RingGeometry(.9, 1, 48).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: 0, depthWrite: false })); vague.visible = false; s.add(vague);
+    const nom = etiquette('ton île'); nom.material.opacity = 0; s.add(nom);
+    this.intro = { t: 0, etape: -1, fini: false, onEtape: opts.onEtape, onFin: opts.onFin, ile, etapes, choses, mots, vague, nom, az, x0, z0, x1: demo.x, z1: demo.z, rayon: d.m.rayon * E };
+    this.introAller(reduit ? INTRO.arrivee + 3 : 0); // sans mouvement : tout est déjà en place, l’eau calmée
+  }
+  introAller(t) { Object.assign(this.intro, { t, etape: -1, fini: false }); this.prochaine = Infinity; } // revoir, ou sauter à un moment
+  poserCamera({ az, el, d, c }) { const k = Math.cos(el); this.camera.position.set(c[0] + Math.sin(az) * k * d, c[1] + Math.sin(el) * d, c[2] + Math.cos(az) * k * d); this.camera.lookAt(c[0], c[1], c[2]); }
+  introFrame(dt) {
+    const I = this.intro, t = (I.t += reduit ? 0 : dt), pose = j => INTRO.chute + j * INTRO.intervalle + INTRO.vol;
+    // la terre : l’étape acquise, et celles qui montent encore, de sous l’eau
+    let base = 0;
+    for (let q = 1; q < I.etapes.length; q++) if (t >= pose(q - 1) + .54) base = q;
+    I.etapes.forEach((e, q) => { const monte = q > base && t >= pose(q - 1); e.g.visible = q === base || monte; e.g.position.y = monte ? -.35 * (1 - (t - pose(q - 1)) / .6) ** 2 : 0; });
+    for (const c of I.choses) { // chaque chose pousse avec son mot, posée sur la terre qui monte ; puis sa lanterne se lève
+      const sc = ECH * pop(pose(2 * c.k + 1), t);
+      c.o.visible = sc > .001; c.o.scale.setScalar(Math.max(sc, .001));
+      let y = -1; I.etapes.forEach((e, q) => { if (e.g.visible) y = Math.max(y, c.y[q] + e.g.position.y); }); c.o.position.y = y;
+      const e = sortie((t - INTRO.lanternes - c.k * .3) / .8);
+      for (const l of c.lanternes) { l.o.visible = e > 0; l.o.scale.setScalar(l.s * Math.max(e, .001)); l.o.position.y -= (1 - e) * .45; for (const h of l.halos) h.material.opacity *= e; }
+    }
+    I.mots.forEach((m, j) => { // un mot paraît, flotte, puis tombe sur l’île en goutte de lumière ; un anneau s’ouvre là où il touche
+      const a = sortie((t - INTRO.mots - j * INTRO.pas - (j >= MOTS[0].length ? .2 : 0)) / .25), f = borne((t - INTRO.chute - j * INTRO.intervalle) / INTRO.vol), g = (t - pose(j)) / .3, r = (t - pose(j)) / .9;
+      m.sp.visible = a > 0 && f < .35; m.sp.material.opacity = a * (1 - f / .35);
+      m.sp.scale.set(m.plein[0] * (.15 + .85 * a), m.plein[1], 1); m.sp.position.y = m.y0 - (1 - a) * .04 + Math.sin(t * 2.2 + j) * .015;
+      m.goutte.visible = (f > 0 && f < 1) || (g >= 0 && g < 1);
+      if (f > 0 && f < 1) { const u = f ** 1.5, v = 1 - u; m.goutte.position.set(v * v * m.depart.x + 2 * u * v * m.depart.x + u * u * m.cible.x, v * v * m.depart.y + 2 * u * v * (m.depart.y + .3) + u * u * m.cible.y, v * v * m.depart.z + 2 * u * v * m.depart.z + u * u * m.cible.z); m.goutte.scale.setScalar(.34); m.goutte.material.opacity = borne(f / .2); }
+      else if (g >= 0 && g < 1) { m.goutte.position.copy(m.cible); m.goutte.scale.setScalar(.34 + g * .5); m.goutte.material.opacity = 1 - g; }
+      m.rond.visible = r >= 0 && r < 1;
+      if (m.rond.visible) { m.rond.position.copy(m.cible); m.rond.scale.setScalar(.08 + r * .45); m.rond.material.opacity = (1 - r) * .85; }
+    });
+    // l’île rejoint sa place ; un anneau s’ouvre sur l’eau, et son nom paraît
+    const ui = lisse(INTRO.depart, INTRO.arrivee, t), ip = I.ile.position;
+    ip.set(lerp(I.x0, I.x1, ui), 0, lerp(I.z0, I.z1, ui));
+    const v = (t - INTRO.arrivee) / 2.2; I.vague.visible = v >= 0 && v < 1;
+    if (I.vague.visible) { I.vague.position.set(I.x1, .02, I.z1); I.vague.scale.setScalar((I.rayon + .3) * (1 + v * 1.6)); I.vague.material.opacity = (1 - v) * .8; }
+    I.nom.position.set(ip.x, 1.9, ip.z); I.nom.material.opacity = lisse(INTRO.arrivee - .4, INTRO.arrivee + .5, t);
+    // la caméra : l’archipel de haut, la descente vers l’îlot, puis le recul, pendant que l’île s’en va
+    const tan2 = 2 * Math.tan(this.camera.fov * Math.PI / 360), cadre = (l, h) => Math.max(h / tan2, l / (tan2 * this.camera.aspect)), [L, P] = this.dimsArch;
+    const pousse = lisse(INTRO.chute, INTRO.lanternes + .6, t), dP = Math.max(6.5, cadre(lerp(2.9, 3.7, pousse), 3.3)), dA = cadre(L + 3, (P + 3) * Math.sin(.78) + 2); // de près, l’îlot et ses mots ; de loin, l’archipel entier, un peu rogné sur les côtés
+    const melange3 = (p, q, u, uc = u) => ({ az: lerp(p.az, q.az, u), el: lerp(p.el, q.el, u), d: Math.exp(lerp(Math.log(p.d), Math.log(q.d), u)), c: p.c.map((x, i) => lerp(x, q.c[i], uc)) });
+    const haut = { az: -.14, el: .84, d: dA * 1.08, c: [0, 0, 0] }, large = { az: 0, el: .78, d: dA, c: [0, 0, .5] };
+    const parmi = { az: .06 * Math.sin(Math.max(0, t - INTRO.depart - 3.6) * .12), el: .8, d: dA * .8, c: [I.x1 * .4, 0, I.z1 - 11] }; // à la fin : ton île, au premier plan, parmi les autres
+    const pres = { az: I.az + .02 * (t - INTRO.descente), el: .5, d: dP, c: [ip.x, lerp(.95, .5, pousse), ip.z] };
+    if (reduit) this.poserCamera({ az: .35, el: .86, d: dP * 1.6, c: [I.x1, .3, I.z1] }); // sans mouvement : une seule image, l’île déjà parmi les autres, vue d’assez haut pour qu’aucune ne la cache
+    else if (t < INTRO.depart) this.poserCamera(melange3(melange3(haut, large, sortie(t / INTRO.descente)), pres, lisse(INTRO.descente, INTRO.mots, t)));
+    else { const u = lisse(INTRO.depart, INTRO.depart + 3.6, t); this.poserCamera(melange3(pres, parmi, u, u * u)); } // on recule en gardant l’île au centre, puis on la laisse rejoindre les autres
+    // les légendes suivent, et l’archipel reprend vie quand tout est en place
+    const n = INTRO.legendes.filter(x => x <= t).length - 1;
+    if (n !== I.etape) { I.etape = n; if (n >= 0) I.onEtape?.(n); }
+    if (t >= INTRO.fin && !I.fini) { I.fini = true; this.prochaine = (performance.now() - this.t0) / 1000 + 4; I.onFin?.(); }
+  }
+
   toucher(e) {
+    if (this.mode === 'intro') return; // l’intro se regarde ; on la passe avec le bouton
     const r = this.canvas.getBoundingClientRect(), v = new THREE.Vector2(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
     this.ray.setFromCamera(v, this.camera);
     const hit = this.ray.intersectObjects(this.scene.children, true).find(h => h.object.userData.key || h.object.userData.ile);
@@ -346,11 +468,12 @@ export class Vue3D {
 
   frame() {
     if (!this.actif) return;
-    const T = (performance.now() - this.t0) / 1000, dt = Math.min(.05, T - this.dernier || .016); this.dernier = T;
-    if (this.mode === 'archipel' && T > this.prochaine && !reduit && this.nouvelle) { const it = this.nouvelle(); this.items.push(it); this.ajouterIle(it, [it.x + (Math.random() - .5) * 8, -70]); this.onArrivee?.(it); this.prochaine = T + 5 + Math.random() * 6; }
-    this.orbite.maj(dt);
+    const T = (performance.now() - this.t0) / 1000, ecart = T - this.dernier, dt = Math.min(.05, ecart || .016); this.dernier = T;
+    if ((this.mode === 'archipel' || this.mode === 'intro') && T > this.prochaine && !reduit && this.nouvelle) { const it = this.nouvelle(); this.items.push(it); this.ajouterIle(it, [it.x + (Math.random() - .5) * 8, -70]); this.onArrivee?.(it); this.prochaine = T + 5 + Math.random() * 6; }
+    if (this.mode !== 'intro') this.orbite.maj(dt);
     if (this.eau) this.eau.position.y = Math.sin(T * .6) * .015; // la marée, à peine
     for (const f of this.anims) f(T);
+    if (this.mode === 'intro') this.introFrame(Math.min(.1, ecart || .016)); // le temps de l’intro s’arrête quand la page est cachée
     const Tv = this.vieT ? this.vieT() : T;
     if (this.mode === 'ile') for (const [cle, o] of this.objets) o.scale.setScalar((o.userData.ech || 1) * pop(this.vie.get(cle), Tv));
     this.rendu.render(this.scene, this.camera);
