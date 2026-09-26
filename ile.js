@@ -1,7 +1,7 @@
 // L’archipel : l’île. La carte, le placement des choses, l’île recalculée depuis ses dépôts, les îles inventées de l’archipel.
 // Aucun dessin ici : le relief, la mer et la lumière sont dans monde.js, les choses dans modeles.js, les paysages dans biomes.js.
 
-import { pousser, especeDe } from './grammaire.js?v=2';
+import { pousser, especeDe } from './grammaire.js?v=3';
 import { KEYS, MOCK } from './contenu.js?v=2';
 import { rng, hash, melange } from './outils.js?v=1';
 import { BIOMES, BIOME_IDS, biomeDe } from './biomes.js?v=1';

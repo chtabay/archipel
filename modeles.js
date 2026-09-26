@@ -111,7 +111,7 @@ const touffe = (k, x, z, B) => { const c = B.enneige ? '#ffffff' : B.sol.herbe[2
 
 function tronc(k, h, r, col = '#8a5a3c') { F(k, cyl(r * .72, r, 6), col, { y: h / 2, sy: h, ao: .35 }); }
 function boule(k, x, y, z, r, col, g = 1, sy = .92) { F(k, G.ico1, col, { x, y, z, s: r, sy: r * sy, bosse: .13, graine: g, ao: .45 }); }
-function creux(k, y) { F(k, G.sph, '#3a2a1f', { y, z: .07, sx: .035, sy: .05, sz: .02, ao: 0 }); }
+function creux(k, y) { F(k, G.sph, '#3a2a1f', { y, z: .075, sx: .05, sy: .08, sz: .025, ao: 0 }); } // jamais dit : un creux dans le tronc
 function unArbre(k, a, v) {
   const B = k.B, e = a.espece;
   if (e === 'pin') {
@@ -422,6 +422,10 @@ function lanternes(a, k) {
 
 function etatsCommuns(a, k) {
   if (a.etats?.boucle && a.famille !== 'meteo') F(k, new THREE.TorusGeometry(.44, .065, 4, 24), '#d9bb86', { y: .014, rx: Math.PI / 2, sz: .25, ao: 0 }); // en boucle : un sentier usé tout autour
+  if (a.etats?.ferme && a.famille === 'arbre') { // jamais dit : la terre recouvre ses racines, comme elle recouvre les pierres
+    const f = k.B.falaise || B0.falaise, st = Math.min(3, a.stade || 0), w = [.3, .38, .46, .5][st];
+    F(k, G.ico1, f[0], { y: .02, sx: w, sy: .1, sz: w * .85, bosse: .14, graine: 11, ao: .25 }); F(k, G.ico1, (k.B.sol.herbe || B0.sol.herbe)[1], { y: .065, sx: w * .7, sy: .045, sz: w * .6, bosse: .12, graine: 12, ao: .1 });
+  }
   if (a.etats?.lueur) lanternes(a, k); // un texte : des lanternes, jamais ses mots
 }
 const FAMILLES = { arbre, pierre, caillou: pierre, maison, culture, meteo };
