@@ -10,22 +10,22 @@ En bas de l’écran, trois onglets restent toujours à portée de pouce : **Dé
 
 1. **Les questions.** Quelques cases à cocher. En haut, un îlot montre en direct ce que les cases feraient pousser. Chaque case de la première question s’y voit : la terre qui recouvre ce qui n’a jamais été dit, le sentier de ce qui tourne en boucle, la taille selon l’ancienneté, un nuage gris quand on ne va pas bien du tout, un phare quand il y a un danger.
 2. **Par où aller ?** Parler à quelqu’un, écrire, le dire en trois lignes, juste le poser, ou voir son île.
-3. **La page.** Des débuts de phrases tirés des cases. Le texte est lu sur le téléphone, pour proposer des sujets. Si des mots inquiètent, des numéros d’écoute s’affichent.
-4. **Terminer.** Poser sur l’île, avec le texte gardé sur le téléphone si on veut, ou brûler.
+3. **La page.** Des débuts de phrases tirés des cases. Le texte est lu sur le téléphone : les sujets dont il parle s’ajoutent aux graines, et des lanternes s’allument sur l’îlot pendant qu’on écrit. Si des mots inquiètent, des numéros d’écoute s’affichent.
+4. **Terminer.** Tout ce qui a été déposé pousse sur l’île, texte compris : on ne choisit pas ce que le texte fait pousser. S’il y a un texte, le seul choix porte sur lui : le garder sur le téléphone, pour le relire en touchant ce qu’il a fait pousser, ou le brûler sous ses yeux. Il n’en reste alors que ses lanternes.
 5. **L’île.** Ce qui vient de pousser, avec une phrase. On la fait tourner du doigt, ou avec le bouton posé sur la vue, et on zoome en écartant deux doigts. Toucher une chose dit ce qu’elle est, d’après quelles cases, et depuis quand. L’action principale est « Déposer autre chose ».
 6. **Changer d’île.** Celle-ci reste sur le téléphone et se revoit. Elle peut rejoindre l’archipel sans nom : les autres verraient « une île avec deux arbres nus, une pierre et une maison », rien d’autre.
 7. **L’archipel.** Une mer au soir, avec des voiliers. Les îles des autres y arrivent depuis l’horizon, placées par sensation. Toucher une île fait s’en approcher.
 
 ## La grammaire : quatre axes lus dans les cases
 
-Une confession ne se réduit pas à quelques nombres. Elle garde toutes ses cases, dans un « dépôt », et l’île est recalculée à partir des dépôts. La grammaire est dans `grammaire.js`. Elle lit les cases. Le texte est lu par `lexique.js`, sur l’appareil seulement, pour **proposer** des sujets et une sensation : rien ne pousse du texte sans que la personne l’ait confirmé. Sur l’île, le texte ne fait qu’une lueur.
+Une confession ne se réduit pas à quelques nombres. Elle garde toutes ses cases, dans un « dépôt », et l’île est recalculée à partir des dépôts. La grammaire est dans `grammaire.js`. Elle lit les cases. Le texte est lu par `lexique.js`, sur l’appareil seulement, pour y trouver des sujets et une sensation, qui poussent comme des cases cochées. Sur l’île, le texte allume des lanternes, jamais ses mots.
 
 | Axe | D’après | Ce que ça fait |
 | --- | --- | --- |
 | **1. La place** (d’où ça vient) | le sujet coché, déplacé par « on m’a fait du mal » ou la question de plus | **la famille** : *reçu*, un arbre, dans la forêt ; *commis ou voulu*, une pierre, sur la colline ; *entre vous*, une construction, dans le village ; *soi et ce qui vient*, une culture, dans les champs ; *une sensation sans sujet*, le temps qu’il fait |
 | **2. La sensation** (comment c’est ressenti) | le quadrant des mots : agité ou éteint, douloureux ou supportable | **l’espèce** : voir le tableau ci-dessous |
 | **3. Le temps** (depuis quand) | récent, depuis longtemps, il y a longtemps ; plus d’une fois, ça continue | **la taille** : jeune, adulte, vieux ; un sujet redit grandit d’un cran (bosquet, pierre levée, hameau, moulin) ; « plus d’une fois » met en deux |
-| **4. Le silence** (qui le sait) | jamais dit, cette personne ne le sait pas, jamais parlé ; et la présence d’un texte | **l’état** : fermé (un creux, enterrée, porte close, couvert, en friche) ; une lueur s’il y a un texte, jamais son contenu |
+| **4. Le silence** (qui le sait) | jamais dit, cette personne ne le sait pas, jamais parlé ; et la présence d’un texte | **l’état** : fermé (un creux, enterrée, porte close, couvert, en friche) ; des lanternes s’il y a un texte, jamais son contenu |
 
 Les espèces, famille par sensation :
 
@@ -43,7 +43,7 @@ Les autres cases : *ça tourne en boucle*, un sentier usé autour ; *ça continu
 
 - **Un sujet par graine.** Une confession qui parle de trois sujets fait pousser trois choses. Sans sujet, la situation suffit : « on m’a fait du mal », un arbre ; « je regrette », une pierre. Sinon la sensation laisse un temps qu’il fait. Rien du tout : un caillou posé, qui porte quand même ses états.
 - **Chaque quadrant coché laisse sa trace.** Le quadrant principal donne l’espèce. Les autres ajoutent un temps qu’il fait : « tristesse et espoir », une maison aux volets fermés et des fleurs.
-- **Le texte propose, la personne confirme.** Les sujets repérés dans le texte apparaissent en transparence dans les graines, puis à cocher ou non avant de poser. Le texte donne aussi la sensation quand aucun mot n’est coché.
+- **Le texte compte comme des cases.** Les sujets repérés dans le texte poussent comme s’ils avaient été cochés. Le texte donne aussi la sensation quand aucun mot n’est coché. Il allume une lanterne de papier au-dessus de ce qu’il fait pousser, une de plus à chaque texte, jusqu’à trois. Ses mots, eux, ne sont jamais sur l’île.
 - **Un sujet redit fait grandir**, jamais une deuxième chose. Les arbres et les pierres suivent la sensation du jour. Une construction ou une culture garde son espèce.
 - **Le climat** de l’île suit la dernière confession : grand jour, jour ordinaire, soir doux, crépuscule, brume du matin.
 - **L’île grandit avec ce qu’on y dépose.** Une île vide est un îlot. Chaque dépôt étend la terre, tuile après tuile, depuis le centre, jusqu’à l’île pleine après six ou sept dépôts. Une île finie a donc la taille de ce qu’on y a laissé, dans sa vue comme dans l’archipel.

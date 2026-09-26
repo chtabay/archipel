@@ -394,13 +394,35 @@ export function phare(k) {
     k.anims?.push(T => { pivot.rotation.y = T * .8; });
   }
 }
+/* ───────── Les lanternes : ce que le texte a éclairé ───────── */
+// Un texte ne montre jamais ses mots. Il allume des lanternes de papier qui flottent au-dessus de ce qu’il a fait pousser :
+// une par dépôt écrit, jusqu’à trois. Dans l’archipel, elles restent des points chauds, immobiles.
+
+const LANTERNE = { corps: new THREE.CylinderGeometry(.075, .06, .14, 6), chapeau: new THREE.ConeGeometry(.085, .05, 6), fond: new THREE.CylinderGeometry(.045, .045, .015, 6) };
+for (const g of Object.values(LANTERNE)) g._partage = true;
+const MAT_LANTERNE = { corps: new THREE.MeshBasicMaterial({ color: '#ffc870', toneMapped: false }), bois: new THREE.MeshStandardMaterial({ color: '#7a4630', flatShading: true, roughness: .8 }) };
+for (const m of Object.values(MAT_LANTERNE)) m._partage = true;
+const HAUT_LANTERNE = a => ({ arbre: [1.05, 1.3, 1.6, 1.85], maison: [.95, 1.1, 1.2, 1.3], pierre: [.65, .8, .95, 1.45], caillou: [.55, .6, .7, .75], culture: [.7, .8, .9, 1], meteo: [.6, .65, .7, .75] }[a.famille] || [.8, .9, 1, 1.1])[Math.min(3, a.stade || 0)];
+const PLACES_LANTERNE = [[.05, 0, .1], [.34, -.14, -.12], [-.3, -.07, -.16]], TAILLE_LANTERNE = 1.7; // assez grandes pour se voir de loin
+function lanternes(a, k) {
+  if (a.famille === 'meteo' && !['fleurs', 'etang'].includes(a.espece)) return; // pas sous les nuages
+  const n = Math.max(1, Math.min(3, a.textes || 1)), s = k.s ?? 1;
+  let h0 = HAUT_LANTERNE(a);
+  if (k.grp && k.b.pos.length) { let haut = 0; for (let i = 1; i < k.b.pos.length; i += 3) haut = Math.max(haut, k.b.pos[i]); h0 = Math.max(h0 * .6, (haut - (k.dy || 0)) / s + .28); } // juste au-dessus de la chose, jamais dans son feuillage
+  for (let i = 0; i < n; i++) {
+    const [x, dy, z] = PLACES_LANTERNE[i], y = h0 + dy;
+    if (!k.grp) { FL(k, G.box, '#ffc870', { x, y, z, sx: .2, sy: .22, sz: .2, ao: 0 }); continue; } // immobile, fondue dans l’île
+    const grp = new THREE.Group(), corps = new THREE.Mesh(LANTERNE.corps, MAT_LANTERNE.corps), chapeau = new THREE.Mesh(LANTERNE.chapeau, MAT_LANTERNE.bois), fond = new THREE.Mesh(LANTERNE.fond, MAT_LANTERNE.bois), h = halo('#ffbe5c', .8, .95);
+    chapeau.position.y = .095; fond.position.y = -.078; grp.add(corps, chapeau, fond, h);
+    const X = x * s + (k.dx || 0), Y = y * s + (k.dy || 0), Z = z * s + (k.dz || 0), ph = i * 2.1 + X * 3 + Z * 5;
+    grp.scale.setScalar(s * TAILLE_LANTERNE); grp.position.set(X, Y, Z); k.grp.add(grp);
+    k.anims?.push(T => { grp.position.y = Y + Math.sin(T * .8 + ph) * .07 * s; grp.rotation.y = T * .3 + ph; grp.rotation.z = Math.sin(T * .6 + ph) * .06; h.material.opacity = .78 + .18 * Math.sin(T * 2.2 + ph); });
+  }
+}
+
 function etatsCommuns(a, k) {
   if (a.etats?.boucle && a.famille !== 'meteo') F(k, new THREE.TorusGeometry(.44, .065, 4, 24), '#d9bb86', { y: .014, rx: Math.PI / 2, sz: .25, ao: 0 }); // en boucle : un sentier usé tout autour
-  if (a.etats?.lueur && !(a.famille === 'maison' && ['maison', 'volets'].includes(a.espece)) && k.grp) {
-    const orbe = new THREE.Mesh(G.ico1, new THREE.MeshBasicMaterial({ color: '#fff6d8', toneMapped: false })), h = halo('#ffd98a', .7, .95), s = k.s ?? 1, x0 = .32 * s + (k.dx || 0), y0 = (a.famille === 'arbre' ? .8 : .55) * s + (k.dy || 0), z0 = .2 * s + (k.dz || 0);
-    orbe.scale.setScalar(.035 * s); k.grp.add(orbe, h); const ph = x0 * 3 + z0 * 5;
-    k.anims?.push(T => { const x = x0 + Math.cos(T * .7 + ph) * .06, y = y0 + Math.sin(T * 1.6 + ph) * .05; orbe.position.set(x, y, z0); h.position.set(x, y, z0); h.material.opacity = .75 + .2 * Math.sin(T * 3 + ph); });
-  }
+  if (a.etats?.lueur) lanternes(a, k); // un texte : des lanternes, jamais ses mots
 }
 const FAMILLES = { arbre, pierre, caillou: pierre, maison, culture, meteo };
 

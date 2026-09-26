@@ -3,10 +3,10 @@
 // La carte et les dépôts viennent de ile.js : l’île est recalculée à partir de ses dépôts.
 
 import * as THREE from './vendor/three.min.js?v=1';
-import { N, CLIMATS, eauDe, sol, carte, deriver } from './ile.js?v=2';
+import { N, CLIMATS, eauDe, sol, carte, deriver } from './ile.js?v=3';
 import { biomeDe, BIOMES } from './biomes.js?v=1';
 import { hash, melange, versHex, nuance } from './outils.js?v=1';
-import { Bati, MAT, modeleChose, modelePhare, decor, halo, nuageBati, F, G, cone, cyl, baton } from './modeles.js?v=2';
+import { Bati, MAT, modeleChose, modelePhare, decor, halo, nuageBati, F, G, cone, cyl, baton } from './modeles.js?v=3';
 
 const reduit = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 export const ECH_ARCH = .45; // la taille des îles dans l’archipel : la même pour toutes, pour que leurs tailles se comparent
@@ -365,7 +365,7 @@ export class Ilot3D {
     this.scene = new THREE.Scene(); this.camera = new THREE.PerspectiveCamera(28, 2, .1, 50);
     const sun = this.sun = new THREE.DirectionalLight('#fff4e4', 2.2); sun.position.set(3, 6, 4); sun.castShadow = true; sun.shadow.mapSize.set(512, 512); Object.assign(sun.shadow.camera, { left: -2, right: 2, top: 2, bottom: -2, near: .5, far: 20 }); sun.shadow.normalBias = .02;
     this.scene.add(sun, new THREE.HemisphereLight('#eef8ff', '#e2d2b8', 1.6));
-    this.groupe = new THREE.Group(); this.scene.add(this.groupe); this.anims = []; this.cle = null; this.brule = null; this.t0 = performance.now(); this.objets = [];
+    this.groupe = new THREE.Group(); this.scene.add(this.groupe); this.anims = []; this.cle = null; this.t0 = performance.now(); this.objets = [];
   }
   redim() { const w = this.canvas.clientWidth || 300, h = this.canvas.clientHeight || 120; this.rendu.setSize(w, h, false); this.camera.aspect = w / h; this.camera.updateProjectionMatrix(); this.cadrer(); }
   cadrer(doux = false) { // la caméra suit ce qui est posé : un caillou seul se voit de près, un arbre et un nuage de plus loin
@@ -417,7 +417,6 @@ export class Ilot3D {
     this.sun.intensity = signes.lourd ? 1.35 : 2.2;
     this.cadrer(true);
   }
-  bruler() { this.brule = (performance.now() - this.t0) / 1000; }
   frame() {
     const T = (performance.now() - this.t0) / 1000;
     if (this.visee && this.vise) { const k = reduit ? 1 : .08; this.vise.d += (this.visee.d - this.vise.d) * k; this.vise.y += (this.visee.y - this.vise.y) * k; this.placer(); }
@@ -427,7 +426,6 @@ export class Ilot3D {
     const Tv = this.vieT ? this.vieT() : T;
     for (const o of this.objets) o.scale.setScalar(o.userData.ech * pop(this.vie?.get(o.userData.cle), Tv));
     for (const f of this.anims) f(T);
-    if (this.brule != null) { const p = Math.min(1, (T - this.brule) / 1.3); this.groupe.scale.setScalar(1 - p * .7); this.groupe.position.y -= p * .8; if (p >= 1) { this.brule = null; this.groupe.scale.setScalar(1); } }
     this.rendu.render(this.scene, this.camera);
   }
 }

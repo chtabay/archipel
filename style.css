@@ -363,17 +363,21 @@ textarea:focus { outline: none; border-color: var(--accent); }
 .check { display: flex; align-items: center; gap: .6rem; margin: .4rem 0 .8rem; color: var(--muted); }
 .check input { width: 1.15rem; height: 1.15rem; accent-color: var(--accent); }
 
-/* ───────── Après, et où tu es ───────── */
+/* ───────── Les petites lignes ───────── */
 
-.after { display: grid; align-content: center; justify-items: center; min-height: 55vh; text-align: center; }
-.big { margin: 0; font-size: 1.6rem; font-weight: 800; }
 .tiny { margin: .4rem 0 0; color: var(--dim); font-size: .9rem; }
-.links { display: flex; flex-wrap: wrap; justify-content: center; gap: .4rem 1rem; margin: 1.6rem 0 0; }
 
 .noscript { max-width: 32rem; margin: 2rem auto; padding: 0 1rem; text-align: center; }
 
 @keyframes fade { from { opacity: 0; } }
 @keyframes up { from { transform: translateY(2rem); opacity: 0; } }
+/* le texte brûle : il rougeoie, se brouille et s’en va en fumée */
+textarea.brule { animation: brule 1.4s ease-in forwards; }
+@keyframes brule {
+  0% { color: var(--ink); }
+  35% { color: var(--warm); text-shadow: 0 0 .5rem rgba(217, 141, 85, .7); border-color: var(--warm); }
+  100% { color: transparent; text-shadow: 0 -.6rem 1.2rem rgba(217, 141, 85, 0); filter: blur(3px); transform: translateY(-.6rem); opacity: .35; }
+}
 
 @media (max-width: 360px) {
   .head, .foot, main { padding-inline: .8rem; }
@@ -426,7 +430,6 @@ main { padding-top: .6rem; }
 .ile-caption .quiet { margin-left: .2rem; padding: 0; color: var(--accent-ink); font-weight: 700; text-decoration: underline; text-underline-offset: .2em; }
 .excerpt { margin: .3rem .2rem 0; padding: .6rem .8rem; border-left: 3px solid var(--line-hi); color: var(--muted); font-style: italic; }
 .ile-line { margin: .3rem .2rem 0; color: var(--muted); font-size: .95rem; }
-.propositions { display: grid; gap: .1rem; margin: 0 0 .6rem; }
 .paysages { display: grid; grid-template-columns: repeat(auto-fill, minmax(8.4rem, 1fr)); gap: .5rem; margin: .4rem 0 .8rem; }
 .paysage { display: grid; gap: .2rem; padding: .4rem .4rem .55rem; border: 1.5px solid var(--line); border-radius: .9rem; background: var(--card); color: var(--ink); font: inherit; text-align: center; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .paysage canvas { display: block; width: 100%; aspect-ratio: 1 / .9; border-radius: .6rem; background: #3fb0cc; }
@@ -434,7 +437,6 @@ main { padding-top: .6rem; }
 .paysage small { color: var(--muted); font-size: .8rem; line-height: 1.25; }
 .paysage[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
 .paysage:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
-.propositions .check { margin: .15rem 0; }
 .nav.wrap { flex-wrap: wrap; gap: .3rem .9rem; }
 .legende { padding-left: 1.1rem; }
 .legende li { margin: .35rem 0; }

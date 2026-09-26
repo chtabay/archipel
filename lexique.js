@@ -1,8 +1,8 @@
 // L’archipel : le lexique. Une lecture du texte, sur l’appareil, jamais ailleurs.
 //
-// Le texte est lu ici pour proposer des sujets et une sensation. La personne confirme ou non :
-// rien ne pousse du texte sans son accord. Ce qui est lu ne part jamais ; ce qui est transmis
-// à l’archipel reste des comptes par espèce.
+// Le texte est lu ici pour y trouver des sujets et une sensation : ce qu’il y trouve pousse sur l’île,
+// comme des cases cochées, et le texte y allume des lanternes. Ce qui est lu ne part jamais ; ce qui
+// est transmis à l’archipel reste des comptes par espèce.
 
 const norm = s => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[’‘`´]/g, "'").replace(/\s+/g, ' ');
 
