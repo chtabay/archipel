@@ -3,9 +3,9 @@
 
 import { SUBJECTS, QUESTIONS, KEYS, BASE, LEX, HUMANS, MOCK } from './contenu.js?v=2';
 import { graines, quadDe, nomDe, phrasesDe, casesDe, sujetLabel, listeDe, listeGraines, FAMILLES, ESPECES, NOMS } from './grammaire.js?v=2';
-import { nouvelleIle, deriver, resume, archipelInvente, ileInventee, BIOMES, BIOME_IDS, biomeDe } from './ile.js?v=2';
-import { Vue3D, Ilot3D, apercu, disponible, ECH_ARCH } from './monde.js?v=3';
-import { lire } from './lexique.js?v=1';
+import { nouvelleIle, deriver, resume, archipelInvente, ileInventee, BIOMES, BIOME_IDS, biomeDe } from './ile.js?v=3';
+import { Vue3D, Ilot3D, apercu, disponible, ECH_ARCH } from './monde.js?v=4';
+import { lire } from './lexique.js?v=2';
 
 const $ = s => document.querySelector(s);
 const el = (tag, props = {}, ...kids) => { const n = Object.assign(document.createElement(tag), props); n.append(...kids); return n; };
@@ -20,7 +20,7 @@ const mois = iso => new Date(iso).toLocaleDateString('fr-FR', { month: 'long', y
 /* ───────── État ───────── */
 
 const emptyAnswers = () => Object.fromEntries(KEYS.map(k => [k, new Set()]));
-const state = { answers: emptyAnswers(), text: '', short: false, help: 0, helpKind: '', softShown: false, path: null, hinted: false, refus: new Set() };
+const state = { answers: emptyAnswers(), text: '', short: false, help: 0, helpKind: '', softShown: false, path: null, hinted: false };
 const trace = []; // ce qui serait compté (jamais le texte)
 const note = s => trace.push(s);
 const app = $('#app');
@@ -55,7 +55,7 @@ function loadDraft() {
   state.answers = unpack(d.answers); state.text = d.text || ''; state.short = !!d.short;
 }
 function clearDraft() {
-  state.answers = emptyAnswers(); state.text = ''; state.path = null; state.refus = new Set();
+  state.answers = emptyAnswers(); state.text = ''; state.path = null;
   store.del('draft');
   derive();
 }
@@ -82,20 +82,18 @@ if (ilot) ilot.vieT = now;
 if (vue) vue.vieT = now;
 
 let lu = { sujets: [], quad: 'N' }, proposes = []; // ce que le texte dit (lu sur l’appareil), et les sujets qu’il propose
-const acceptes = () => proposes.filter(id => !state.refus.has(id));
-const avecPropositions = () => ({ ...state.answers, sujets: new Set([...state.answers.sujets, ...acceptes()]) });
+const avecTexte = () => ({ ...state.answers, sujets: new Set([...state.answers.sujets, ...proposes]) }); // les sujets du texte comptent comme des cases
 
 function derive() { // ce que la confession en cours ferait pousser
   const before = new Set(preview.map(a => a.key));
   lu = lire(state.text);
   proposes = lu.sujets.map(([id]) => id).filter(id => !state.answers.sujets.has(id));
-  const r = anyChecked() || state.text.trim() ? graines(avecPropositions(), state.text.trim(), state.answers.mots.size ? null : { quad: lu.quad }) : null, g = r ? r.graines : [];
+  const r = anyChecked() || state.text.trim() ? graines(avecTexte(), state.text.trim(), state.answers.mots.size ? null : { quad: lu.quad }) : null, g = r ? r.graines : [];
   signes = { phare: !!r?.phare, lourd: !!r?.lourd };
-  for (const x of g) if (x.sujet && proposes.includes(x.sujet) && !state.answers.sujets.has(x.sujet)) x.propose = true;
   preview = g;
   for (const a of preview) if (!before.has(a.key)) vie.set(a.key, now());
   const noteEl = $('#ent-note');
-  if (noteEl) { const ids = acceptes(); noteEl.hidden = !ids.length; noteEl.textContent = ids.length ? `Ton texte parle aussi de${NB}: ${ids.map(sujetLabel).join(' · ')}` : ''; }
+  if (noteEl) { noteEl.hidden = !proposes.length; noteEl.textContent = proposes.length ? `Ton texte ajoute${NB}: ${proposes.map(sujetLabel).join(' · ')}` : ''; }
 }
 
 function drawCompanion() { if (!ilot) return; ilot.maj(preview, biomeDe(ile.biome), ile.seed, vie, signes); ilot.frame(); }
@@ -160,7 +158,8 @@ function ligneDe(a, d) {
   const first = deps[0], cases = first ? casesDe(unpack(first.answers)) : [];
   const quoi = `${cap(nomDe(a))} · ${FAMILLES[a.famille].de}${a.sujet ? `${NB}: ${sujetLabel(a.sujet)}` : ''}`;
   const quand = first?.date ? (deps.length > 1 ? `Depuis le ${jour(first.date)}, redit ${deps.length - 1 === 1 ? 'une fois' : `${deps.length - 1} fois`}.` : `Le ${jour(first.date)}.`) : '';
-  return `${quoi}. ${cases.length ? `${cap(cases.join(', '))}. ` : ''}${quand}`.trim();
+  const texte = deps.some(x => x.duTexte?.includes(a.sujet)) ? 'Ton texte l’a fait pousser. ' : a.etats?.lueur ? 'Ton texte l’éclaire. ' : ''; // ce que le texte a fait, sans jamais ses mots
+  return `${quoi}. ${cases.length ? `${cap(cases.join(', '))}. ` : ''}${texte}${quand}`.trim();
 }
 
 function updateIleLine() {
@@ -177,8 +176,8 @@ function legende() {
   ul.append(el('li', {}, el('b', { textContent: 'Comment c’est ressenti, l’espèce. ' }), ...Object.entries(Q).map(([q, t]) => `${cap(t)}${NB}: ${Object.keys(ESPECES).map(f => NOMS[ESPECES[f][q]][0].replace(/^(un|une|des) /, '')).join(', ')}. `)));
   ul.append(el('li', {}, el('b', { textContent: 'Depuis quand, la taille. ' }), 'Récent, c’est petit ; depuis longtemps, c’est grand. Un sujet redit fait grandir la même chose, jamais une deuxième. Un arbre nu peut se couvrir de feuilles.'));
   ul.append(el('li', {}, el('b', { textContent: 'Le paysage et les variantes. ' }), 'Tu choisis le paysage en commençant une île : la prairie, la forêt d’automne, l’île tropicale, l’île enneigée ou la lande. Il change les couleurs du sol, les essences, les maisons, les cultures et le petit décor. Chaque chose a aussi plusieurs formes. Ni le paysage ni les formes ne disent quelque chose : ils rendent chaque île différente.'));
-  ul.append(el('li', {}, el('b', { textContent: 'Qui le sait, l’état. ' }), 'Jamais dit, c’est fermé. Un texte, c’est une lueur, jamais son contenu. En boucle, un sentier usé. Plus d’une fois, en deux. Ça continue, il pleut dessus. Regret, la mousse reprend la pierre. Jamais réparé, elle est fendue. Un danger, c’est un phare, pour parler à quelqu’un.'));
-  ul.append(el('li', {}, el('b', { textContent: 'Ton texte. ' }), 'Il est lu ici, sur ce téléphone, jamais ailleurs. S’il parle d’un sujet que tu n’as pas coché, il te le propose à la fin, et rien ne pousse sans ton accord. S’il n’y a aucun mot coché, il donne la sensation. Sur l’île, il fait une lueur.'));
+  ul.append(el('li', {}, el('b', { textContent: 'Qui le sait, l’état. ' }), 'Jamais dit, c’est fermé. Un texte allume des lanternes au-dessus de ce qu’il fait pousser, jamais ses mots. En boucle, un sentier usé. Plus d’une fois, en deux. Ça continue, il pleut dessus. Regret, la mousse reprend la pierre. Jamais réparé, elle est fendue. Un danger, c’est un phare, pour parler à quelqu’un.'));
+  ul.append(el('li', {}, el('b', { textContent: 'Ton texte. ' }), 'Il est lu ici, sur ce téléphone, jamais ailleurs. Les sujets dont il parle poussent comme des cases cochées, et s’il n’y a aucun mot coché, il donne la sensation. Sur l’île, il allume une lanterne au-dessus de ce qu’il fait pousser, une de plus à chaque texte, jusqu’à trois. À la fin, tu le gardes sur ce téléphone, ou tu le brûles : il n’en reste alors que ses lanternes.'));
   ul.append(el('li', {}, el('b', { textContent: 'Le temps qu’il fait. ' }), 'Le ciel de l’île suit ta dernière confession. Chaque sensation cochée en plus de la principale laisse un temps qu’il fait : un nuage d’orage, un nuage de pluie, des fleurs, un étang. Sans sujet, la situation suffit : on m’a fait du mal, un arbre ; je regrette, une pierre. Rien du tout : un caillou posé.'));
   return ul;
 }
@@ -290,11 +289,10 @@ function updateOnglets() {
 function render(screen) {
   ecran = screen;
   document.body.classList.toggle('short', state.short && screen === 'page');
-  companion.hidden = ['after', 'ile', 'archipel'].includes(screen);
+  companion.hidden = ['ile', 'archipel'].includes(screen);
   if (!companion.hidden) ilot?.redim();
   if (screen === 'orient') renderOrient();
   else if (screen === 'page') renderPage();
-  else if (screen === 'after') renderAfter();
   else if (screen === 'ile') renderIle();
   else if (screen === 'archipel') renderArchipel();
   else renderQ(QUESTIONS[screen.slice(2)] ? screen.slice(2) : 'situ');
@@ -372,7 +370,7 @@ function renderOrient() {
   if (sig.strong) path('Parler à quelqu’un, maintenant', 'des humains, à toute heure', humans, 'first');
   path('Écrire', starters().length ? 'avec des débuts de phrases tirés de tes cases' : 'la page est à toi', () => { state.short = false; go('page'); });
   path('Le dire en trois lignes', 'court, et c’est tout', () => { state.short = true; go('page'); });
-  path('Juste le poser', 'sans écrire : sur l’île, ou au feu', finishSheet);
+  path('Juste le poser', 'sans écrire, directement sur ton île', finishSheet);
   if (!sig.strong && sig.soft) path('Parler à quelqu’un', 'des humains, ailleurs, à toute heure', humans);
   path('Voir ton île', courant.assets.length ? 'ce qui a poussé, et l’archipel' : 'elle est vide, pour l’instant', () => { regard = null; go('ile'); });
   const seq = sequence();
@@ -462,7 +460,7 @@ function renderPage() {
   app.replaceChildren(
     el('p', { className: 'step', textContent: state.short ? 'En trois lignes' : 'La page' }),
     el('h1', { textContent: state.short ? 'Dis-le court.' : 'À toi.' }),
-    el('p', { className: 'hint', textContent: 'Rien ne part. Le texte est lu ici, sur ce téléphone, pour te proposer des sujets. Sur l’île, il ne fait qu’une lueur.' }),
+    el('p', { className: 'hint', textContent: 'Rien ne part. Ton texte est lu ici, sur ce téléphone : les sujets dont il parle poussent sur ton île, et il y allume des lanternes. À la fin, tu choisis de le garder ou de le brûler.' }),
     ta, count, help, chips,
     el('nav', { className: 'nav' }, quiet('retour', () => history.back()), el('span', { className: 'spacer' }), finish),
   );
@@ -515,29 +513,23 @@ function humansSheet(first = 'self') {
   openSheet(body);
 }
 
-function finishSheet() {
+function finishSheet() { // ce qui a été déposé pousse sur l’île, texte compris ; s’il y a un texte, on choisit de le garder ou de le brûler
+  const texte = state.text.trim(), g = preview.length ? preview : graines(state.answers, '').graines;
   const body = el('div', {}, el('h2', { textContent: 'Et maintenant ?' }));
-  const intro = el('p', { className: 'intro' });
-  const refresh = () => { intro.textContent = `${state.text.trim() ? '' : 'Juste tes cases, sans texte. Ça suffit. '}Sur l’île, ça ferait pousser ${listeGraines(preview.length ? preview : graines(state.answers, '').graines)}.`; };
-  refresh();
-  body.append(intro);
-  if (proposes.length) { // ce que le texte propose ; rien ne pousse du texte sans accord
-    body.append(el('p', { className: 'intro', textContent: `Ton texte, lu ici, parle aussi de${NB}:` }));
-    body.append(el('div', { className: 'propositions' }, ...proposes.map(id => {
-      const [row, input] = checkRow(sujetLabel(id), !state.refus.has(id));
-      input.addEventListener('change', () => { if (input.checked) state.refus.delete(id); else state.refus.add(id); derive(); refresh(); });
-      return row;
-    })));
-  }
-  const [row, keepText] = checkRow('Garder aussi le texte, sur ce téléphone', true);
+  const guillemets = ids => ids.map(id => `«${NB}${sujetLabel(id)}${NB}»`).reduce((t, x, i, l) => (i ? t + (i === l.length - 1 ? ' et ' : ', ') : '') + x, '');
+  let dit = `${texte ? '' : 'Juste tes cases, sans texte. Ça suffit. '}Sur ton île, ça va faire pousser ${listeGraines(g)}.`;
+  if (texte) dit += proposes.length ? ` C’est ton texte qui a apporté ${guillemets(proposes)}, et il allume des lanternes au-dessus de ce qui pousse.` : ' Ton texte allume des lanternes au-dessus de ce qui pousse.';
+  body.append(el('p', { className: 'intro', textContent: dit }));
   const gesture = (t, sub, fn) => {
     const b = el('button', { type: 'button', className: 'gesture' }, t, el('small', { textContent: sub }));
     b.addEventListener('click', () => { closeSheet(); fn(); });
     body.append(b);
   };
-  gesture('Poser sur l’île', 'ça restera sur ce téléphone, et ça poussera', () => poser(keepText.checked));
-  if (state.text.trim()) body.append(row);
-  gesture('Brûler', 'il n’en restera rien, rien ne pousse', burn);
+  if (texte) {
+    body.append(el('p', { className: 'intro', textContent: 'Et ton texte ?' }));
+    gesture('Garder le texte', 'sur ce téléphone seulement ; en touchant ce qu’il a fait pousser, tu le reliras', () => poser(true));
+    gesture('Brûler le texte', 'il n’en restera que ce qu’il a fait pousser', bruler);
+  } else gesture('Poser sur l’île', 'ça restera sur ce téléphone, et ça poussera', () => poser(false));
   body.append(footRow(quiet('pas maintenant', closeSheet), quiet('voir l’île', () => { closeSheet(); regard = null; go('ile'); })));
   openSheet(body);
 }
@@ -628,12 +620,12 @@ function ilesSheet() {
 
 /* ───────── Gestes ───────── */
 
-function poser(garderTexte) {
+function poser(garderTexte, brule = false) {
   const texte = state.text.trim();
-  const ok = acceptes();
+  const ok = [...proposes];
   for (const id of ok) state.answers.sujets.add(id);
   const depot = { id: Date.now(), date: new Date().toISOString(), quad: quadDe(state.answers), texte: !!texte, answers: pack(state.answers) };
-  if (ok.length) { depot.duTexte = ok; note(`texte : lu ici, propose ${ok.map(sujetLabel).join(', ')} (accepté)`); }
+  if (ok.length) { depot.duTexte = ok; note(`texte : lu ici, fait pousser ${ok.map(sujetLabel).join(', ')}`); }
   if (!state.answers.mots.size && lu.quad !== 'N') { depot.quadTexte = lu.quad; depot.quad = lu.quad; note('texte : donne la sensation, aucun mot coché'); }
   if (texte && garderTexte) depot.contenu = texte;
   ile.depots.push(depot); saveIle();
@@ -647,25 +639,18 @@ function poser(garderTexte) {
   const phrases = phrasesDe(nouvelles, grandies);
   const n = nouvelles.length + grandies.length, NOMBRES = ['', '', 'Deux', 'Trois', 'Quatre', 'Cinq', 'Six', 'Sept', 'Huit'];
   const verbe = !nouvelles.length ? 'grandi' : !grandies.length ? 'poussé' : 'bougé';
-  titre = { h1: n === 1 ? `Quelque chose a ${verbe}` : `${NOMBRES[n] || n} choses ont ${verbe}`, line: phrases.join(' ') + (d.phare === depot.id ? ' Un phare s’est allumé sur la rive.' : '') };
+  titre = { h1: n === 1 ? `Quelque chose a ${verbe}` : `${NOMBRES[n] || n} choses ont ${verbe}`, line: phrases.join(' ') + (d.phare === depot.id ? ' Un phare s’est allumé sur la rive.' : '') + (texte ? (brule ? ' Ton texte a brûlé : il n’en reste que ses lanternes.' : ' Ton texte y a allumé des lanternes.') : '') };
+  if (texte) note(brule ? 'geste : brûler le texte' : 'geste : garder le texte, sur ce téléphone');
   clearDraft();
   regard = null;
   go('ile');
 }
 
-function burn() {
-  note('geste : brûler');
-  const done = () => { clearDraft(); afterLine = 'Partie.'; go('after'); };
-  if (reduced || companion.hidden || !ilot) return done();
-  ilot.bruler();
-  setTimeout(done, 1300);
-}
-
-let afterLine = '';
-function renderAfter() {
-  app.replaceChildren(el('div', { className: 'after' },
-    el('p', { className: 'big', textContent: afterLine }),
-    el('div', { className: 'links' }, quiet('voir ton île', () => { regard = null; go('ile'); }), quiet('déposer autre chose', () => { clearDraft(); go('q:situ'); }))));
+function bruler() { // le texte brûle sous tes yeux ; ce qu’il a fait pousser reste
+  const ta = app.querySelector('textarea'), fin = () => poser(false, true);
+  if (reduced || !ta) return fin();
+  ta.readOnly = true; ta.classList.add('brule');
+  setTimeout(fin, 1400);
 }
 
 /* ───────── Boucle et départ ───────── */

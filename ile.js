@@ -174,6 +174,8 @@ export function deriver(ile, { pleine = false } = {}) {
     occ.delete(a.tile[0] * N + a.tile[1]); a.tile = placer(m, occ, a, r); occ.add(a.tile[0] * N + a.tile[1]);
   }
   const phareTile = etat.phare ? bout(m, occ) : null;
+  const ecrits = new Set(ile.depots.filter(d => d.texte).map(d => d.id)); // les dépôts qui avaient un texte : une lanterne chacun
+  for (const a of etat.assets) a.textes = a.depots.filter(id => ecrits.has(id)).length;
   return { ...etat, ile, m, phareTile, dernier };
 }
 
