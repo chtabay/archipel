@@ -738,7 +738,8 @@ $('#humans').addEventListener('click', () => humansSheet());
 $('#exit').addEventListener('click', e => { e.preventDefault(); location.replace(e.currentTarget.href); });
 addEventListener('popstate', e => render(e.state?.screen || 'q:situ'));
 const premiere = !store.get('intro', false) && !ile.depots.length && !iles.length && !anyChecked() && !state.text.trim(); // la toute première fois : rien encore sur ce téléphone
-history.replaceState({ screen: premiere ? 'intro' : 'q:situ' }, '', '');
-render(premiere ? 'intro' : 'q:situ');
+const depart = premiere ? 'intro' : ile.depots.length || iles.length ? 'ile' : 'q:situ'; // au retour, une île déjà commencée : on la retrouve d’abord
+history.replaceState({ screen: depart }, '', '');
+render(depart);
 requestAnimationFrame(frame);
 window.archipel = { state, get ile() { return ile; }, get iles() { return iles; }, get courant() { return courant; }, get preview() { return preview; }, arch, vie, vue, ilot }; // pour les tests
