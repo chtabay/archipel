@@ -10,6 +10,8 @@ En bas de l’écran, trois onglets restent toujours à portée de pouce : **Dé
 
 **La première fois**, une courte intro, d’une quinzaine de secondes, montre l’idée sans aucun exemple. D’abord l’archipel au soir. Puis un îlot au premier plan, au-dessus duquel flottent des mots sans lettres, des pastilles de lumière. Ils tombent un à un : à chacun, la terre monte de l’eau et une chose pousse. Leur lumière reste au-dessus, en lanternes. Enfin l’île rejoint sa place parmi les autres, et « ton île » s’affiche. Quatre phrases l’accompagnent. On peut la passer à tout moment, puis la revoir depuis l’archipel. « Parler à quelqu’un » et « quitter » restent visibles. Sans mouvement ou sans 3D, les quatre phrases se lisent d’un coup.
 
+**Au retour**, une île déjà commencée s’ouvre d’abord sur l’onglet **Ton île**. Si quelque chose était en cours de dépôt, l’action principale le reprend. Sans île commencée, on arrive sur les premières cases.
+
 1. **Les questions.** Quelques cases à cocher. En haut, un îlot montre en direct ce que les cases feraient pousser. Chaque case de la première question s’y voit : la terre qui recouvre ce qui n’a jamais été dit, le sentier de ce qui tourne en boucle, la taille selon l’ancienneté, un nuage gris quand on ne va pas bien du tout, un phare quand il y a un danger.
 2. **Par où aller ?** Parler à quelqu’un, écrire, le dire en trois lignes, juste le poser, ou voir son île.
 3. **La page.** Des débuts de phrases tirés des cases. Le texte est lu sur le téléphone : les sujets dont il parle s’ajoutent aux graines, et des lanternes s’allument sur l’îlot pendant qu’on écrit. Si des mots inquiètent, des numéros d’écoute s’affichent.
