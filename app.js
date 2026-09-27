@@ -440,7 +440,7 @@ function go(screen) { history.pushState({ screen, n: (history.state?.n || 0) + 1
 
 let ecran = 'q:situ';
 const ongletDe = screen => (screen === 'ile' || screen === 'archipel' ? screen : 'deposer');
-const ONGLETS = { deposer: () => go('q:situ'), ile: () => { regard = null; go('ile'); }, archipel: () => go('archipel') };
+const ONGLETS = { deposer: () => go('q:situ'), ile: () => { regard = null; go('ile'); }, archipel: () => go('archipel'), plus: () => plusSheet() }; // Plus : un menu, pas un écran
 function updateOnglets() {
   const actif = ongletDe(ecran), n = courant.assets.length, c = $('.onglets .compte');
   for (const b of document.querySelectorAll('.onglets button')) { if (b.dataset.onglet === actif) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); }
@@ -448,7 +448,7 @@ function updateOnglets() {
 }
 
 function render(screen) {
-  ecran = screen;
+  ecran = screen; majSon = null;
   suivi?.disconnect(); suivi = null; clearInterval(sondage); sondage = null;
   document.body.classList.toggle('short', state.short && screen === 'page');
   document.body.classList.toggle('en-intro', screen === 'intro');
@@ -821,9 +821,10 @@ addEventListener('beforeinstallprompt', e => { e.preventDefault(); invitation = 
 addEventListener('appinstalled', () => { invitation = null; lienInstaller(); note('app : installée'); });
 
 function installerSheet() {
-  const body = el('div', {}, el('h2', { textContent: 'L’installer comme une app' }),
-    el('p', { className: 'intro', textContent: 'L’archipel s’ouvrira depuis ton écran d’accueil, en plein écran, même sans réseau. Seul l’archipel partagé a besoin du réseau.' }));
-  if (invitation) {
+  const body = el('div', {}, el('h2', { textContent: 'L’installer comme une app' }));
+  if (installee()) body.append(el('p', { className: 'intro', textContent: 'Elle est installée sur cet appareil : tu es dedans. Elle s’ouvre depuis ton écran d’accueil, même sans réseau.' }));
+  else body.append(el('p', { className: 'intro', textContent: 'L’archipel s’ouvrira depuis ton écran d’accueil, en plein écran, même sans réseau. Seul l’archipel partagé a besoin du réseau.' }));
+  if (installee()) { /* rien à faire */ } else if (invitation) {
     const b = el('button', { type: 'button', className: 'gesture', textContent: 'L’installer' });
     b.addEventListener('click', async () => {
       const i = invitation; invitation = null; closeSheet(); note('geste : installer l’app');
@@ -831,10 +832,11 @@ function installerSheet() {
       lienInstaller();
     });
     body.append(el('p', { className: 'tiny', textContent: 'Tu y retrouveras ton île. Son icône, « L’archipel », sera visible sur ton écran d’accueil.' }), b);
-  } else body.append(
+  } else if (surIPhone()) body.append(
     el('p', { className: 'intro', textContent: 'Dans Safari, touche le bouton Partager, puis « Sur l’écran d’accueil ».' }),
     el('p', { className: 'tiny', textContent: 'Sur iPhone, l’app installée a sa propre mémoire : elle commence avec une île vide, et celle d’ici reste dans Safari. Son icône, « L’archipel », sera visible sur ton écran d’accueil.' }));
-  body.append(footRow(quiet('pas maintenant', closeSheet)));
+  else body.append(el('p', { className: 'intro', textContent: 'Ce navigateur ne le propose pas. Sur Android, Chrome le propose ; sur iPhone, Safari, avec le bouton Partager.' }));
+  body.append(footRow(quiet(installee() ? 'revenir' : 'pas maintenant', closeSheet)));
   openSheet(body);
 }
 
@@ -897,11 +899,33 @@ $('#humans').addEventListener('click', () => humansSheet());
 const musiqueVoulue = () => !!store.get('musique', 0);
 const PIECE_DE = { ile: 'ile', archipel: 'archipel' };
 function suivreMusique(screen) { if (!musique.disponible || !musiqueVoulue()) return; if (PIECE_DE[screen]) musique.jouer(PIECE_DE[screen]); else musique.taire(); }
+let majSon = null; // le bouton de son de la vue en cours, pour le tenir à jour quand le menu change la musique
+function basculerMusique(piece = PIECE_DE[ecran]) { // depuis le bouton d’une vue, ou depuis le menu
+  const on = !musiqueVoulue(); store.set('musique', on ? 1 : 0); note(on ? 'musique : allumée' : 'musique : coupée');
+  if (!on) musique.arreter(); else if (piece) musique.jouer(piece);
+  majSon?.(); return on;
+}
 function boutonSon(piece) {
   const b = el('button', { type: 'button', className: 'son' });
   const maj = () => { const on = musiqueVoulue(); b.innerHTML = ICONE_SON[on]; b.setAttribute('aria-pressed', String(on)); b.setAttribute('aria-label', on ? 'Couper la musique' : 'Allumer la musique'); };
-  b.addEventListener('click', () => { const on = !musiqueVoulue(); store.set('musique', on ? 1 : 0); note(on ? 'musique : allumée' : 'musique : coupée'); if (on) musique.jouer(piece); else musique.arreter(); maj(); });
-  maj(); return b;
+  b.addEventListener('click', () => basculerMusique(piece));
+  maj(); majSon = maj; return b;
+}
+
+/* ───────── Le menu Plus ───────── */
+// Dans la barre du bas : ce qui sert partout, à portée de pouce. Ce sont des actions qu’on trouve aussi ailleurs, à leur place.
+
+function plusSheet() {
+  note('geste : menu plus');
+  const ligne = (titre, sous, fn) => { const b = el('button', { type: 'button', className: 'row' }, titre, el('small', { textContent: sous })); b.addEventListener('click', fn); return b; };
+  const ligneMusique = () => { const on = musiqueVoulue(), b = ligne(on ? 'Couper la musique' : 'Allumer la musique', on ? `Allumée${NB}: le feu de camp sur ton île, la mer dans l’archipel. Ailleurs, le silence.` : 'Le feu de camp sur ton île, la mer dans l’archipel. Rien ne part.', () => { basculerMusique(); b.replaceWith(ligneMusique()); }); return b; };
+  const liste = el('div', { className: 'list' },
+    ligne('Quitter vite ce site', 'L’écran se vide, et le bouton retour ne ramène pas ici.', () => quitter($('#exit').href)),
+    ...(musique.disponible ? [ligneMusique()] : []),
+    ligne('Installer l’app', installee() ? 'Déjà installée : tu es dedans.' : 'Sur ton écran d’accueil, même sans réseau.', installerSheet),
+    ligne('Parler à quelqu’un', 'Des gens répondent, à toute heure. Ici, personne ne lit.', () => humansSheet()),
+    ...(vue ? [ligne('Revoir l’intro', 'L’archipel, une île qui pousse, et comment elle le rejoint.', () => { closeSheet(); revue = true; go('intro'); })] : []));
+  openSheet(el('div', {}, el('h2', { textContent: 'Plus' }), liste, footRow(quiet('revenir', closeSheet))));
 }
 let fuite = false; // on part : plus rien ne s’affiche
 function quitter(url) { // partir vite : l’écran se vide, on remonte l’historique de l’app, puis on le remplace. « Retour » ne ramène plus ici.
