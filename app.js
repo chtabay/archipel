@@ -6,6 +6,7 @@ import { graines, quadDe, nomDe, phrasesDe, casesDe, sujetLabel, listeDe, listeG
 import { nouvelleIle, deriver, resume, forme, depuisForme, archipelInvente, ileInventee, BIOMES, BIOME_IDS, biomeDe } from './ile.js?v=6';
 import { Vue3D, Ilot3D, apercu, disponible, ECH_ARCH, ILE_INTRO } from './monde.js?v=8';
 import { lireArchipel, poserIle, retirerIle, nouveauJeton } from './serveur.js?v=1';
+import { musique } from './musique.js?v=1';
 import { lire } from './lexique.js?v=2';
 
 const $ = s => document.querySelector(s);
@@ -883,9 +884,22 @@ loadDraft();
 derive();
 for (const b of document.querySelectorAll('.onglets button')) b.addEventListener('click', () => ONGLETS[b.dataset.onglet]());
 $('#humans').addEventListener('click', () => humansSheet());
+/* ───────── La musique ───────── */
+// Coupée par défaut. Un bouton discret l’allume ; le choix reste sur ce téléphone. Rallumée au retour, elle attend un geste :
+// le navigateur n’ouvre le son qu’à ce moment-là.
+const boutonMusique = $('#musique');
+function afficherMusique() { const m = musique.enMarche; boutonMusique.textContent = m ? 'couper la musique' : 'musique'; boutonMusique.setAttribute('aria-pressed', String(m)); }
+if (musique.disponible) {
+  boutonMusique.hidden = false;
+  boutonMusique.addEventListener('click', () => { const m = musique.basculer(); store.set('musique', m ? 1 : 0); note(m ? 'musique : allumée' : 'musique : coupée'); afficherMusique(); });
+  if (store.get('musique', 0)) { // allumée la dernière fois : elle reprend au premier geste, sauf si ce geste est pour quitter
+    const reprendre = e => { if (e.target?.closest?.('#exit, #musique')) return; if (musique.demarrer()) afficherMusique(); };
+    addEventListener('pointerdown', reprendre, { once: true }); addEventListener('keydown', reprendre, { once: true });
+  }
+}
 let fuite = false; // on part : plus rien ne s’affiche
 function quitter(url) { // partir vite : l’écran se vide, on remonte l’historique de l’app, puis on le remplace. « Retour » ne ramène plus ici.
-  fuite = true; document.body.style.visibility = 'hidden'; closeSheet();
+  fuite = true; document.body.style.visibility = 'hidden'; closeSheet(); musique.arreter(true);
   const n = history.state?.n || 0;
   if (n > 0) { history.go(-n); setTimeout(() => location.replace(url), 700); } else location.replace(url);
 }
@@ -903,4 +917,4 @@ function garderHorsLigne() { // le service worker garde les fichiers que la page
     .catch(() => {}); // sans service worker, l’app marche pareil, en ligne
 }
 if ('serviceWorker' in navigator) { if (document.readyState === 'complete') garderHorsLigne(); else addEventListener('load', garderHorsLigne); }
-window.archipel = { state, get ile() { return ile; }, get iles() { return iles; }, get courant() { return courant; }, get preview() { return preview; }, arch, vie, vue, ilot, sonder, synchroniser, placeLibre, posArch }; // pour les tests
+window.archipel = { state, get ile() { return ile; }, get iles() { return iles; }, get courant() { return courant; }, get preview() { return preview; }, arch, vie, vue, ilot, sonder, synchroniser, placeLibre, posArch, musique }; // pour les tests
