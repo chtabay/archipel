@@ -92,6 +92,13 @@ function prisme() { // un toit : faîte le long de X, base en y = 0, largeur, pr
   return g;
 }
 G.prisme = prisme();
+function pyramide() { // un toit à quatre pans : base en y = 0, largeur et profondeur 1, sommet en y = 1
+  const A = [-.5, 0, -.5], B2 = [.5, 0, -.5], C2 = [.5, 0, .5], D2 = [-.5, 0, .5], S = [0, 1, 0];
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute([D2, C2, S, C2, B2, S, B2, A, S, A, D2, S].flat(), 3));
+  return g;
+}
+G.pyramide = pyramide();
 for (const g of Object.values(G)) g._partage = true; // des formes partagées : on ne les libère jamais
 for (const m of Object.values(MAT)) m._partage = true;
 
@@ -238,31 +245,129 @@ function pierre(a, k) {
 function fleurette(k, x, z, col, h = .1, t = .028) { F(k, cyl(.006, .008, 4), '#5f9e34', { x, y: h / 2, z, sy: h, ao: 0 }); F(k, G.ico0, col, { x, y: h + t * .5, z, s: t, ao: 0 }); }
 
 /* ───────── Les constructions ───────── */
+// Une maison : des murs qui montent en pignon sous un toit épais qui déborde, en rangs qui se recouvrent ; une porte encadrée
+// sous un auvent, des fenêtres à croisée, appui et linteau, des volets ; une cheminée à chapeau. Le style du paysage habille
+// les murs : colombages, pierres et chaînages d’angle, planches à clins, crépi sur soubassement, ou une paillote sur pilotis
+// sous un toit de chaume. De loin (k.leger) : les murs, le toit, la cheminée, la porte et les fenêtres. La silhouette, sans le fin.
 
-function boite(k, o) {
-  const W = .56, D = .46, H = .42, murs = o.murs, toit = o.toit, sty = o.style;
-  F(k, G.box, murs[0], { y: H / 2, sx: W, sy: H, sz: D, ao: .18, varie: .03 });
-  const poutre = '#7a4e33', fin = .026;
-  if (sty === 'colombage') { for (const x of [-W / 2 + .02, 0, W / 2 - .02]) F(k, G.box, poutre, { x, y: H / 2, z: D / 2 + .004, sx: fin, sy: H, sz: .01, ao: 0 }); for (const z of [-D / 2 + .02, D / 2 - .02]) F(k, G.box, poutre, { x: W / 2 + .004, y: H / 2, z, sx: .01, sy: H, sz: fin, ao: 0 }); F(k, G.box, poutre, { y: H * .55, z: D / 2 + .005, sx: W, sy: fin, sz: .01, ao: 0 }); F(k, G.box, poutre, { x: W / 2 + .005, y: H * .55, sx: .01, sy: fin, sz: D, ao: 0 }); F(k, G.box, poutre, { x: W / 4, y: H * .3, z: D / 2 + .006, sx: .012, sy: H * .55, sz: .01, rz: .7, ao: 0 }); }
-  else if (sty === 'pierre') { const r = rngL(Math.round(W * 1e3 + o.graine * 97)); for (let i = 0; i < 14; i++) { const face = i % 2, x = face ? W / 2 + .004 : (r() - .5) * W * .85, z = face ? (r() - .5) * D * .85 : D / 2 + .004; F(k, G.box, i % 3 ? '#b8b2a6' : '#d9d3c7', { x, y: .04 + r() * (H - .08), z, sx: face ? .01 : .07, sy: .045, sz: face ? .07 : .01, ao: 0 }); } }
-  else if (sty === 'bois' || sty === 'paillote') { for (const y of [.1, .2, .3]) { F(k, G.box, '#6d4a33', { y, z: D / 2 + .004, sx: W, sy: .008, sz: .01, ao: 0 }); F(k, G.box, '#6d4a33', { x: W / 2 + .004, y, sx: .01, sy: .008, sz: D, ao: 0 }); } }
-  else F(k, G.box, murs[1], { y: .03, sx: W + .02, sy: .06, sz: D + .02, ao: 0 });
-  F(k, G.prisme, toit[0], { y: H, sx: W + .1, sy: .3, sz: D + .14, ao: .3, varie: .04 });
-  F(k, G.box, toit[1], { y: H + .3, sx: W + .12, sy: .03, sz: .05, ao: 0 });
-  if (o.neige) F(k, G.prisme, '#ffffff', { y: H + .13, sx: W + .12, sy: .18, sz: (D + .14) * .56, ao: 0 });
-  // la porte, ses marches ; les fenêtres, leur croisée
-  const lit = o.lit, dx = -W * .2;
-  F(k, G.box, '#bdb6aa', { x: dx, y: .015, z: D / 2 + .05, sx: .16, sy: .03, sz: .08, ao: 0 }); F(k, G.box, '#a39c90', { x: dx, y: .04, z: D / 2 + .03, sx: .14, sy: .025, sz: .05, ao: 0 });
-  F(k, G.box, '#6d4a33', { x: dx, y: .14, z: D / 2 + .006, sx: .14, sy: .26, sz: .012, ao: 0 });
-  (lit ? FL : F)(k, G.box, o.ferme ? '#4a3626' : lit ? '#ffcf6a' : '#8a5a3c', { x: dx, y: .13, z: D / 2 + .012, sx: .11, sy: .23, sz: .01, ao: 0 });
-  for (const [x, z, face] of [[W * .22, D / 2 + .01, 0], [W / 2 + .01, 0, 1]]) {
-    F(k, G.box, '#e9e0cf', { x, y: .25, z, sx: face ? .012 : .15, sy: .15, sz: face ? .15 : .012, ao: 0 });
-    (lit ? FL : F)(k, G.box, lit ? '#ffd766' : '#6a7d93', { x: x + (face ? .004 : 0), y: .25, z: z + (face ? 0 : .004), sx: face ? .01 : .11, sy: .11, sz: face ? .11 : .01, ao: 0 });
-    F(k, G.box, '#f3ead8', { x: x + (face ? .007 : 0), y: .25, z: z + (face ? 0 : .007), sx: face ? .008 : .012, sy: .11, sz: face ? .012 : .008, ao: 0 });
-    if (o.volets) for (const sgn of [-1, 1]) F(k, G.box, '#6f8f6a', { x: x + (face ? .008 : sgn * .04), y: .25, z: z + (face ? sgn * .04 : .008), sx: face ? .01 : .07, sy: .12, sz: face ? .07 : .01, ao: 0 });
+const W = .56, D = .46, H = .42; // la boîte : largeur (le faîte suit X), profondeur, hauteur des murs
+const LARGEUR = f => (f % 2 ? D : W); // la largeur d’une face : 0 devant (+z), 1 à droite (+x), 2 derrière, 3 à gauche
+const surFace = (f, u, e) => f === 0 ? [u, D / 2 + e, 0] : f === 1 ? [W / 2 + e, -u, Math.PI / 2] : f === 2 ? [-u, -D / 2 - e, Math.PI] : [-W / 2 - e, u, -Math.PI / 2]; // [x, z, ry] d’un point de la face f, à u du milieu, à e du mur
+function plaque(k, f, u, y, e, sx, sy, sz, col, t = {}, bati) { const [x, z, ry] = surFace(f, u, e + sz / 2 + .002); F(k, G.box, col, { x, y, z, ry, sx, sy, sz, ao: 0, ...t }, bati); } // une boîte plaquée sur la face f : sx le long du mur, sz en épaisseur, à e du mur
+const barre = (k, f, u0, y0, u1, y1, ep, col) => plaque(k, f, (u0 + u1) / 2, (y0 + y1) / 2, 0, ep, Math.hypot(u1 - u0, y1 - y0), .012, col, { rz: -Math.atan2(u1 - u0, y1 - y0) }); // une pièce de bois d’un point à un autre, sur la face f
+const OUVERTURES = [[[-.2, -.03, 0, .33], [.03, .23, .14, .36]], [[-.1, .1, .14, .36]], [[.01, .23, .14, .36]], []]; // par face : [u0, u1, y0, y1] de la porte et des fenêtres
+const libre = (f, u, y) => OUVERTURES[f].every(([u0, u1, y0, y1]) => u < u0 - .04 || u > u1 + .04 || y < y0 - .03 || y > y1 + .03);
+const STYLES = { // par style : le bois des menuiseries, le cadre et l’appui des fenêtres, le linteau, la porte, les volets, la cheminée ; le débord du toit et sa hauteur
+  colombage: { bois: '#7a4e33', cadre: '#f3ead8', appui: '#d9d0c0', linteau: '#7a4e33', porte: '#8a5a3c', volet: '#6f8f6a', ouverts: true, chem: '#a8a29a', over: .07, rh: .3 },
+  pierre: { bois: '#6d4a33', cadre: '#efe6d6', appui: '#c9c2b6', linteau: '#b8b2a6', porte: '#6d4a33', volet: '#5f7a8a', ouverts: true, chem: '#a29b92', over: .06, rh: .3 },
+  crepi: { bois: '#6d4a33', cadre: '#fff8ec', appui: '#d9d0c0', linteau: null, porte: '#7a5a3c', volet: '#6f8f6a', ouverts: true, chem: '#b3ada4', over: .06, rh: .3 },
+  bois: { bois: '#5e3f2a', cadre: '#f3ead8', appui: '#e0d6c6', linteau: '#5e3f2a', porte: '#5e3f2a', volet: '#8a3f36', ouverts: true, chem: '#8f8a84', over: .1, rh: .25 },
+  paillote: { bois: '#6b4a30', cadre: '#d9b27a', appui: '#b48a5c', linteau: '#8f6842', porte: '#8f6842', volet: '#b48a5c', ouverts: false, chem: '#a8a29a', over: .1, rh: .3 },
+};
+
+function toitPans(k, o) { // deux pans épais qui débordent, en rangs qui se recouvrent, le faîtage par-dessus ; la neige dessus
+  const toit = o.toit, RH = o.rh, th = Math.atan2(RH, D / 2), hd = D / 2 + o.over * .85, L = hd / Math.cos(th), ep = .04, cy = Math.cos(th), sn = Math.sin(th), sx = W + 2 * o.over;
+  const rang = (c, t0, t1, off, col, epr = ep, t = {}) => { const tm = (t0 + t1) / 2; F(k, G.box, col, { y: H + RH - tm * hd * Math.tan(th) + off * cy, z: c * (tm * hd + off * sn), sx, sy: epr, sz: (t1 - t0) * L, rx: c * th, ao: .12, varie: .025, ...t }); }; // un rang du pan c (+1 devant), de t0 à t1 le long de la pente (0 au faîte, 1 à l’égout), à off du pan
+  for (const c of [-1, 1]) {
+    if (k.leger) { rang(c, -.04, 1, ep / 2 + .004, toit[0]); if (o.neige) rang(c, -.06, .7, ep + .01, '#ffffff', .03, { ao: 0, varie: .01 }); continue; }
+    for (let i = 0; i < 3; i++) rang(c, i / 3 - (i ? .08 : .1), (i + 1) / 3, ep / 2 + .004 + (2 - i) * .016, i % 2 ? nuance(toit[0], -.07) : toit[0]);
+    if (o.neige) rang(c, -.08, .7, ep + .04, '#ffffff', .04, { ao: 0, varie: .01 });
   }
-  if (sty !== 'paillote') F(k, G.box, '#9a9a9a', { x: W * .25, y: H + .24, z: -D * .15, sx: .07, sy: .2, sz: .07, ao: .2 });
-  if (lit && k.anims) { const h1 = halo('#ffc86a', .5, .8); h1.position.set(W * .22 * (k.s ?? 1) + (k.dx || 0), .25 * (k.s ?? 1) + (k.dy || 0), (D / 2 + .08) * (k.s ?? 1) + (k.dz || 0)); k.grp.add(h1); fumee(k, W * .25, H + .38, -D * .15); }
+  F(k, G.box, o.neige ? '#ffffff' : toit[1], { y: H + RH + ep / 2 + .014 + (k.leger ? 0 : .032) + (o.neige ? .03 : 0), sx: sx + .01, sy: .04, sz: .09, ao: 0 }); // le faîtage, ou la neige qui le couvre
+}
+function toitChaume(k, o) { // un toit de chaume à quatre pans, en trois couches qui se recouvrent, et son toupet
+  const toit = o.toit, sx = W + .24, sz = D + .24, h = .36, y0 = H - .02;
+  const couche = (r, y, col) => F(k, G.pyramide, col, { y, sx: sx * r, sy: h * r, sz: sz * r, ao: .25, varie: .03 });
+  couche(1, y0, toit[0]);
+  if (k.leger) return;
+  couche(.72, y0 + .12, nuance(toit[0], -.07)); couche(.45, y0 + .22, toit[0]);
+  F(k, cyl(.03, .05, 6), toit[1], { y: y0 + h + .02, sy: .06, ao: 0 }); // le toupet
+}
+function cheminee(k, x, z, o) { // sur le pan arrière : le conduit, son chapeau, le noir du trou, la neige dessus
+  const yb = H + .05, yh = H + .44; F(k, G.box, o.chem, { x, y: (yb + yh) / 2, z, sx: .085, sy: yh - yb, sz: .085, ao: .2 });
+  if (k.leger) return;
+  F(k, G.box, nuance(o.chem, -.2), { x, y: yh + .012, z, sx: .115, sy: .024, sz: .115, ao: 0 });
+  if (o.neige) F(k, G.box, '#ffffff', { x, y: yh + .031, z, sx: .12, sy: .014, sz: .12, ao: 0 });
+  else F(k, G.box, '#3a3230', { x, y: yh + .028, z, sx: .06, sy: .01, sz: .06, ao: 0 });
+}
+function porte(k, u, o, bas) { // devant : le vantail entre ses montants, sous le linteau et l’auvent ; les marches, ou l’échelle d’une paillote
+  plaque(k, 0, u, .135, .01, .13, .27, .012, o.ferme ? '#4a3626' : o.porte);
+  for (const c of [-1, 1]) plaque(k, 0, u + c * .078, .15, 0, .024, .3, .024, o.bois);
+  plaque(k, 0, u, .31, 0, .19, .03, .026, o.bois);
+  if (bas) { // l’échelle, depuis le sol
+    const kk = { ...k, dy: (k.dy || 0) - bas * (k.s ?? 1) }, z0 = D / 2 + .17, z1 = D / 2 + .05;
+    for (const c of [-1, 1]) baton(kk, [u + c * .05, 0, z0], [u + c * .05, bas + .02, z1], .012, .012, o.bois, 4);
+    if (!k.leger) for (const t of [.3, .6, .9]) baton(kk, [u - .05, t * (bas + .02), z0 + (z1 - z0) * t], [u + .05, t * (bas + .02), z0 + (z1 - z0) * t], .009, .009, o.bois, 4);
+    return;
+  }
+  F(k, G.box, '#bdb6aa', { x: u, y: .015, z: D / 2 + .06, sx: .17, sy: .03, sz: .1, ao: 0 }); // les marches
+  if (k.leger) return;
+  F(k, G.box, '#a39c90', { x: u, y: .045, z: D / 2 + .035, sx: .15, sy: .03, sz: .06, ao: 0 });
+  F(k, G.box, o.toit[1], { x: u, y: .37, z: D / 2 + .05, sx: .25, sy: .014, sz: .11, rx: .5, ao: 0 }); // l’auvent
+  F(k, G.ico0, '#e0b64a', { x: u + .045, y: .14, z: D / 2 + .028, s: .009, ao: 0 }); // la poignée
+}
+function fenetre(k, f, u, y, o, s = 1, jardiniere = false) { // sur la face f : le cadre, la vitre (chaude si allumée), la croisée, l’appui, le linteau, les volets ; s : plus petite, dans un pignon
+  const lit = o.lit && !o.volets, w = .16 * s, g = .12 * s;
+  plaque(k, f, u, y, 0, w, w, .02, o.cadre);
+  plaque(k, f, u, y, .012, g, g, .01, lit ? '#ffd766' : '#6a7d93', {}, lit ? k.lum : undefined);
+  if (o.volets) for (const c of [-1, 1]) plaque(k, f, u + c * g * .27, y, .022, g * .52, g * 1.05, .012, o.volet); // clos : deux battants sur la vitre
+  if (k.leger) return;
+  if (!o.volets) { plaque(k, f, u, y, .02, .012 * s, g, .008, o.cadre); plaque(k, f, u, y, .02, g, .012 * s, .008, o.cadre); } // la croisée
+  plaque(k, f, u, y - w * .56, 0, w * 1.25, .02, .04, o.appui);
+  if (o.linteau) plaque(k, f, u, y + w * .58, 0, w * 1.15, .024, .014, o.linteau);
+  if (!o.volets && o.ouverts) for (const c of [-1, 1]) plaque(k, f, u + c * w * .72, y, .004, w * .38, w * .9, .012, o.volet); // ouverts, rabattus sur le mur
+  if (jardiniere && !o.neige && o.ouverts) { plaque(k, f, u, y - w * .66, .01, w * 1.05, .035, .05, o.bois); for (const [i, c] of [[0, -1], [1, 0], [2, 1]]) plaque(k, f, u + c * w * .3, y - w * .48, .02, .03, .03, .03, o.fleurs[i % o.fleurs.length]); } // la jardinière, et ses fleurs
+}
+function colombages(k, poutre) { // des poteaux, des sablières, des écharpes ; dans les pignons, les arbalétriers et un entrait
+  for (let f = 0; f < 4; f++) {
+    const w = LARGEUR(f);
+    for (const u of f % 2 ? [-w / 2 + .018, w / 2 - .018] : [-w / 2 + .018, 0, w / 2 - .018]) plaque(k, f, u, H / 2, 0, .026, H, .012, poutre);
+    plaque(k, f, 0, H - .016, 0, w, .026, .012, poutre); plaque(k, f, 0, .03, 0, w, .026, .012, poutre);
+    for (const u of f % 2 ? [-.14, .14] : f === 2 ? [-.14] : []) plaque(k, f, u, .21, 0, .022, .3, .01, poutre, { rz: u > 0 ? .55 : -.55 });
+    if (f % 2) { barre(k, f, -w / 2 + .03, H + .012, -.02, H + .3 - .03, .024, poutre); barre(k, f, w / 2 - .03, H + .012, .02, H + .3 - .03, .024, poutre); plaque(k, f, 0, H + .165, 0, w * .43, .024, .012, poutre); }
+  }
+}
+function pierres(k, g) { // des chaînages d’angle, une assise sur deux, et des moellons semés sur les murs, hors des ouvertures
+  const r = rngL(g), tons = ['#b8b2a6', '#d9d3c7', '#c8c1b4'];
+  for (let f = 0; f < 4; f++) {
+    const w = LARGEUR(f);
+    for (let i = 0; i < 5; i++) if ((i + f) % 2 === 0) for (const c of [-1, 1]) plaque(k, f, c * (w / 2 - .035), .045 + i * .08, 0, .075, .05, .01, tons[(i + (c > 0 ? 1 : 0)) % 3]);
+    let n = 0, essais = 0;
+    while (n < 6 && essais++ < 30) { const u = (r() - .5) * (w - .18), y = .07 + r() * (H - .14); if (!libre(f, u, y)) continue; plaque(k, f, u, y, 0, .05 + r() * .04, .035 + r() * .02, .008, tons[n % 3]); n++; }
+  }
+}
+function planches(k, mur, sombre) { // des planches à clins, une teinte sur deux, et des planches d’angle
+  for (let f = 0; f < 4; f++) { const w = LARGEUR(f); for (let i = 0; i < 6; i++) plaque(k, f, 0, (i + .5) * H / 6, 0, w + .004, H / 6 - .004, .012, nuance(mur, i % 2 ? -.06 : .05), { varie: .04 }); }
+  for (const [x, z] of [[1, 1], [1, -1], [-1, 1], [-1, -1]]) F(k, G.box, sombre, { x: x * W / 2, y: H / 2, z: z * D / 2, sx: .03, sy: H, sz: .03, ao: .1 });
+}
+function bambous(k, o) { // une paillote : des bandes de bambou, des poteaux d’angle
+  for (let f = 0; f < 4; f++) for (const y of [.1, .22, .34]) plaque(k, f, 0, y, 0, LARGEUR(f) + .004, .014, .008, o.linteau);
+  for (const [x, z] of [[1, 1], [1, -1], [-1, 1], [-1, -1]]) F(k, G.box, o.bois, { x: x * W / 2, y: H / 2 + .01, z: z * D / 2, sx: .028, sy: H + .04, sz: .028, ao: .1 });
+}
+function pilotis(k, bas, o) { // le plancher d’une paillote, sur ses poteaux
+  for (const [x, z] of [[-.4, -.4], [0, -.4], [.4, -.4], [-.4, .4], [0, .4], [.4, .4]]) F(k, cyl(.02, .026, 5), o.bois, { x: x * W, y: bas / 2, z: z * D, sy: bas + .04, ao: .3 });
+  F(k, G.box, '#a3784a', { y: bas - .015, sx: W + .08, sy: .03, sz: D + .08, ao: .2 });
+}
+function buches(k, col) { // un tas de bûches contre le pignon gauche
+  for (const [y, zs] of [[.024, [-.055, 0, .055]], [.07, [-.028, .028]]]) for (const z of zs) F(k, cyl(.024, .024, 5), col, { x: -W / 2 - .06, y, z, sy: .15, rx: Math.PI / 2, ao: .15 });
+}
+function boite(k, o) {
+  const sty = o.style, paill = sty === 'paillote', st = STYLES[sty] || STYLES.crepi, murs = o.murs, s = k.s ?? 1, bas = paill ? .1 : 0;
+  const kk = bas ? { ...k, dy: (k.dy || 0) + bas * s } : k, oo = { ...st, ...o, neige: o.neige && !paill, fleurs: FLEURS[idDe(k.B)] };
+  if (paill) pilotis(k, bas, oo);
+  F(kk, G.box, murs[0], { y: H / 2, sx: W, sy: H, sz: D, ao: .18, varie: .03 }); // les murs
+  if (!paill) F(kk, G.prisme, murs[0], { y: H, sx: W, sy: st.rh, sz: D, ao: .08, varie: .03 }); // les pignons
+  if (sty === 'crepi' || (kk.leger && !paill)) F(kk, G.box, murs[1], { y: .035, sx: W + .024, sy: .07, sz: D + .024, ao: 0 }); // le soubassement
+  if (!kk.leger) {
+    if (sty === 'colombage') colombages(kk, st.bois); else if (sty === 'pierre') pierres(kk, o.graine * 131 + Math.round(k.v * 977)); else if (sty === 'bois') planches(kk, murs[0], st.bois); else if (paill) bambous(kk, oo);
+    else F(kk, G.box, murs[1], { y: H - .012, sx: W + .02, sy: .024, sz: D + .02, ao: 0 }); // crépi : la corniche
+  }
+  if (paill) toitChaume(kk, oo); else { toitPans(kk, oo); cheminee(kk, W * .27, -D * .2, oo); }
+  porte(kk, -W * .2, oo, bas);
+  fenetre(kk, 0, W * .24, .25, oo, 1, true); fenetre(kk, 1, 0, .25, oo); fenetre(kk, 2, .12, .25, oo);
+  if (!paill && !kk.leger) { fenetre(kk, 1, 0, H + .09, oo, .5); fenetre(kk, 3, 0, H + .09, oo, .5); } // les fenêtres des pignons
+  if (sty === 'bois' && !kk.leger) buches(kk, BOIS[1]);
+  if (oo.lit && k.anims) { const h1 = halo('#ffc86a', .5, .8); h1.position.set(W * .24 * s + (k.dx || 0), (.25 + bas) * s + (k.dy || 0), (D / 2 + .08) * s + (k.dz || 0)); k.grp.add(h1); if (!paill) fumee(kk, W * .27, H + .48, -D * .2); }
 }
 function fumee(k, x, y, z) {
   if (!k.anims) return;
@@ -272,7 +377,7 @@ function fumee(k, x, y, z) {
 function lanterne(k, x, z) {
   F(k, cyl(.012, .015, 5), '#3f3834', { x, y: .22, z, sy: .44, ao: 0 });
   FL(k, G.box, '#ffe39a', { x, y: .47, z, sx: .06, sy: .07, sz: .06, ao: 0 });
-  F(k, cone(4), '#3f3834', { x, y: .53, z, sx: .06, sy: .05, sz: .06, ry: .78, ao: 0 });
+  F(k, cone(4), '#6b5f58', { x, y: .53, z, sx: .055, sy: .045, sz: .055, ry: .78, ao: 0 }); // le chapeau, pas trop sombre : vu d’en haut, il cache la lampe
   if (k.grp) { const h = halo('#ffd98a', .45, .8); h.position.set(x * (k.s ?? 1) + (k.dx || 0), .47 * (k.s ?? 1) + (k.dy || 0), z * (k.s ?? 1) + (k.dz || 0)); k.grp.add(h); }
 }
 function maison(a, k) {
