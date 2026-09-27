@@ -21,7 +21,7 @@ function creerRendu(canvas, { alpha = false, ombres = true } = {}) {
   const r = new THREE.WebGLRenderer({ canvas, antialias: true, alpha, powerPreference: 'default' });
   r.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
   r.outputColorSpace = THREE.SRGBColorSpace; r.toneMapping = THREE.ACESFilmicToneMapping; r.toneMappingExposure = 1.1; // filmique : des hautes lumières qui roulent, des couleurs qui tiennent
-  r.shadowMap.enabled = ombres; r.shadowMap.type = THREE.PCFSoftShadowMap; // des ombres aux bords doux
+  r.shadowMap.enabled = ombres; r.shadowMap.type = THREE.PCFShadowMap; // les bords doux viennent du rayon de flou de chaque ombre
   if (alpha) r.setClearColor(0x000000, 0);
   return r;
 }
@@ -221,7 +221,7 @@ function soleil(scene, climat, portee, ombre = true) { // ombre : non pour l’a
   sun.position.set(Math.cos(el) * Math.sin(az) * 30, Math.sin(el) * 30, Math.cos(el) * Math.cos(az) * 30);
   sun.castShadow = ombre; sun.shadow.mapSize.set(mobile ? 1024 : 2048, mobile ? 1024 : 2048);
   Object.assign(sun.shadow.camera, { left: -portee, right: portee, top: portee, bottom: -portee, near: 1, far: 80 });
-  sun.shadow.bias = -.0004; sun.shadow.normalBias = .03;
+  sun.shadow.bias = -.0004; sun.shadow.normalBias = .03; sun.shadow.radius = 4; // des ombres aux bords doux
   const contre = new THREE.DirectionalLight(melange(L.ciel, '#8fb4ff', .5), L.i * .18), el2 = .5, az2 = az + Math.PI;
   contre.position.set(Math.cos(el2) * Math.sin(az2) * 30, Math.sin(el2) * 30, Math.cos(el2) * Math.cos(az2) * 30);
   scene.add(sun, sun.target, contre, new THREE.HemisphereLight(L.ciel, L.sol, L.hi * .72));
@@ -528,7 +528,7 @@ export class Ilot3D {
   constructor(canvas) {
     this.canvas = canvas; this.rendu = creerRendu(canvas, { alpha: true, ombres: true });
     this.scene = new THREE.Scene(); this.camera = new THREE.PerspectiveCamera(28, 2, .1, 50);
-    const sun = this.sun = new THREE.DirectionalLight('#fff4e4', 2.8); sun.position.set(3, 6, 4); sun.castShadow = true; sun.shadow.mapSize.set(512, 512); Object.assign(sun.shadow.camera, { left: -2, right: 2, top: 2, bottom: -2, near: .5, far: 20 }); sun.shadow.normalBias = .02;
+    const sun = this.sun = new THREE.DirectionalLight('#fff4e4', 2.8); sun.position.set(3, 6, 4); sun.castShadow = true; sun.shadow.mapSize.set(512, 512); Object.assign(sun.shadow.camera, { left: -2, right: 2, top: 2, bottom: -2, near: .5, far: 20 }); sun.shadow.normalBias = .02; sun.shadow.radius = 2;
     const contre = new THREE.DirectionalLight('#b9cfff', .5); contre.position.set(-3, 2.5, -4);
     this.scene.add(sun, contre, new THREE.HemisphereLight('#eef8ff', '#e2d2b8', 1.15));
     this.groupe = new THREE.Group(); this.scene.add(this.groupe); this.anims = []; this.cle = null; this.t0 = performance.now(); this.objets = [];
