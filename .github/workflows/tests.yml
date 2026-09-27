@@ -1,13 +1,19 @@
 # L’archipel : les tests, à chaque proposition de changement et à chaque mise à jour de main.
+# Une suite par job, en parallèle : le tout dure le temps de la plus longue, au lieu de leur somme.
 name: Tests
 on:
   pull_request:
   push:
     branches: [main]
 jobs:
-  tests:
+  suite:
+    name: ${{ matrix.suite }}
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        suite: [parcours, intro, retour, stabilite, archipel, pwa, musique, plus]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -15,12 +21,16 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - uses: actions/cache@v4 # le Chromium de Playwright, gardé d’une fois sur l’autre
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
       - run: npx playwright install --with-deps chromium
-      - run: npm test
+      - run: npm test -- ${{ matrix.suite }}
         env:
           CAPTURES: ${{ runner.temp }}/captures
       - if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: captures
+          name: captures-${{ matrix.suite }}
           path: ${{ runner.temp }}/captures

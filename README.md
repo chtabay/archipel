@@ -161,4 +161,4 @@ npm test            # toutes les suites
 npm test -- archipel    # une seule : parcours, intro, retour, stabilite, archipel, pwa, musique ou plus
 ```
 
-Les captures d’écran des tests vont dans un dossier temporaire, ou dans celui que désigne `CAPTURES`. Sur GitHub, les tests tournent à chaque proposition de changement.
+Les captures d’écran des tests vont dans un dossier temporaire, ou dans celui que désigne `CAPTURES`. Sur GitHub, les tests tournent à chaque proposition de changement, une suite par job, en parallèle : le tout dure le temps de la plus longue, 4 à 5 minutes.
