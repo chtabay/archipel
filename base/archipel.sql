@@ -1,5 +1,6 @@
 -- L’archipel : la base de l’archipel partagé, telle qu’elle est dans le projet Supabase de Pyramides
--- (migration « archipel_iles_partagees »). Gardée ici pour la lire et pouvoir la recréer ; rien ne l’applique tout seul.
+-- (migrations « archipel_iles_partagees », puis « archipel_familles_animaux_buissons » pour les animaux et les buissons).
+-- Gardée ici pour la lire et pouvoir la recréer ; rien ne l’applique tout seul.
 -- Le site n’y accède que par les trois fonctions publiques, avec la clé publique de serveur.js.
 
 -- L’archipel : les îles partagées, dans un espace à part de la base, sans aucun lien avec Pyramides.
@@ -68,8 +69,8 @@ begin
   for c in select value from jsonb_array_elements(f -> 'choses') loop
     if jsonb_typeof(c) <> 'object' then return false; end if;
     if exists (select 1 from jsonb_object_keys(c) k where k not in ('famille', 'espece', 'stade', 'case', 'etats', 'textes', 'v')) then return false; end if;
-    if coalesce(c ->> 'famille', '') not in ('arbre', 'pierre', 'maison', 'culture', 'meteo', 'caillou') then return false; end if;
-    if coalesce(c ->> 'espece', '') not in ('pin', 'nu', 'feuillu', 'fleuri', 'sombre', 'moussue', 'cairn', 'galet', 'pierre', 'cloture', 'volets', 'pont', 'banc', 'maison', 'feu', 'puits', 'champ', 'barque', 'orage', 'pluie', 'fleurs', 'etang', 'caillou') then return false; end if;
+    if coalesce(c ->> 'famille', '') not in ('arbre', 'pierre', 'maison', 'culture', 'meteo', 'caillou', 'animal', 'buisson') then return false; end if;
+    if coalesce(c ->> 'espece', '') not in ('pin', 'nu', 'feuillu', 'fleuri', 'sombre', 'moussue', 'cairn', 'galet', 'pierre', 'cloture', 'volets', 'pont', 'banc', 'maison', 'feu', 'puits', 'champ', 'barque', 'orage', 'pluie', 'fleurs', 'etang', 'caillou', 'lievre', 'chat', 'chevreuil', 'mouton', 'poule', 'ronce', 'buissonsec', 'buissonfleuri', 'baies', 'buisson') then return false; end if;
     if not archipel.nombre(c -> 'stade', 0, 3, true) then return false; end if;
     if not archipel.nombre(c -> 'textes', 0, 3, true) then return false; end if;
     if not archipel.nombre(c -> 'v', 0, 1) then return false; end if;
