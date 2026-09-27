@@ -17,10 +17,10 @@ const BOIS = ['#c79a63', '#a3784a', '#7f5a36'];
 /* ───────── Les matériaux ───────── */
 
 export const MAT = {
-  base: new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: .9, metalness: 0 }),
+  base: new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: .8, metalness: 0 }), // un peu de reflet du soleil sur les facettes
   lum: new THREE.MeshBasicMaterial({ vertexColors: true, toneMapped: false }), // ce qui éclaire : fenêtres, flammes, lanternes
   propose: new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: .9, metalness: 0, transparent: true, opacity: .45, depthWrite: false }),
-  fond: new THREE.MeshBasicMaterial({ vertexColors: true }), // sous l’eau : la couleur telle quelle, sans facettes ; le climat la règle d’avance
+  fond: new THREE.MeshBasicMaterial({ vertexColors: true, toneMapped: false }), // sous l’eau : la couleur telle quelle, sans facettes ni mappage ; le climat la règle d’avance
 };
 let _glow = null;
 export function texGlow() {
@@ -58,7 +58,7 @@ export class Bati { // on y pose des formes colorées ; on les fusionne en un se
     let ymin = Infinity, ymax = -Infinity;
     for (let i = 1; i < p.length; i += 3) { if (p[i] < ymin) ymin = p[i]; if (p[i] > ymax) ymax = p[i]; }
     _c.set(couleur);
-    const varie = t.varie ?? .07, ao = t.ao ?? .22;
+    const varie = t.varie ?? .07, ao = t.ao ?? .28; // ao : le bas de chaque forme, un peu plus sombre
     for (let f = 0; f < n; f++) {
       const yc = (p[f * 9 + 1] + p[f * 9 + 4] + p[f * 9 + 7]) / 3, k = (1 + (this.r() - .5) * 2 * varie) * (1 - ao + ao * (ymax > ymin ? (yc - ymin) / (ymax - ymin) : 1));
       for (let v = 0; v < 9; v++) this.pos.push(p[f * 9 + v]);
