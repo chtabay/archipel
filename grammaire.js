@@ -3,7 +3,7 @@
 // Un dépôt (une confession) garde toutes ses cases. Rien n’est réduit à l’enregistrement :
 // l’île est recalculée à partir des dépôts, et une autre grammaire pourrait relire les mêmes dépôts.
 // La grammaire lit quatre axes dans les cases, et jamais le texte, sauf sa présence :
-//   1. la place    — d’où ça vient : reçu, commis ou voulu, entre vous, en soi      → la famille
+//   1. la place    — d’où ça vient : reçu, commis, voulu, entre vous, toi, tes jours  → la famille
 //   2. la sensation — comment c’est ressenti (le quadrant des mots)                  → l’espèce
 //   3. le temps    — depuis quand, et si ça revient                                  → la taille
 //   4. le silence  — qui le sait, et s’il y a un texte                               → l’état
@@ -16,15 +16,17 @@ export const FAMILLES = {
   arbre: { nom: 'les arbres', de: 'ce qu’on t’a fait', zone: 'dans la forêt', verbe: 'a poussé' },
   pierre: { nom: 'les pierres', de: 'ce que tu as fait, ou voulu', zone: 'sur la colline', verbe: 's’est posée' },
   maison: { nom: 'les constructions', de: 'ce qui se passe entre vous', zone: 'dans le village', verbe: 's’est construit' },
-  culture: { nom: 'les cultures', de: 'toi, et ce qui vient', zone: 'dans les champs', verbe: 'est apparu' },
+  culture: { nom: 'les cultures', de: 'ce qui occupe tes jours', zone: 'dans les champs', verbe: 'est apparu' },
+  animal: { nom: 'les animaux', de: 'toi, tel que tu es', zone: 'sur le pré', verbe: 'est venu' },
+  buisson: { nom: 'les buissons', de: 'ce que tu as voulu', zone: 'au bord du chemin', verbe: 'a poussé' },
   meteo: { nom: 'le temps qu’il fait', de: 'une sensation', zone: 'sur l’île', verbe: 'est arrivé' },
   caillou: { nom: 'les cailloux', de: 'juste posé, sans rien dire de plus', zone: 'sur la plage', verbe: 's’est posé' },
 };
 
 // Chaque sujet a une famille de départ.
 export const SUJET_FAMILLE = {
-  s0: 'pierre', s1: 'pierre', s2: 'pierre', s3: 'culture', s4: 'maison', s5: 'maison', s6: 'culture', s7: 'culture',
-  s8: 'pierre', s9: 'culture', s10: 'culture', s11: 'arbre', s12: 'maison', s13: 'culture', s14: 'culture',
+  s0: 'pierre', s1: 'pierre', s2: 'buisson', s3: 'buisson', s4: 'maison', s5: 'maison', s6: 'culture', s7: 'culture',
+  s8: 'pierre', s9: 'animal', s10: 'animal', s11: 'arbre', s12: 'maison', s13: 'animal', s14: 'buisson',
 };
 
 // La place vis-à-vis du fait déplace la famille : reçu → arbre ; commis (la question de plus répondue) → pierre.
@@ -44,6 +46,8 @@ export const ESPECES = {
   pierre: { AD: 'sombre', ED: 'moussue', AS: 'cairn', ES: 'galet', N: 'pierre' },
   maison: { AD: 'cloture', ED: 'volets', AS: 'pont', ES: 'banc', N: 'maison' },
   culture: { AD: 'feu', ED: 'puits', AS: 'champ', ES: 'barque', N: 'champ' },
+  animal: { AD: 'lievre', ED: 'chat', AS: 'chevreuil', ES: 'mouton', N: 'poule' },
+  buisson: { AD: 'ronce', ED: 'buissonsec', AS: 'buissonfleuri', ES: 'baies', N: 'buisson' },
   meteo: { AD: 'orage', ED: 'pluie', AS: 'fleurs', ES: 'etang' },
 };
 
@@ -101,12 +105,12 @@ export function graines(a, texte, lu = null) {
 
 /* ───────── La composition : un dépôt complète l’île ───────── */
 // Un sujet déjà présent (même clé : le sujet) ne fait pas une deuxième chose : il fait grandir la première. Pour les arbres
-// et les pierres, l’espèce suit la sensation d’aujourd’hui (un arbre nu peut se couvrir de feuilles) ;
-// une construction ou une culture garde son espèce. Les états qui disent « aujourd’hui » (fermé,
+// les pierres et les buissons, l’espèce suit la sensation d’aujourd’hui (un arbre nu peut se couvrir de feuilles) ;
+// une construction, une culture ou un animal garde son espèce. Les états qui disent « aujourd’hui » (fermé,
 // boucle, pluie) suivent le dernier dépôt ; les autres s’accumulent.
 
 export const SUIVENT = ['ferme', 'boucle', 'pluie'];
-export const CHANGENT = ['arbre', 'pierre'];
+export const CHANGENT = ['arbre', 'pierre', 'buisson'];
 
 export function pousser(etat, depot, a) { // etat : { assets, phare, climat } ; renvoie ce qui a changé
   const g = graines(a, depot.texte, depot.quadTexte ? { quad: depot.quadTexte } : null);
@@ -139,6 +143,8 @@ export const NOMS = {
   sombre: ['une pierre sombre', 'f', 'pierres sombres'], moussue: ['une pierre moussue', 'f', 'pierres moussues'], cairn: ['un cairn', 'm', 'cairns'], galet: ['un galet', 'm', 'galets'], pierre: ['une pierre', 'f', 'pierres'], menhir: ['une pierre levée', 'f', 'pierres levées'],
   cloture: ['une clôture', 'f', 'clôtures'], volets: ['une maison aux volets fermés', 'f', 'maisons aux volets fermés'], pont: ['un pont', 'm', 'ponts'], banc: ['un banc', 'm', 'bancs'], maison: ['une maison', 'f', 'maisons'], hameau: ['un hameau', 'm', 'hameaux'],
   feu: ['un feu', 'm', 'feux'], puits: ['un puits', 'm', 'puits'], champ: ['un champ', 'm', 'champs'], moulin: ['un moulin', 'm', 'moulins'], barque: ['une barque', 'f', 'barques'],
+  lievre: ['un lièvre', 'm', 'lièvres'], chat: ['un chat', 'm', 'chats'], chevreuil: ['un chevreuil', 'm', 'chevreuils'], mouton: ['un mouton', 'm', 'moutons'], poule: ['une poule', 'f', 'poules'], troupeau: ['un petit troupeau', 'm', 'petits troupeaux'], chats: ['des chats', 'p', 'chats'],
+  ronce: ['une ronce', 'f', 'ronces'], buissonsec: ['un buisson sec', 'm', 'buissons secs'], buissonfleuri: ['un buisson fleuri', 'm', 'buissons fleuris'], baies: ['un buisson de baies', 'm', 'buissons de baies'], buisson: ['un buisson', 'm', 'buissons'], haie: ['une haie', 'f', 'haies'], fourre: ['un fourré', 'm', 'fourrés'],
   orage: ['un nuage d’orage', 'm', 'nuages d’orage'], pluie: ['un nuage de pluie', 'm', 'nuages de pluie'], fleurs: ['des fleurs', 'p', 'fleurs'], etang: ['un étang', 'm', 'étangs'], caillou: ['un caillou', 'm', 'cailloux'],
   phare: ['un phare', 'm', 'phares'],
 };
@@ -161,13 +167,15 @@ export function especeDe(x) {
   if (x.famille === 'pierre' && x.stade >= 3 && x.espece !== 'cairn') return 'menhir';
   if (x.espece === 'maison' && x.stade >= 3) return 'hameau';
   if (x.espece === 'champ' && x.stade >= 2) return 'moulin';
+  if (x.famille === 'animal' && x.stade >= 3) return x.espece === 'chat' ? 'chats' : 'troupeau';
+  if (x.famille === 'buisson' && x.stade >= 2) return x.stade >= 3 ? 'fourre' : 'haie';
   return x.espece;
 }
 export const nomDe = x => NOMS[especeDe(x)]?.[0] || 'quelque chose';
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
 
 // Les verbes : [singulier, pluriel, s’accorde (être)].
-const VERBES = { arbre: ['a poussé', 'ont poussé', false], pierre: ['s’est posé', 'se sont posé', true], maison: ['s’est construit', 'se sont construit', true], culture: ['est apparu', 'sont apparu', true], meteo: ['est arrivé', 'sont arrivé', true], caillou: ['s’est posé', 'se sont posé', true] };
+const VERBES = { arbre: ['a poussé', 'ont poussé', false], pierre: ['s’est posé', 'se sont posé', true], maison: ['s’est construit', 'se sont construit', true], culture: ['est apparu', 'sont apparu', true], meteo: ['est arrivé', 'sont arrivé', true], caillou: ['s’est posé', 'se sont posé', true], animal: ['est venu', 'sont venu', true], buisson: ['a poussé', 'ont poussé', false] };
 const ZONES = { barque: 'sur la rive', caillou: 'sur la plage', etang: 'en contrebas' };
 const defini = nom => nom.replace(/^(un|une|des) (.)/, (m, art, c) => (/[aeiouéèêh]/i.test(c) && art !== 'des' ? `l’${c}` : `${art === 'des' ? 'les' : art === 'une' ? 'la' : 'le'} ${c}`));
 

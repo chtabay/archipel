@@ -38,7 +38,7 @@ const sansIntro = () => { localStorage.clear(); localStorage.setItem('archipel:i
 // Un faux archipel, en mémoire, qui répond comme le vrai serveur : les tests ne touchent jamais la vraie base.
 const ARCHIPEL = /^https:\/\/alvxrjftenialifyktyz\.supabase\.co\/rest\/v1\/rpc\/(\w+)/;
 const CORS = { 'access-control-allow-origin': '*', 'access-control-allow-headers': 'apikey, content-type', 'access-control-allow-methods': 'POST, OPTIONS' };
-const ESPECES = ['pin', 'nu', 'feuillu', 'fleuri', 'sombre', 'moussue', 'cairn', 'galet', 'pierre', 'cloture', 'volets', 'pont', 'banc', 'maison', 'feu', 'puits', 'champ', 'barque', 'orage', 'pluie', 'fleurs', 'etang', 'caillou'];
+const ESPECES = ['pin', 'nu', 'feuillu', 'fleuri', 'sombre', 'moussue', 'cairn', 'galet', 'pierre', 'cloture', 'volets', 'pont', 'banc', 'maison', 'feu', 'puits', 'champ', 'barque', 'orage', 'pluie', 'fleurs', 'etang', 'caillou', 'lievre', 'chat', 'chevreuil', 'mouton', 'poule', 'ronce', 'buissonsec', 'buissonfleuri', 'baies', 'buisson'];
 const ETATS = ['ferme', 'lueur', 'boucle', 'double', 'pluie', 'mousse', 'fissure', 'caillou', 'clos'];
 const entier = (v, a, b) => Number.isInteger(v) && v >= a && v <= b, laCase = c => Array.isArray(c) && c.length === 2 && c.every(v => entier(v, 0, 9));
 function formeValide(f) { // les mêmes règles que la base : seulement ce que la 3D dessine
@@ -48,7 +48,7 @@ function formeValide(f) { // les mêmes règles que la base : seulement ce que l
   if (!entier(f.graine, 1, 2147483647) || !entier(f.taille, 1, 100) || (f.phare !== null && f.phare !== undefined && !laCase(f.phare))) return false;
   if (!Array.isArray(f.choses) || f.choses.length > 80) return false;
   return f.choses.every(c => c && typeof c === 'object' && !Object.keys(c).some(k => !['famille', 'espece', 'stade', 'case', 'etats', 'textes', 'v'].includes(k))
-    && ['arbre', 'pierre', 'maison', 'culture', 'meteo', 'caillou'].includes(c.famille) && ESPECES.includes(c.espece) && entier(c.stade, 0, 3) && entier(c.textes, 0, 3)
+    && ['arbre', 'pierre', 'maison', 'culture', 'meteo', 'caillou', 'animal', 'buisson'].includes(c.famille) && ESPECES.includes(c.espece) && entier(c.stade, 0, 3) && entier(c.textes, 0, 3)
     && typeof c.v === 'number' && c.v >= 0 && c.v <= 1 && laCase(c.case) && Array.isArray(c.etats) && c.etats.length <= 9 && c.etats.every(e => ETATS.includes(e)));
 }
 function archipelFactice() {
@@ -79,7 +79,7 @@ async function contexte(navigateur, options = TELEPHONE) { const c = await navig
 // des îles des autres, pour le faux archipel : inventées dans la page par la même grammaire, réduites à leur forme,
 // et placées comme l’app place la sienne : l’eau libre la plus proche de leur sensation, autour de celles déjà là
 const formesInventees = (page, n, depart = 0, deja = []) => page.evaluate(async ([n, depart, deja]) => {
-  const { archipelInvente, deriver, depuisForme, forme } = await import('./ile.js?v=7'), A = window.archipel;
+  const { archipelInvente, deriver, depuisForme, forme } = await import('./ile.js?v=8'), A = window.archipel;
   const fixes = deja.map((i, k) => ({ d: depuisForme(i.forme, `deja-${k}`), x: i.x, z: i.z }));
   return archipelInvente(depart + n).slice(depart).map(o => { const it = { d: deriver(o.ile) }; A.placeLibre(it, fixes, A.posArch(o.a, o.v)); fixes.push(it); return { forme: forme(it.d), x: it.x, z: it.z }; });
 }, [n, depart, deja.map(({ forme, x, z }) => ({ forme, x, z }))]);

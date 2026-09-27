@@ -3,11 +3,11 @@
 // La carte et les dépôts viennent de ile.js : l’île est recalculée à partir de ses dépôts.
 
 import * as THREE from './vendor/three.min.js?v=1';
-import { N, CLIMATS, eauDe, sol, carte, deriver, etape } from './ile.js?v=7';
+import { N, CLIMATS, eauDe, sol, carte, deriver, etape } from './ile.js?v=8';
 import { biomeDe, BIOMES } from './biomes.js?v=2';
 import { hash, melange, versHex, nuance } from './outils.js?v=1';
-import { Bati, MAT, modeleChose, modelePhare, decor, halo, nuageBati, F, G, cone, cyl, baton } from './modeles.js?v=9';
-import { vie } from './vie.js?v=1';
+import { Bati, MAT, modeleChose, modelePhare, decor, halo, nuageBati, F, G, cone, cyl, baton } from './modeles.js?v=10';
+import { vie } from './vie.js?v=2';
 
 const reduit = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 export const ECH_ARCH = .45; // la taille des îles dans l’archipel : la même pour toutes, pour que leurs tailles se comparent

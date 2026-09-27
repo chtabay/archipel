@@ -41,7 +41,7 @@ export function halo(couleur = '#ffd98a', taille = .6, opacite = 1) {
 
 /* ───────── L’assembleur ───────── */
 
-const _m = new THREE.Matrix4(), _q = new THREE.Quaternion(), _e = new THREE.Euler(), _p = new THREE.Vector3(), _s = new THREE.Vector3(), _c = new THREE.Color();
+const _m = new THREE.Matrix4(), _q = new THREE.Quaternion(), _qy = new THREE.Quaternion(), _e = new THREE.Euler(), _p = new THREE.Vector3(), _s = new THREE.Vector3(), _c = new THREE.Color();
 const _up = new THREE.Vector3(0, 1, 0), _d = new THREE.Vector3();
 function bosseler(g, amp, graine) { // des bosses stables : un même sommet bouge toujours de la même façon, sans fissure
   const p = g.attributes.position;
@@ -52,7 +52,7 @@ export class Bati { // on y pose des formes colorées ; on les fusionne en un se
   forme(geo, couleur, t = {}) {
     const g = geo.index ? geo.toNonIndexed() : geo.clone();
     if (t.bosse) bosseler(g, t.bosse, t.graine || 1);
-    _e.set(t.rx || 0, t.ry || 0, t.rz || 0); _q.setFromEuler(_e);
+    _e.set(t.rx || 0, t.ry || 0, t.rz || 0); _q.setFromEuler(_e); if (t.qy) _q.premultiply(_qy.setFromAxisAngle(_up, t.qy)); // qy : la chose entière tournée, après sa propre pose
     const s = t.s ?? 1; _s.set(t.sx ?? s, t.sy ?? s, t.sz ?? s); _p.set(t.x || 0, t.y || 0, t.z || 0);
     _m.compose(_p, _q, _s); g.applyMatrix4(_m);
     const p = g.attributes.position.array, n = p.length / 9;
@@ -105,8 +105,11 @@ for (const m of Object.values(MAT)) m._partage = true;
 // Tout passe par F : la chose est posée avec un décalage (dx, dy, dz) et une échelle (s), pour les doubles, les bosquets, les hameaux.
 function F(k, geo, col, t = {}, bati = k.b) {
   const s = k.s ?? 1, ts = t.s ?? 1;
-  bati.forme(geo, col, { ...t, x: (t.x || 0) * s + (k.dx || 0), y: (t.y || 0) * s + (k.dy || 0), z: (t.z || 0) * s + (k.dz || 0), sx: (t.sx ?? ts) * s, sy: (t.sy ?? ts) * s, sz: (t.sz ?? ts) * s, s: undefined });
+  let x = t.x || 0, z = t.z || 0, qy = t.qy;
+  if (k.ry) { const c = Math.cos(k.ry), sn = Math.sin(k.ry); [x, z] = [x * c + z * sn, -x * sn + z * c]; qy = (qy || 0) + k.ry; } // k.ry : la chose entière tournée autour de son pied
+  bati.forme(geo, col, { ...t, x: x * s + (k.dx || 0), y: (t.y || 0) * s + (k.dy || 0), z: z * s + (k.dz || 0), sx: (t.sx ?? ts) * s, sy: (t.sy ?? ts) * s, sz: (t.sz ?? ts) * s, qy, s: undefined });
 }
+const sur = (k, p) => { const s = k.s ?? 1, c = Math.cos(k.ry || 0), sn = Math.sin(k.ry || 0); return { ...k, dx: (k.dx || 0) + (p[0] * c + p[2] * sn) * s, dy: (k.dy || 0) + p[1] * s, dz: (k.dz || 0) + (-p[0] * sn + p[2] * c) * s }; }; // le même contexte, décalé au point p de la chose
 const FL = (k, geo, col, t) => F(k, geo, col, t, k.lum);
 function baton(k, a, b, r0, r1, col, n = 5, bati = k.b) { // un cylindre d’un point à un autre
   _d.set(b[0] - a[0], b[1] - a[1], b[2] - a[2]); const len = _d.length(); _d.normalize();
@@ -539,6 +542,96 @@ export function phare(k) {
     k.anims?.push(T => { pivot.rotation.y = T * .8; });
   }
 }
+/* ───────── Les bêtes ───────── */
+// Chaque bête regarde vers +z, posée en y = 0. Le corps et la tête se dessinent à part, la tête autour de son pivot : en groupe
+// animé, elle bouge seule ; dans le bâti d’une île, elle est posée à sa place. Les bêtes servent deux fois : la vie qui ne dit
+// rien (vie.js), et la famille des animaux, « toi, tel que tu es ».
+
+const bati = g => ({ b: new Bati(g), s: 1 });
+export const BETES = {
+  mouton: { pivot: [0, .19, .13], act: 'broute', vitesse: .12, rayon: 1.1, pause: [2, 5], sols: ['herbe'],
+    corps(k, g) { const n = '#3a322f'; F(k, G.ico1, '#f3efe4', { y: .17, sx: .11, sy: .095, sz: .15, bosse: .16, graine: g, ao: .3 }); F(k, G.ico1, '#faf7f0', { y: .2, z: .01, sx: .085, sy: .07, sz: .11, bosse: .18, graine: g + 3, ao: .2 }); for (const [x, z] of [[-.055, -.07], [.055, -.07], [-.055, .06], [.055, .06]]) F(k, G.box, n, { x, y: .06, z, sx: .026, sy: .12, sz: .026, ao: .3 }); },
+    tete(k) { const n = '#3a322f'; F(k, G.ico0, n, { y: -.01, z: .02, sx: .04, sy: .045, sz: .05, ao: .1 }); for (const c of [-1, 1]) F(k, G.box, n, { x: c * .04, y: .01, sx: .035, sy: .012, sz: .02, ry: c * .3, ao: 0 }); F(k, G.ico0, '#f3efe4', { y: .03, z: -.005, s: .028, ao: 0 }); } },
+  poule: { pivot: [0, .11, .045], act: 'picore', vitesse: .08, rayon: .7, pause: [1, 3], sols: ['herbe', 'sable'],
+    corps(k, g) { const c = g % 2 ? '#f5f0e6' : '#c8703c', q = g % 2 ? '#3a322f' : '#7a4630'; F(k, G.ico0, c, { y: .075, sx: .045, sy: .042, sz: .06, ao: .3 }); F(k, G.tetra, q, { y: .1, z: -.06, sx: .03, sy: .04, sz: .03, rx: -.6, ao: 0 }); for (const x of [-.015, .015]) baton(k, [x, 0, 0], [x, .05, 0], .005, .005, '#e0a848', 4); },
+    tete(k, g) { const c = g % 2 ? '#f5f0e6' : '#c8703c'; F(k, G.sph, c, { s: .024, ao: 0 }); F(k, G.box, '#e8452e', { y: .026, sx: .008, sy: .018, sz: .02, ao: 0 }); F(k, cone(4), '#f2a63c', { z: .03, sx: .008, sy: .02, sz: .008, rx: Math.PI / 2, ao: 0 }); F(k, G.box, '#e8452e', { y: -.014, z: .018, sx: .006, sy: .012, sz: .006, ao: 0 }); } },
+  crabe: { pivot: null, act: 'cote', vitesse: .15, rayon: .8, pause: [1, 3], sols: ['sable'],
+    corps(k) { const c = '#e8552e', s = '#c9431f'; F(k, G.ico0, c, { y: .028, sx: .05, sy: .02, sz: .036, ao: .2 }); for (const d of [-1, 1]) { F(k, G.ico0, c, { x: d * .055, y: .028, z: .025, sx: .022, sy: .014, sz: .02, ao: 0 }); for (let i = 0; i < 3; i++) F(k, G.box, s, { x: d * (.05 + i * .004), y: .014, z: -.02 + i * .016, sx: .03, sy: .006, sz: .006, rz: d * .5, ao: 0 }); F(k, G.sph, '#2a1f1c', { x: d * .012, y: .045, z: .028, s: .006, ao: 0 }); } } },
+  renard: { pivot: [0, .17, .12], act: 'flaire', vitesse: .25, rayon: 1.6, pause: [1.5, 4], sols: ['herbe'],
+    corps(k, g) { const o = '#e07a30', w = '#f6e9d8', n = '#3a2a22'; F(k, G.ico1, o, { y: .13, sx: .06, sy: .065, sz: .13, bosse: .1, graine: g, ao: .3 }); F(k, G.ico1, w, { y: .1, z: .06, sx: .04, sy: .04, sz: .05, ao: .2 }); F(k, G.ico1, o, { y: .12, z: -.16, sx: .035, sy: .035, sz: .09, bosse: .12, graine: g + 2, rx: -.35, ao: .2 }); F(k, G.ico0, w, { y: .14, z: -.23, s: .025, ao: 0 }); for (const [x, z] of [[-.03, -.06], [.03, -.06], [-.03, .07], [.03, .07]]) F(k, G.box, n, { x, y: .05, z, sx: .02, sy: .1, sz: .02, ao: .3 }); },
+    tete(k) { const o = '#e07a30', w = '#f6e9d8', n = '#3a2a22'; F(k, G.ico0, o, { sx: .04, sy: .035, sz: .045, ao: .1 }); F(k, cone(5), w, { y: -.008, z: .045, sx: .015, sy: .035, sz: .012, rx: Math.PI / 2, ao: 0 }); F(k, G.sph, n, { y: -.006, z: .064, s: .007, ao: 0 }); for (const c of [-1, 1]) F(k, G.tetra, o, { x: c * .022, y: .035, z: -.005, sx: .014, sy: .028, sz: .012, ao: 0 }); } },
+  lievre: { pivot: [0, .11, .06], act: 'saute', saut: true, vitesse: .5, rayon: 1.3, pause: [2, 5], sols: ['herbe'],
+    corps(k, g, B) { const blanc = B?.enneige, c = blanc ? '#f2eee8' : '#a88a6c', s = blanc ? '#d9d4cc' : '#8a6e52'; F(k, G.ico1, c, { y: .07, sx: .05, sy: .06, sz: .085, bosse: .12, graine: g, ao: .3 }); F(k, G.sph, '#ffffff', { y: .08, z: -.085, s: .018, ao: 0 }); for (const [x, z] of [[-.028, -.04], [.028, -.04]]) F(k, G.ico0, s, { x, y: .03, z, sx: .02, sy: .025, sz: .04, ao: .2 }); for (const [x, z] of [[-.02, .05], [.02, .05]]) F(k, G.box, s, { x, y: .02, z, sx: .012, sy: .04, sz: .012, ao: .2 }); },
+    tete(k, g, B) { const c = B?.enneige ? '#f2eee8' : '#a88a6c'; F(k, G.ico0, c, { sx: .032, sy: .03, sz: .04, ao: .1 }); for (const d of [-1, 1]) { F(k, G.sph, '#2a1f1c', { x: d * .014, y: .008, z: .025, s: .005, ao: 0 }); F(k, G.box, c, { x: d * .012, y: .05, z: -.01, sx: .012, sy: .07, sz: .006, rz: d * -.15, rx: -.2, ao: 0 }); } } },
+  rougegorge: { pivot: [0, .045, .02], act: 'saute', saut: true, vitesse: .3, rayon: .8, pause: [1, 3], sols: ['herbe', 'roche', 'neige'],
+    corps(k) { const b = '#8a6a4a', r = '#e8552e', q = '#5e4632'; F(k, G.sph, b, { y: .03, sx: .018, sy: .018, sz: .026, ao: .2 }); F(k, G.sph, r, { y: .024, z: .012, sx: .015, sy: .014, sz: .016, ao: 0 }); F(k, G.box, q, { y: .036, z: -.03, sx: .012, sy: .004, sz: .022, rx: .3, ao: 0 }); for (const x of [-.006, .006]) baton(k, [x, 0, 0], [x, .02, 0], .002, .002, q, 3); },
+    tete(k) { F(k, G.sph, '#8a6a4a', { s: .014, ao: 0 }); F(k, G.sph, '#e8552e', { y: -.005, z: .008, s: .01, ao: 0 }); F(k, cone(4), '#3a2a22', { z: .018, sx: .004, sy: .012, sz: .004, rx: Math.PI / 2, ao: 0 }); } },
+  chat: { pivot: [0, .17, .04], act: 'regarde', vitesse: .1, rayon: .5, pause: [3, 7], sols: ['herbe', 'sable'], // assis, la queue autour des pattes
+    corps(k, g) { const c = g % 2 ? '#8d8d96' : '#d9883a', w = '#f4ede2'; F(k, G.ico1, c, { y: .09, sx: .05, sy: .09, sz: .065, bosse: .1, graine: g, ao: .3 }); F(k, G.ico1, w, { y: .07, z: .035, sx: .03, sy: .05, sz: .03, ao: .2 }); for (const x of [-.022, .022]) F(k, G.box, c, { x, y: .025, z: .05, sx: .018, sy: .05, sz: .02, ao: .2 }); baton(k, [.04, .02, -.05], [.1, .025, .04], .011, .008, c, 4); },
+    tete(k, g) { const c = g % 2 ? '#8d8d96' : '#d9883a'; F(k, G.ico0, c, { sx: .04, sy: .036, sz: .04, ao: .1 }); F(k, G.sph, '#f4ede2', { y: -.01, z: .03, sx: .018, sy: .012, sz: .014, ao: 0 }); for (const d of [-1, 1]) { F(k, G.tetra, c, { x: d * .022, y: .03, z: 0, sx: .013, sy: .026, sz: .01, ao: 0 }); F(k, G.sph, '#7fc26b', { x: d * .014, y: .006, z: .034, s: .005, ao: 0 }); } } },
+  chevreuil: { pivot: [0, .34, .18], act: 'broute', vitesse: .3, rayon: 1.4, pause: [2, 5], sols: ['herbe'],
+    corps(k, g) { const c = '#b98a5a', p = '#8a6a48'; F(k, G.ico1, c, { y: .21, sx: .06, sy: .075, sz: .15, bosse: .1, graine: g, ao: .3 }); F(k, G.ico0, '#f6efe4', { y: .21, z: -.14, sx: .035, sy: .04, sz: .02, ao: 0 }); baton(k, [0, .24, .1], [0, .33, .17], .03, .022, c, 5); for (const [x, z] of [[-.03, -.08], [.03, -.08], [-.03, .07], [.03, .07]]) F(k, G.box, p, { x, y: .09, z, sx: .016, sy: .18, sz: .016, ao: .3 }); },
+    tete(k) { const c = '#b98a5a'; F(k, G.ico0, c, { sx: .033, sy: .036, sz: .06, ao: .1 }); F(k, G.sph, '#2a1f1c', { z: .062, s: .008, ao: 0 }); for (const d of [-1, 1]) { F(k, G.tetra, c, { x: d * .026, y: .025, z: -.01, sx: .012, sy: .03, sz: .01, ao: 0 }); baton(k, [d * .014, .03, -.01], [d * .04, .1, -.02], .006, .003, '#6b5a4a', 4); baton(k, [d * .027, .065, -.015], [d * .015, .1, -.03], .004, .002, '#6b5a4a', 3); } } },
+};
+export function bete(kind, g, B) { // une bête en groupe animé : le corps, et la tête sur son pivot
+  const b = BETES[kind], kb = bati(g), kt = bati(g + 1), grp = new THREE.Group();
+  b.corps(kb, g, B); grp.add(kb.b.maillage());
+  let tete = null; if (b.tete) { b.tete(kt, g, B); tete = kt.b.maillage(); tete.position.set(...b.pivot); grp.add(tete); }
+  return { ...b, grp, tete };
+}
+export function activite(b, T, arret) { // ce que fait une bête à l’arrêt, et en chemin : la tête qui broute, picore, flaire, regarde
+  const t = b.tete; if (!t) return;
+  let rx = 0, ry = 0;
+  if (b.act === 'broute') rx = arret ? .85 + Math.sin(T * 5) * .08 : .1;
+  else if (b.act === 'picore') rx = arret ? (Math.sin(T * 7) > .2 ? .7 : 0) : Math.sin(T * 12) * .15;
+  else if (b.act === 'flaire') rx = arret ? .45 + Math.sin(T * 3) * .1 : .05;
+  else if (b.act === 'saute') ry = arret ? Math.sin(T * .8) * .6 : 0;
+  else if (b.act === 'regarde') { ry = Math.sin(T * .5) * .7; rx = Math.max(0, Math.sin(T * .23)) * .3; }
+  t.rotation.x += (rx - t.rotation.x) * .12; t.rotation.y += (ry - t.rotation.y) * .12;
+}
+const TAILLE_BETE = 1.25; // les bêtes des familles, un peu plus grandes que celles qui passent
+function poserBete(kind, k, g, B) { // dans le bâti de l’île (de loin), ou en groupe animé, la tête qui vit
+  const b = BETES[kind];
+  if (!k.grp) { b.corps(k, g, B); if (b.tete) b.tete(sur(k, b.pivot), g, B); return; }
+  const o = bete(kind, g, B); o.grp.position.set(k.dx || 0, k.dy || 0, k.dz || 0); o.grp.scale.setScalar(k.s ?? 1); o.grp.rotation.y = k.ry || 0; k.grp.add(o.grp);
+  const ph = g % 7; k.anims.push(T => activite(o, T + ph, Math.sin((T + ph) * .3) > -.3)); // à l’arrêt le plus souvent, la tête qui se relève parfois
+}
+function abri(k, B, x, z) { // un petit abri ouvert : quatre poteaux, un toit du paysage, de la paille au sol
+  const t = choix(B.maisons.toits, k.v)[0];
+  for (const [dx, dz] of [[-.2, -.15], [.2, -.15], [-.2, .15], [.2, .15]]) F(k, G.box, BOIS[2], { x: x + dx, y: .16, z: z + dz, sx: .035, sy: .32, sz: .035, ao: .3 });
+  F(k, G.box, BOIS[1], { x, y: .33, z, sx: .5, sy: .03, sz: .4, ao: 0 }); F(k, G.prisme, t, { x, y: .34, z, sx: .56, sy: .16, sz: .46, ao: .25, varie: .04 });
+  if (B.enneige) F(k, G.prisme, '#ffffff', { x, y: .43, z, sx: .58, sy: .09, sz: .26, ao: 0 });
+  F(k, G.box, '#d9c9a0', { x, y: .03, z, sx: .5, sy: .06, sz: .4, ao: 0 });
+}
+function animal(a, k) { // toi, tel que tu es : une bête sur le pré ; redit, une deuxième, puis un petit troupeau et son abri. Fermé : elle tourne le dos
+  const e = a.espece, st = a.stade, s0 = k.s ?? 1, B = k.B, g = Math.floor(k.v * 1e5) + 3, dos = a.etats.ferme ? Math.PI : 0;
+  const places = st >= 3 ? [[0, .02, 1, .3], [-.32, .2, .9, 2.5], [.3, .24, .85, 4.2]] : st === 2 ? [[-.14, .06, 1, .4], [.22, -.18, .9, 2.7]] : [[0, 0, st ? 1 : .72, .6]]; // [x, z, taille, orientation]
+  places.forEach(([dx, dz, s, ry], i) => poserBete(e, { ...k, dx: (k.dx || 0) + dx * s0, dz: (k.dz || 0) + dz * s0, s: s0 * s * TAILLE_BETE, ry: ry + k.v * 2 + dos }, g + i * 7, B));
+  if (st >= 3) abri(k, B, -.04, -.44);
+  touffe(k, .3 * s0 + (k.dx || 0), .28 * s0 + (k.dz || 0), B);
+}
+
+/* ───────── Les buissons ───────── */
+// Ce qu’on a voulu : un buisson au bord du chemin. Une ronce, un buisson sec, un buisson fleuri, un buisson de baies, un buisson.
+
+const SECS = ['#d3bb88', '#b39a63', '#8f7a4e'], RONCE = ['#4d6b3a', '#3c5530', '#2f4426'];
+function unBuisson(e, k, v, i) {
+  const B = k.B, t = e === 'buissonsec' ? SECS : e === 'ronce' ? RONCE : B.feuillu.tons[0], g = Math.round(v * 91) + i, r = rngL(g * 7 + 1);
+  const masses = e === 'ronce' ? [[0, .13, 0, .3, .17, .28], [.16, .1, .08, .2, .12, .18], [-.15, .09, -.06, .19, .12, .17], [.03, .08, -.17, .16, .1, .14]] : [[0, .2, 0, .26, .22, .25], [.17, .15, .06, .17, .14, .16], [-.16, .13, -.04, .16, .13, .15], [.02, .12, -.16, .14, .11, .13]];
+  masses.forEach(([x, y, z, sx, sy, sz], j) => F(k, G.ico1, t[j % 3], { x, y, z, sx, sy, sz, bosse: .16, graine: g + j, ao: .4 }));
+  if (e === 'buissonsec') for (let j = 0; j < 4; j++) { const an = r() * 6.28; baton(k, [Math.cos(an) * .1, .15, Math.sin(an) * .1], [Math.cos(an) * .22, .38 + r() * .1, Math.sin(an) * .22], .012, .004, '#7a5a3c', 4); } // des branches nues
+  if (e === 'ronce') for (let j = 0; j < 3; j++) { const an = r() * 6.28; baton(k, [0, .12, 0], [Math.cos(an) * .36, .06, Math.sin(an) * .36], .014, .006, '#3a4a2c', 4); for (let q = 0; q < 3; q++) F(k, cone(3), '#2a2a22', { x: Math.cos(an) * (.15 + q * .08), y: .12 - q * .02, z: Math.sin(an) * (.15 + q * .08), sx: .012, sy: .035, sz: .012, rz: (q % 2 ? 1 : -1) * .8, ao: 0 }); } // des tiges qui retombent, et leurs épines
+  if (B.enneige) F(k, G.ico1, '#ffffff', { y: e === 'ronce' ? .28 : .4, sx: .24, sy: .06, sz: .22, bosse: .15, graine: g + 9, ao: 0 });
+  else if (e === 'buissonfleuri') { const pal = FLEURS[idDe(B)]; for (let j = 0; j < 9; j++) { const an = r() * 6.28, d = r() * .22; F(k, G.ico0, pal[j % pal.length], { x: Math.cos(an) * d, y: .3 + r() * .12, z: Math.sin(an) * d, s: .028, ao: 0 }); } }
+  else if (e === 'baies') for (let j = 0; j < 10; j++) { const an = r() * 6.28, d = .06 + r() * .2; F(k, G.sph, j % 3 ? '#e0413a' : '#b8262a', { x: Math.cos(an) * d, y: .22 + r() * .18, z: Math.sin(an) * d, s: .016, ao: 0 }); }
+}
+function buisson(a, k) { // un buisson ; redit, il grossit, fait une haie, puis un fourré. Fermé : un creux sombre au pied
+  const e = a.espece, st = a.stade, s0 = k.s ?? 1, v = k.v;
+  const places = st >= 3 ? [[0, 0, 1.15], [-.34, .1, .8], [.33, -.06, .85], [-.1, -.34, .7], [.14, .32, .75]] : st === 2 ? [[-.36, .08, .9], [0, -.02, 1], [.35, .06, .9]] : [[0, 0, st ? 1 : .68]];
+  places.forEach(([dx, dz, s], i) => unBuisson(e, { ...k, dx: (k.dx || 0) + dx * s0, dz: (k.dz || 0) + dz * s0, s: s0 * s, ry: v * 3 + i }, (v + i * .31) % 1, i));
+  if (a.etats.ferme) F(k, G.sph, '#2e2418', { y: .06, z: .22, sx: .07, sy: .05, sz: .03, ao: 0 });
+}
+
 /* ───────── Les lanternes : ce que le texte a éclairé ───────── */
 // Un texte ne montre jamais ses mots. Il allume des lanternes de papier qui flottent au-dessus de ce qu’il a fait pousser :
 // une par dépôt écrit, jusqu’à trois. Dans l’archipel, elles restent des points chauds, immobiles.
@@ -547,7 +640,7 @@ const LANTERNE = { corps: new THREE.CylinderGeometry(.075, .06, .14, 6), chapeau
 for (const g of Object.values(LANTERNE)) g._partage = true;
 const MAT_LANTERNE = { corps: new THREE.MeshBasicMaterial({ color: '#ffc870', toneMapped: false }), bois: new THREE.MeshStandardMaterial({ color: '#7a4630', flatShading: true, roughness: .8 }) };
 for (const m of Object.values(MAT_LANTERNE)) m._partage = true;
-const HAUT_LANTERNE = a => ({ arbre: [1.05, 1.3, 1.6, 1.85], maison: [.95, 1.1, 1.2, 1.3], pierre: [.65, .8, .95, 1.45], caillou: [.55, .6, .7, .75], culture: [.7, .8, .9, 1], meteo: [.6, .65, .7, .75] }[a.famille] || [.8, .9, 1, 1.1])[Math.min(3, a.stade || 0)];
+const HAUT_LANTERNE = a => ({ arbre: [1.05, 1.3, 1.6, 1.85], maison: [.95, 1.1, 1.2, 1.3], pierre: [.65, .8, .95, 1.45], caillou: [.55, .6, .7, .75], culture: [.7, .8, .9, 1], meteo: [.6, .65, .7, .75], animal: [.5, .6, .65, .8], buisson: [.6, .7, .8, .95] }[a.famille] || [.8, .9, 1, 1.1])[Math.min(3, a.stade || 0)];
 const PLACES_LANTERNE = [[.05, 0, .1], [.34, -.14, -.12], [-.3, -.07, -.16]], TAILLE_LANTERNE = 1.7; // assez grandes pour se voir de loin
 function lanternes(a, k) {
   if (a.famille === 'meteo' && !['fleurs', 'etang'].includes(a.espece)) return; // pas sous les nuages
@@ -573,7 +666,7 @@ function etatsCommuns(a, k) {
   }
   if (a.etats?.lueur) lanternes(a, k); // un texte : des lanternes, jamais ses mots
 }
-const FAMILLES = { arbre, pierre, caillou: pierre, maison, culture, meteo };
+const FAMILLES = { arbre, pierre, caillou: pierre, maison, culture, meteo, animal, buisson };
 
 // Construit une chose. o : { bati, lum (pour tout fusionner, sans animation), dx, dy, dz, s, bas, eauHex, propose }
 export function modeleChose(a, B = B0, v = .5, o = {}) {

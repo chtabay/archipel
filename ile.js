@@ -1,7 +1,7 @@
 // L’archipel : l’île. La carte, le placement des choses, l’île recalculée depuis ses dépôts, les îles inventées de l’archipel.
 // Aucun dessin ici : le relief, la mer et la lumière sont dans monde.js, les choses dans modeles.js, les paysages dans biomes.js.
 
-import { pousser, especeDe } from './grammaire.js?v=3';
+import { pousser, especeDe } from './grammaire.js?v=4';
 import { KEYS, MOCK } from './contenu.js?v=2';
 import { rng, hash, melange } from './outils.js?v=1';
 import { BIOMES, BIOME_IDS, biomeDe } from './biomes.js?v=2';
@@ -112,7 +112,7 @@ export function etape(seed, L) { // l’île avec ses L premières tuiles : son 
 
 /* ───────── Le placement : les quartiers ───────── */
 
-const QUARTIERS = { foret: [N * .28, N * .72], colline: [N * .26, N * .26], village: [N * .7, N * .7], champs: [N * .72, N * .3], centre: [N * .5, N * .5] };
+const QUARTIERS = { foret: [N * .28, N * .72], colline: [N * .26, N * .26], village: [N * .7, N * .7], champs: [N * .72, N * .3], centre: [N * .5, N * .5], lisiere: [N * .3, N * .5] };
 function zoneDe(a) {
   const e = a.espece;
   if (a.famille === 'meteo') return e === 'etang' ? ['bas', ['herbe', 'sable']] : e === 'fleurs' ? ['pre', ['herbe']] : ['ciel', ['herbe', 'sable', 'roche']];
@@ -120,6 +120,8 @@ function zoneDe(a) {
   if (a.famille === 'arbre') return ['foret', ['herbe', 'roche']];
   if (a.famille === 'pierre') return ['colline', ['roche', 'herbe', 'sable', 'neige']];
   if (a.famille === 'maison') return ['village', ['herbe', 'sable']];
+  if (a.famille === 'animal') return ['pre', ['herbe']];
+  if (a.famille === 'buisson') return ['lisiere', ['herbe', 'roche', 'sable']];
   if (e === 'barque') return ['rive', ['eau']];
   return ['champs', ['herbe', 'sable']];
 }

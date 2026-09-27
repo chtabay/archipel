@@ -45,19 +45,21 @@ Une confession ne se réduit pas à quelques nombres. Elle garde toutes ses case
 
 | Axe | D’après | Ce que ça fait |
 | --- | --- | --- |
-| **1. La place** (d’où ça vient) | le sujet coché, déplacé par « on m’a fait du mal » ou la question de plus | **la famille** : *reçu*, un arbre, dans la forêt ; *commis ou voulu*, une pierre, sur la colline ; *entre vous*, une construction, dans le village ; *soi et ce qui vient*, une culture, dans les champs ; *une sensation sans sujet*, le temps qu’il fait |
+| **1. La place** (d’où ça vient) | le sujet coché, déplacé par « on m’a fait du mal » ou la question de plus | **la famille** : *reçu*, un arbre, dans la forêt ; *commis*, une pierre, sur la colline ; *voulu*, un buisson, au bord du chemin ; *entre vous*, une construction, dans le village ; *toi, tel que tu es*, un animal, sur le pré ; *ce qui occupe tes jours*, une culture, dans les champs ; *une sensation sans sujet*, le temps qu’il fait |
 | **2. La sensation** (comment c’est ressenti) | le quadrant des mots : agité ou éteint, douloureux ou supportable | **l’espèce** : voir le tableau ci-dessous |
-| **3. Le temps** (depuis quand) | récent, depuis longtemps, il y a longtemps ; plus d’une fois, ça continue | **la taille** : jeune, adulte, vieux ; un sujet redit grandit d’un cran (bosquet, pierre levée, hameau, moulin) ; « plus d’une fois » met en deux |
-| **4. Le silence** (qui le sait) | jamais dit, cette personne ne le sait pas, jamais parlé ; et la présence d’un texte | **l’état** : fermé (un creux, enterrée, porte close, couvert, en friche) ; des lanternes s’il y a un texte, jamais son contenu |
+| **3. Le temps** (depuis quand) | récent, depuis longtemps, il y a longtemps ; plus d’une fois, ça continue | **la taille** : jeune, adulte, vieux ; un sujet redit grandit d’un cran (bosquet, pierre levée, hameau, moulin, petit troupeau et son abri, haie puis fourré) ; « plus d’une fois » met en deux |
+| **4. Le silence** (qui le sait) | jamais dit, cette personne ne le sait pas, jamais parlé ; et la présence d’un texte | **l’état** : fermé (un creux, enterrée, porte close, couvert, en friche, la bête qui tourne le dos, un creux au pied du buisson) ; des lanternes s’il y a un texte, jamais son contenu |
 
 Les espèces, famille par sensation :
 
 | | agité, douloureux | éteint, douloureux | agité, supportable | éteint, supportable | sans mot |
 | --- | --- | --- | --- | --- | --- |
 | **arbre** (reçu) | pin | arbre nu | arbre | arbre en fleurs | arbre |
-| **pierre** (commis, voulu) | pierre sombre | pierre moussue | cairn | galet | pierre |
+| **pierre** (commis) | pierre sombre | pierre moussue | cairn | galet | pierre |
+| **buisson** (voulu) | ronce | buisson sec | buisson fleuri | buisson de baies | buisson |
 | **construction** (entre vous) | clôture | maison aux volets fermés | pont | banc | maison |
-| **culture** (soi, ce qui vient) | feu | puits | champ | barque | champ |
+| **animal** (toi, tel que tu es) | lièvre | chat | chevreuil | mouton | poule |
+| **culture** (ce qui occupe tes jours) | feu | puits | champ | barque | champ |
 | **temps** (une sensation) | nuage d’orage | nuage de pluie | fleurs | étang | — |
 
 Les autres cases : *ça tourne en boucle*, un sentier usé autour ; *ça continue*, il pleut dessus ; *je regrette*, la mousse et des fleurs reprennent la pierre ; *jamais réparé*, la pierre est fendue ; *je me sens responsable*, un caillou au pied de l’arbre ; *danger* ou *peur de cette personne*, un phare sur la rive, qu’on touche pour parler à quelqu’un ; *pas bien du tout*, le ciel se couvre.
@@ -67,7 +69,7 @@ Les autres cases : *ça tourne en boucle*, un sentier usé autour ; *ça continu
 - **Un sujet par graine.** Une confession qui parle de trois sujets fait pousser trois choses. Sans sujet, la situation suffit : « on m’a fait du mal », un arbre ; « je regrette », une pierre ; les deux, un arbre et une pierre. Avec des sujets, une situation qu’aucun sujet ne porte fait aussi pousser sa chose. Sinon la sensation laisse un temps qu’il fait. Rien du tout : un caillou posé, qui porte quand même ses états.
 - **Chaque quadrant coché laisse sa trace.** Le quadrant principal donne l’espèce. Les autres ajoutent un temps qu’il fait : « tristesse et espoir », une maison aux volets fermés et des fleurs.
 - **Le texte compte comme des cases.** Les sujets repérés dans le texte poussent comme s’ils avaient été cochés. Le texte donne aussi la sensation quand aucun mot n’est coché. Il allume une lanterne de papier au-dessus de ce qu’il fait pousser, une de plus à chaque texte, jusqu’à trois. Ses mots, eux, ne sont jamais sur l’île.
-- **Un sujet redit fait grandir**, jamais une deuxième chose. Les arbres et les pierres suivent la sensation du jour. Une construction ou une culture garde son espèce.
+- **Un sujet redit fait grandir**, jamais une deuxième chose. Les arbres, les pierres et les buissons suivent la sensation du jour. Une construction, une culture ou un animal garde son espèce.
 - **Le climat** de l’île suit la dernière confession : grand jour, jour ordinaire, soir doux, crépuscule, brume du matin.
 - **L’île grandit avec ce qu’on y dépose.** Une île vide est un îlot. Chaque dépôt étend la terre, tuile après tuile, depuis le centre, jusqu’à l’île pleine après six ou sept dépôts. Une île finie a donc la taille de ce qu’on y a laissé, dans sa vue comme dans l’archipel.
 - **Le placement** est par quartiers : la forêt, la colline de pierres, le village, les champs ; les barques à la rive, les cailloux sur la plage. Ce que fait pousser un dépôt se place sur l’île telle qu’elle est à ce moment-là. La terre ne fait que s’ajouter, donc les positions ne bougent pas. Seules les barques suivent le rivage quand il s’éloigne.

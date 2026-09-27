@@ -2,97 +2,25 @@
 // confession : des moutons en prairie, des poules près des maisons, des crabes sur le sable, un renard en automne,
 // des lièvres dans la lande, des rouges-gorges dans la neige, des papillons. Chacune va d’une place libre à une autre,
 // s’arrête, broute, picore, flaire, saute. Elles évitent les cases où quelque chose a poussé. Le mouvement réduit les
-// laisse en place.
+// laisse en place. Les bêtes elles-mêmes sont dessinées dans modeles.js : la famille des animaux les partage.
 
 import * as THREE from './vendor/three.min.js?v=1';
-import { N, sol } from './ile.js?v=7';
-import { Bati, F, G, cone, baton } from './modeles.js?v=9';
+import { N, sol } from './ile.js?v=8';
+import { BETES, bete, activite } from './modeles.js?v=10';
 import { rng } from './outils.js?v=1';
 
 const immobile = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
-const bati = g => ({ b: new Bati(g), s: 1 });
-function monter(kb, kt, pivot, o) { // le corps, et la tête sur son pivot, pour qu’elle bouge seule
-  const grp = new THREE.Group(); grp.add(kb.b.maillage());
-  let tete = null; if (kt) { tete = kt.b.maillage(); tete.position.set(...pivot); grp.add(tete); }
-  return { grp, tete, ...o };
-}
+const TAILLES = { mouton: 1.3, poule: 1.45, crabe: 1.5, renard: 1.15, lievre: 1.35, rougegorge: 1.7, papillon: 1.3 }; // un peu plus grandes que nature, pour se voir
 
-/* ───────── Les bêtes : chacune regarde vers +z, posée en y = 0 ───────── */
-
-function mouton(g) { // laineux, la tête sombre qui broute, quatre pattes
-  const kb = bati(g), kt = bati(g + 1), n = '#3a322f';
-  F(kb, G.ico1, '#f3efe4', { y: .17, sx: .11, sy: .095, sz: .15, bosse: .16, graine: g, ao: .3 });
-  F(kb, G.ico1, '#faf7f0', { y: .2, z: .01, sx: .085, sy: .07, sz: .11, bosse: .18, graine: g + 3, ao: .2 });
-  for (const [x, z] of [[-.055, -.07], [.055, -.07], [-.055, .06], [.055, .06]]) F(kb, G.box, n, { x, y: .06, z, sx: .026, sy: .12, sz: .026, ao: .3 });
-  F(kt, G.ico0, n, { y: -.01, z: .02, sx: .04, sy: .045, sz: .05, ao: .1 });
-  for (const c of [-1, 1]) F(kt, G.box, n, { x: c * .04, y: .01, sx: .035, sy: .012, sz: .02, ry: c * .3, ao: 0 }); // les oreilles
-  F(kt, G.ico0, '#f3efe4', { y: .03, z: -.005, s: .028, ao: 0 }); // une touffe sur la tête
-  return monter(kb, kt, [0, .19, .13], { vitesse: .12, rayon: 1.1, pause: [2, 5], sols: ['herbe'], act: 'broute' });
-}
-function poule(g) { // blanche ou rousse, la crête, le bec, la queue ; elle picore
-  const kb = bati(g), kt = bati(g + 1), c = g % 2 ? '#f5f0e6' : '#c8703c', q = g % 2 ? '#3a322f' : '#7a4630';
-  F(kb, G.ico0, c, { y: .075, sx: .045, sy: .042, sz: .06, ao: .3 });
-  F(kb, G.tetra, q, { y: .1, z: -.06, sx: .03, sy: .04, sz: .03, rx: -.6, ao: 0 });
-  for (const x of [-.015, .015]) baton(kb, [x, 0, 0], [x, .05, 0], .005, .005, '#e0a848', 4);
-  F(kt, G.sph, c, { s: .024, ao: 0 }); F(kt, G.box, '#e8452e', { y: .026, sx: .008, sy: .018, sz: .02, ao: 0 }); F(kt, cone(4), '#f2a63c', { z: .03, sx: .008, sy: .02, sz: .008, rx: Math.PI / 2, ao: 0 }); F(kt, G.box, '#e8452e', { y: -.014, z: .018, sx: .006, sy: .012, sz: .006, ao: 0 });
-  return monter(kb, kt, [0, .11, .045], { vitesse: .08, rayon: .7, pause: [1, 3], sols: ['herbe', 'sable'], act: 'picore' });
-}
-function crabe(g) { // plat, deux pinces, six pattes, deux yeux ; il va de côté
-  const kb = bati(g), c = '#e8552e', s = '#c9431f';
-  F(kb, G.ico0, c, { y: .028, sx: .05, sy: .02, sz: .036, ao: .2 });
-  for (const d of [-1, 1]) {
-    F(kb, G.ico0, c, { x: d * .055, y: .028, z: .025, sx: .022, sy: .014, sz: .02, ao: 0 });
-    for (let i = 0; i < 3; i++) F(kb, G.box, s, { x: d * (.05 + i * .004), y: .014, z: -.02 + i * .016, sx: .03, sy: .006, sz: .006, rz: d * .5, ao: 0 });
-    F(kb, G.sph, '#2a1f1c', { x: d * .012, y: .045, z: .028, s: .006, ao: 0 });
-  }
-  return monter(kb, null, null, { vitesse: .15, rayon: .8, pause: [1, 3], sols: ['sable'], act: 'cote' });
-}
-function renard(g) { // roux, le poitrail et le bout de la queue blancs, les oreilles pointues ; il trotte et flaire
-  const kb = bati(g), kt = bati(g + 1), o = '#e07a30', w = '#f6e9d8', n = '#3a2a22';
-  F(kb, G.ico1, o, { y: .13, sx: .06, sy: .065, sz: .13, bosse: .1, graine: g, ao: .3 }); F(kb, G.ico1, w, { y: .1, z: .06, sx: .04, sy: .04, sz: .05, ao: .2 });
-  F(kb, G.ico1, o, { y: .12, z: -.16, sx: .035, sy: .035, sz: .09, bosse: .12, graine: g + 2, rx: -.35, ao: .2 }); F(kb, G.ico0, w, { y: .14, z: -.23, s: .025, ao: 0 });
-  for (const [x, z] of [[-.03, -.06], [.03, -.06], [-.03, .07], [.03, .07]]) F(kb, G.box, n, { x, y: .05, z, sx: .02, sy: .1, sz: .02, ao: .3 });
-  F(kt, G.ico0, o, { sx: .04, sy: .035, sz: .045, ao: .1 }); F(kt, cone(5), w, { y: -.008, z: .045, sx: .015, sy: .035, sz: .012, rx: Math.PI / 2, ao: 0 }); F(kt, G.sph, n, { y: -.006, z: .064, s: .007, ao: 0 });
-  for (const c of [-1, 1]) F(kt, G.tetra, o, { x: c * .022, y: .035, z: -.005, sx: .014, sy: .028, sz: .012, ao: 0 });
-  return monter(kb, kt, [0, .17, .12], { vitesse: .25, rayon: 1.6, pause: [1.5, 4], sols: ['herbe'], act: 'flaire' });
-}
-function lievre(g, B) { // brun, ou blanc dans la neige ; les longues oreilles ; il se tient, puis saute
-  const kb = bati(g), kt = bati(g + 1), blanc = B.enneige, c = blanc ? '#f2eee8' : '#a88a6c', s = blanc ? '#d9d4cc' : '#8a6e52';
-  F(kb, G.ico1, c, { y: .07, sx: .05, sy: .06, sz: .085, bosse: .12, graine: g, ao: .3 }); F(kb, G.sph, '#ffffff', { y: .08, z: -.085, s: .018, ao: 0 });
-  for (const [x, z] of [[-.028, -.04], [.028, -.04]]) F(kb, G.ico0, s, { x, y: .03, z, sx: .02, sy: .025, sz: .04, ao: .2 });
-  for (const [x, z] of [[-.02, .05], [.02, .05]]) F(kb, G.box, s, { x, y: .02, z, sx: .012, sy: .04, sz: .012, ao: .2 });
-  F(kt, G.ico0, c, { sx: .032, sy: .03, sz: .04, ao: .1 }); for (const d of [-1, 1]) F(kt, G.sph, '#2a1f1c', { x: d * .014, y: .008, z: .025, s: .005, ao: 0 });
-  for (const d of [-1, 1]) F(kt, G.box, c, { x: d * .012, y: .05, z: -.01, sx: .012, sy: .07, sz: .006, rz: d * -.15, rx: -.2, ao: 0 });
-  return monter(kb, kt, [0, .11, .06], { vitesse: .5, rayon: 1.3, pause: [2, 5], sols: ['herbe'], act: 'saute', saut: true });
-}
-function rougegorge(g) { // tout petit, la gorge rouge ; il sautille
-  const kb = bati(g), kt = bati(g + 1), b = '#8a6a4a', r = '#e8552e', q = '#5e4632';
-  F(kb, G.sph, b, { y: .03, sx: .018, sy: .018, sz: .026, ao: .2 }); F(kb, G.sph, r, { y: .024, z: .012, sx: .015, sy: .014, sz: .016, ao: 0 }); F(kb, G.box, q, { y: .036, z: -.03, sx: .012, sy: .004, sz: .022, rx: .3, ao: 0 });
-  for (const x of [-.006, .006]) baton(kb, [x, 0, 0], [x, .02, 0], .002, .002, q, 3);
-  F(kt, G.sph, b, { s: .014, ao: 0 }); F(kt, G.sph, r, { y: -.005, z: .008, s: .01, ao: 0 }); F(kt, cone(4), '#3a2a22', { z: .018, sx: .004, sy: .012, sz: .004, rx: Math.PI / 2, ao: 0 });
-  return monter(kb, kt, [0, .045, .02], { vitesse: .3, rayon: .8, pause: [1, 3], sols: ['herbe', 'roche', 'neige'], act: 'saute', saut: true });
-}
 function papillon(g, B, couleurs = ['#ffd166', '#ffffff']) { // deux ailes qui battent, d’une couleur du paysage ; il vole autour d’une place
   const grp = new THREE.Group(), mat = new THREE.MeshBasicMaterial({ color: couleurs[g % couleurs.length], side: THREE.DoubleSide });
   const aile = () => { const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute([0, 0, -.012, 0, 0, .014, .03, 0, .006, 0, 0, -.012, .03, 0, .006, .022, 0, -.02], 3)); return new THREE.Mesh(geo, mat); };
   const ag = aile(), ad = aile(); ad.scale.x = -1; grp.add(ag, ad);
   return { grp, ailes: [ag, ad], vole: true, rayon: .5, sols: ['herbe', 'sable'] };
 }
-export const BETES = { mouton, poule, crabe, renard, lievre, rougegorge, papillon };
-const SOLS = { mouton: ['herbe'], poule: ['herbe', 'sable'], crabe: ['sable'], renard: ['herbe'], lievre: ['herbe'], rougegorge: ['herbe', 'roche', 'neige'], papillon: ['herbe', 'sable'] }; // où chaque bête se tient
-const TAILLES = { mouton: 1.3, poule: 1.45, crabe: 1.5, renard: 1.15, lievre: 1.35, rougegorge: 1.7, papillon: 1.3 }; // un peu plus grandes que nature, pour se voir
 
 /* ───────── Aller et venir ───────── */
 
-function activite(b, T, arret) { // ce que fait une bête à l’arrêt, et en chemin
-  const t = b.tete; if (!t) return;
-  let rx = 0, ry = 0;
-  if (b.act === 'broute') rx = arret ? .85 + Math.sin(T * 5) * .08 : .1;
-  else if (b.act === 'picore') rx = arret ? (Math.sin(T * 7) > .2 ? .7 : 0) : Math.sin(T * 12) * .15;
-  else if (b.act === 'flaire') rx = arret ? .45 + Math.sin(T * 3) * .1 : .05;
-  else if (b.act === 'saute') ry = arret ? Math.sin(T * .8) * .6 : 0;
-  t.rotation.x += (rx - t.rotation.x) * .12; t.rotation.y += (ry - t.rotation.y) * .12;
-}
 function promener(b, x0, z0, hy, va, r) { // d’une place à l’autre, dans un rayon autour de la sienne ; entre deux, un arrêt
   const o = b.grp;
   let x = x0, z = z0, cx = x0, cz = z0, dernier = null, attente = 1 + r() * 3, ang = r() * 6.28, phase = 0;
@@ -141,10 +69,10 @@ export function vie(d, B, h) {
   for (const [kind, n, couleurs] of B.vie || []) for (let k = 0; k < n; k++) {
     const g = Math.floor(r() * 1e6) + 1, pres = kind === 'poule' ? maisons[k % maisons.length]?.tile : null;
     if (kind === 'poule' && !maisons.length) break; // des poules, seulement près d’une maison
-    const t = place(SOLS[kind], pres);
+    const t = place(kind === 'papillon' ? ['herbe', 'sable'] : BETES[kind].sols, pres);
     if (!t) continue;
-    const b = BETES[kind](g, B, couleurs), x0 = t[0] + .3 + r() * .4 - N / 2, z0 = t[1] + .3 + r() * .4 - N / 2;
-    b.grp.scale.setScalar(TAILLES[kind] || 1); b.grp.traverse(o => { o.raycast = () => {}; }); // on ne touche pas les bêtes
+    const b = kind === 'papillon' ? papillon(g, B, couleurs) : bete(kind, g, B), x0 = t[0] + .3 + r() * .4 - N / 2, z0 = t[1] + .3 + r() * .4 - N / 2;
+    b.grp.scale.setScalar(TAILLES[kind] || 1); b.grp.traverse(o => { o.raycast = () => {}; }); // on ne touche pas les bêtes qui passent
     grp.add(b.grp); anims.push(b.vole ? voler(b, x0, z0, hy, r) : promener(b, x0, z0, hy, va, r));
   }
   return { grp, anims };
