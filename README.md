@@ -20,6 +20,14 @@ En bas de l’écran, trois onglets restent toujours à portée de pouce : **Dé
 6. **Changer d’île.** Celle-ci reste sur le téléphone et se revoit. Une case, décochée d’office, la met dans l’archipel : les autres verraient « une île avec deux arbres nus, une pierre et une maison », dans son paysage, rien d’autre.
 7. **L’archipel.** Une mer au soir, avec des voiliers, et les îles réelles : celles que des personnes y ont mises, les soixante plus récentes. Aucune n’est inventée ; tant que personne n’y a mis d’île, l’archipel le dit. Pendant qu’on regarde, les îles qui arrivent viennent de l’horizon, et celles qui grandissent changent sur place. Toucher une île fait s’en approcher. « Y mettre ton île » y pose la sienne, dans l’eau libre la plus proche de sa sensation ; ensuite, chaque dépôt la fait grandir là-bas aussi. On peut l’en retirer depuis son île.
 
+## L’installer comme une app
+
+Le site s’installe sur l’écran d’accueil, et s’ouvre alors en plein écran, comme une app, même sans réseau. Sur l’île, un lien discret, « installer l’app », paraît quand le navigateur le permet : sur Android et sur ordinateur, il ouvre la proposition du navigateur ; sur iPhone, il explique le bouton Partager de Safari, puis « Sur l’écran d’accueil ». Rien ne surgit tout seul au milieu d’un dépôt.
+
+- `manifest.webmanifest` donne le nom, les couleurs et les icônes. Les icônes sont dans `icones/`, avec leurs sources en SVG et le script qui les fabrique.
+- `sw.js` est le service worker. Il garde les fichiers du site que la page a chargés, jamais ce qu’on dépose, et ne touche pas à l’archipel partagé. La page se prend d’abord sur le réseau, pour avoir la dernière version ; sans réseau, c’est celle gardée. Les fichiers numérotés, comme `app.js?v=12`, ne changent jamais : gardés, ils servent tels quels. Après un changement de `sw.js`, on change son nom de cache, `CACHE`.
+- Sur iPhone, l’app installée a sa propre mémoire : elle commence avec une île vide, et l’île de Safari reste dans Safari. Sur Android, on retrouve son île.
+
 ## La grammaire : quatre axes lus dans les cases
 
 Une confession ne se réduit pas à quelques nombres. Elle garde toutes ses cases, dans un « dépôt », et l’île est recalculée à partir des dépôts. La grammaire est dans `grammaire.js`. Elle lit les cases. Le texte est lu par `lexique.js`, sur l’appareil seulement, pour y trouver des sujets et une sensation, qui poussent comme des cases cochées. Sur l’île, le texte allume des lanternes, jamais ses mots.
@@ -82,7 +90,7 @@ L’archipel vit dans la base du projet Supabase de Pyramides, dans un espace à
 
 ## Confidentialité
 
-- Site statique : pas de cookie, pas de traceur. La police et la bibliothèque 3D sont dans le dépôt.
+- Site statique : pas de cookie, pas de traceur. La police et la bibliothèque 3D sont dans le dépôt. Le service worker ne garde que les fichiers du site.
 - La seule requête vers l’extérieur va au serveur de l’archipel : pour le lire quand on le regarde, et pour y mettre, faire grandir ou retirer son île. Sans cookie ni adresse d’origine. Comme tout serveur, il voit passer l’adresse IP de la requête dans ses journaux ; la base, elle, ne la garde pas.
 - Ce qu’on dépose reste sur le téléphone, sans chiffrement. Le texte y est lu, pour y trouver des sujets, et n’en sort jamais.
 
@@ -103,6 +111,9 @@ L’archipel vit dans la base du projet Supabase de Pyramides, dans un espace à
 | `style.css` | Le style |
 | `app.js` | Les écrans, les feuilles, les gestes, le stockage local, l’archipel partagé |
 | `serveur.js` | Les appels au serveur de l’archipel : lire, poser, faire grandir, retirer une île |
+| `sw.js` | Le service worker : les fichiers du site, gardés pour s’ouvrir sans réseau |
+| `manifest.webmanifest` | Le manifeste de l’app installable : nom, couleurs, icônes |
+| `icones/` | Les icônes de l’app, leurs sources SVG et `fabriquer.js`, qui les dessine avec le Chromium des tests |
 | `contenu.js` | Les cases, les sujets et leurs poids, les mots-clés d’alerte, les numéros |
 | `grammaire.js` | Les familles par sujet, les espèces, les états, la composition, les phrases |
 | `lexique.js` | Les mots qui font pousser un sujet ou donnent une sensation, lus sur l’appareil |
@@ -115,13 +126,13 @@ L’archipel vit dans la base du projet Supabase de Pyramides, dans un espace à
 | `fonts/` | Nunito (licence SIL OFL 1.1) |
 | `404.html` | Page introuvable ; les anciennes adresses des maquettes et de `limbes/` mènent à l’accueil |
 | `base/archipel.sql` | La base de l’archipel partagé, telle qu’elle est dans le projet de Pyramides |
-| `tests/` | Les tests, dans Chromium avec une 3D logicielle : le parcours, l’intro, le retour, la stabilité, l’archipel partagé. Ils parlent à un faux serveur, en mémoire, jamais à la vraie base |
+| `tests/` | Les tests, dans Chromium avec une 3D logicielle : le parcours, l’intro, le retour, la stabilité, l’archipel partagé, l’installation. Ils parlent à un faux serveur, en mémoire, jamais à la vraie base |
 | `package.json` | Seulement pour les tests ; le site n’a besoin de rien |
 | `.nojekyll` | Sert les fichiers tels quels sur GitHub Pages |
 
 Le stockage local utilise le préfixe `archipel:`. Une île mise dans l’archipel y garde sa place et son jeton. Au premier passage, l’île gardée sous un ancien nom du projet est reprise, sans rien effacer. `archipel:intro` retient que l’intro a été vue ou passée.
 
-Chaque fichier est appelé avec un numéro de version, comme `?v=1`. Après une modification, on augmente le numéro de ce fichier là où il est appelé, pour qu’un téléphone ne mélange pas deux versions en cache.
+Chaque fichier est appelé avec un numéro de version, comme `?v=1`. Après une modification, on augmente le numéro de ce fichier là où il est appelé, pour qu’un téléphone ne mélange pas deux versions en cache. Le service worker s’y fie aussi : en local, sans changer le numéro, il resservirait l’ancien fichier ; les outils de développement du navigateur permettent de le contourner.
 
 Voir le site en local, depuis la racine du dépôt :
 
@@ -135,7 +146,7 @@ Lancer les tests, qui servent eux-mêmes le site, en une dizaine de minutes :
 ```sh
 npm install
 npm test            # toutes les suites
-npm test -- archipel    # une seule : parcours, intro, retour, stabilite ou archipel
+npm test -- archipel    # une seule : parcours, intro, retour, stabilite, archipel ou pwa
 ```
 
 Les captures d’écran des tests vont dans un dossier temporaire, ou dans celui que désigne `CAPTURES`. Sur GitHub, les tests tournent à chaque proposition de changement.

@@ -1,6 +1,6 @@
 // L’archipel : ce que les tests partagent. Chromium avec la 3D logicielle, un téléphone, le compte des vérifications,
 // et la surveillance des erreurs et des requêtes vers l’extérieur.
-const path = require('path'), os = require('os'), fs = require('fs');
+const path = require('path'), os = require('os'), fs = require('fs'), http = require('http');
 
 const BASE = process.env.BASE || 'http://127.0.0.1:8123/'; // le site, servi depuis la racine du dépôt
 const OUT = process.env.CAPTURES || path.join(os.tmpdir(), 'archipel-captures'); // les captures, pour regarder après coup
@@ -15,8 +15,24 @@ const bilan = () => { console.log(echecs ? `\n${echecs} échec(s) sur ${total}` 
 const surveiller = (p, erreurs, dehors) => {
   p.on('console', m => { if (m.type() === 'error' || m.type() === 'warning') erreurs.push(`[${m.type()}] ${m.text()}`); });
   p.on('pageerror', e => erreurs.push(`[pageerror] ${e.message}`));
-  p.on('request', r => { const u = r.url(); if (!u.startsWith(BASE.replace(/\/$/, '')) && !u.startsWith('data:') && !u.startsWith('blob:') && !ARCHIPEL.test(u)) dehors.push(u); }); // l’archipel est simulé à part
+  p.on('request', r => { const u = r.url(); if (!LOCAL.test(u) && !u.startsWith('data:') && !u.startsWith('blob:') && !ARCHIPEL.test(u)) dehors.push(u); }); // l’archipel est simulé à part
 };
+const LOCAL = /^http:\/\/127\.0\.0\.1(:\d+)?\//; // le site, servi ici
+const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.woff2': 'font/woff2', '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png', '.webmanifest': 'application/manifest+json' };
+// un serveur du dépôt, comme GitHub Pages : les fichiers tels quels, et 404.html sinon. etat.coupe : plus rien ne répond, comme sans réseau
+function servir(port = 0) {
+  const etat = { coupe: false, servies: 0 };
+  const s = http.createServer((req, res) => {
+    if (etat.coupe) { req.socket.destroy(); return; }
+    let p = decodeURIComponent(new URL(req.url, 'http://x').pathname);
+    if (p.endsWith('/')) p += 'index.html';
+    const f = path.join(RACINE, path.normalize(p));
+    etat.servies++;
+    if (!f.startsWith(RACINE) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) { res.writeHead(404, { 'content-type': TYPES['.html'] }); res.end(fs.readFileSync(path.join(RACINE, '404.html'))); return; }
+    res.writeHead(200, { 'content-type': TYPES[path.extname(f)] || 'application/octet-stream' }); fs.createReadStream(f).pipe(res);
+  });
+  return new Promise(ok => s.listen(port, '127.0.0.1', () => ok({ base: `http://127.0.0.1:${s.address().port}/`, etat, fermer: () => { s.closeAllConnections(); s.close(); } })));
+}
 const sansIntro = () => { localStorage.clear(); localStorage.setItem('archipel:intro', '1'); }; // à passer à page.evaluate
 
 // Un faux archipel, en mémoire, qui répond comme le vrai serveur : les tests ne touchent jamais la vraie base.
@@ -69,4 +85,4 @@ const formesInventees = (page, n, depart = 0, deja = []) => page.evaluate(async 
 }, [n, depart, deja.map(({ forme, x, z }) => ({ forme, x, z }))]);
 const peupler = async (page, archipel, n, depart = 0) => { for (const { forme, x, z } of await formesInventees(page, n, depart, archipel.etat.iles)) archipel.ajouter(forme, x, z); };
 
-module.exports = { BASE, OUT, RACINE, GL, TELEPHONE, verifier, bilan, surveiller, sansIntro, archipelFactice, contexte, formeValide, formesInventees, peupler, ARCHIPEL };
+module.exports = { BASE, OUT, RACINE, GL, TELEPHONE, verifier, bilan, surveiller, sansIntro, servir, archipelFactice, contexte, formeValide, formesInventees, peupler, ARCHIPEL };
