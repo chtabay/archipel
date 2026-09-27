@@ -47,7 +47,7 @@ body {
 }
 .head { display: flex; justify-content: space-between; align-items: center; padding-top: max(1rem, env(safe-area-inset-top)); }
 .brand { display: inline-flex; align-items: center; gap: .55rem; color: var(--ink); font-size: 1.35rem; font-weight: 800; letter-spacing: .01em; line-height: 1; }
-.logo { flex: none; width: 1.75rem; height: 1.75rem; }
+.logo { flex: none; width: 1.75rem; height: 1.75rem; object-fit: contain; }
 main { flex: 1; padding-top: 1.4rem; padding-bottom: 1.5rem; }
 .foot {
   display: flex;

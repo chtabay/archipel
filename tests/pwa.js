@@ -22,7 +22,7 @@ const semer = p => p.evaluate(i => { localStorage.clear(); localStorage.setItem(
     verifier(m.theme_color === await p.getAttribute('meta[name="theme-color"]', 'content') && m.background_color === m.theme_color, 'la couleur du manifeste est celle de la page');
     const tailles = await p.evaluate(srcs => Promise.all(srcs.map(s => new Promise(ok => { const i = new Image(); i.onload = () => ok(`${i.naturalWidth}×${i.naturalHeight}`); i.onerror = () => ok('absente'); i.src = s; }))), m.icons.map(i => i.src));
     const attendues = m.icons.map(i => i.sizes.replace('x', '×'));
-    verifier(m.icons.length === 3 && tailles.join() === attendues.join() && m.icons.some(i => i.purpose === 'maskable' && i.sizes === '512x512') && m.icons.some(i => i.purpose === 'any' && i.sizes === '192x192'), `les icônes se chargent, aux bonnes tailles (${tailles.join(', ')}), dont une pour Android qui va jusqu’aux bords`);
+    verifier(m.icons.length === 4 && tailles.join() === attendues.join() && m.icons.some(i => i.purpose === 'maskable' && i.sizes === '512x512') && m.icons.some(i => i.purpose === 'any' && i.sizes === '192x192'), `les icônes se chargent, aux bonnes tailles (${tailles.join(', ')}), dont une pour Android qui va jusqu’aux bords`);
     const pomme = await p.evaluate(() => new Promise(ok => { const i = new Image(); i.onload = () => ok(`${i.naturalWidth}×${i.naturalHeight}`); i.onerror = () => ok('absente'); i.src = document.querySelector('link[rel="apple-touch-icon"]').href; }));
     verifier(pomme === '180×180' && await p.$('meta[name="apple-mobile-web-app-capable"][content="yes"]') !== null, `l’icône pour l’iPhone se charge (${pomme}), et la page se dit app`);
 
