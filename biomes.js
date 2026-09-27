@@ -1,5 +1,6 @@
 // L’archipel : les paysages. Choisis par la personne quand elle commence une île.
-// Un paysage ne dit rien : il change les couleurs du sol, les essences, les maisons, les cultures et le petit décor.
+// Un paysage ne dit rien : il change les couleurs du sol, les essences, les maisons, les cultures, le petit décor,
+// et la vie qui se promène (vie.js) : des bêtes par paysage, [espèce, nombre, couleurs pour les papillons].
 // Ce qui dit quelque chose reste la famille, l’espèce, la taille et l’état (grammaire.js).
 
 export const BIOMES = {
@@ -13,7 +14,8 @@ export const BIOMES = {
     pin: { formes: ['sapin', 'elance', 'cypres'], tons: [['#4f9e66', '#357a4d', '#25593a']] },
     maisons: { murs: [['#f6eddb', '#dccfb5'], ['#efe6d6', '#d4c8b2']], toits: [['#dc6a52', '#b4503c'], ['#e38b5c', '#bd6b42']], styles: ['colombage', 'pierre', 'crepi'] },
     champs: ['ble', 'potager', 'ble'],
-    decor: { herbe: [['touffe', 5], ['paquerette', 3], ['bouton', 2], ['trefle', 2], ['dalle', 1]], sable: [['galet', 3], ['touffe', 1]], roche: [['eclat', 2], ['mousse', 2]], neige: [['eclat', 1]] },
+    decor: { herbe: [['touffe', 5], ['paquerette', 3], ['bouton', 2], ['trefle', 2], ['dalle', 1], ['buisson', 2], ['buissonfleuri', 1]], sable: [['galet', 3], ['touffe', 1], ['rocher', 1]], roche: [['eclat', 2], ['mousse', 2], ['rocher', 2]], neige: [['eclat', 1]] },
+    vie: [['mouton', 3], ['poule', 2], ['papillon', 3, ['#ffd166', '#ffffff', '#ff9ecf', '#b08cff']]],
     densite: .62, mousse: true,
   },
   automne: {
@@ -26,7 +28,8 @@ export const BIOMES = {
     pin: { formes: ['sapin', 'elance'], tons: [['#5b8f5a', '#406f43', '#2c5231']] },
     maisons: { murs: [['#f3e7d2', '#d8c9ae'], ['#e9dcc6', '#cdbd9f']], toits: [['#b8584a', '#8e4136'], ['#7f8fa3', '#626f80']], styles: ['colombage', 'bois', 'pierre'] },
     champs: ['citrouilles', 'ble'],
-    decor: { herbe: [['feuilles', 6], ['champignon', 3], ['touffe', 2], ['souche', 1], ['buche', 1]], sable: [['galet', 2], ['feuilles', 1]], roche: [['mousse', 2], ['champignon', 1], ['eclat', 1]], neige: [['eclat', 1]] },
+    decor: { herbe: [['feuilles', 6], ['champignon', 3], ['touffe', 2], ['souche', 1], ['buche', 1], ['buisson', 2]], sable: [['galet', 2], ['feuilles', 1], ['rocher', 1]], roche: [['mousse', 2], ['champignon', 1], ['eclat', 1], ['rocher', 2]], neige: [['eclat', 1]] },
+    vie: [['renard', 1], ['poule', 2], ['papillon', 1, ['#f2b93e', '#fff1c1']]],
     densite: .7, mousse: true, feuillesNues: true,
   },
   tropique: {
@@ -39,7 +42,8 @@ export const BIOMES = {
     pin: { formes: ['elance', 'cypres'], tons: [['#3f9a5a', '#2b7a45', '#1d5a33']] },
     maisons: { murs: [['#e2bd86', '#c29a66'], ['#f4e6cc', '#d8c6a4']], toits: [['#e8c870', '#c8a64c']], styles: ['paillote', 'bois'] },
     champs: ['riz', 'ananas'],
-    decor: { herbe: [['fougere', 4], ['fleurrouge', 2], ['touffe', 2]], sable: [['coquillage', 3], ['galet', 1], ['etoile', 1]], roche: [['eclat', 1], ['fougere', 1]], neige: [['eclat', 1]] },
+    decor: { herbe: [['fougere', 4], ['fleurrouge', 2], ['touffe', 2], ['buisson', 2], ['buissonfleuri', 1]], sable: [['coquillage', 3], ['galet', 1], ['etoile', 1], ['rocher', 1]], roche: [['eclat', 1], ['fougere', 1], ['rocher', 2]], neige: [['eclat', 1]] },
+    vie: [['crabe', 3], ['papillon', 3, ['#ff4d6d', '#ffd166', '#5fd3ff']], ['poule', 1]],
     densite: .55, mousse: false,
   },
   neige: {
@@ -52,7 +56,8 @@ export const BIOMES = {
     pin: { formes: ['sapin', 'elance', 'sapin'], tons: [['#4a7f6a', '#335f50', '#244639']] },
     maisons: { murs: [['#9a6446', '#7a4c34'], ['#ece4d8', '#d0c6b6']], toits: [['#5f7fa3', '#48637f'], ['#8a4a3c', '#6c3a2f']], styles: ['bois', 'crepi'] },
     champs: ['neige'],
-    decor: { herbe: [['tasneige', 4], ['baies', 2], ['eclat', 1], ['sapineau', 1]], sable: [['tasneige', 2], ['galet', 1]], roche: [['eclat', 2], ['tasneige', 1]], neige: [['tasneige', 1]] },
+    decor: { herbe: [['tasneige', 4], ['baies', 2], ['eclat', 1], ['sapineau', 1], ['buisson', 1], ['rocher', 1]], sable: [['tasneige', 2], ['galet', 1]], roche: [['eclat', 2], ['tasneige', 1], ['rocher', 2]], neige: [['tasneige', 1]] },
+    vie: [['rougegorge', 2], ['lievre', 1]],
     densite: .5, mousse: false, enneige: true,
   },
   lande: {
@@ -65,7 +70,8 @@ export const BIOMES = {
     pin: { formes: ['cypres', 'sapin'], tons: [['#5a8a62', '#3f6a4a', '#2c4f36']] },
     maisons: { murs: [['#d3cec4', '#b6b0a5'], ['#e6e0d4', '#c9c2b4']], toits: [['#6d7480', '#555b66'], ['#d9b25a', '#b8913d']], styles: ['pierre', 'pierre', 'colombage'] },
     champs: ['lavande', 'ble'],
-    decor: { herbe: [['bruyere', 5], ['fougere', 2], ['touffe', 2], ['eclat', 1]], sable: [['galet', 2]], roche: [['mousse', 2], ['eclat', 2]], neige: [['eclat', 1]] },
+    decor: { herbe: [['bruyere', 5], ['fougere', 2], ['touffe', 2], ['eclat', 1], ['buisson', 2], ['buissonfleuri', 1]], sable: [['galet', 2], ['rocher', 1]], roche: [['mousse', 2], ['eclat', 2], ['rocher', 3]], neige: [['eclat', 1]] },
+    vie: [['lievre', 2], ['mouton', 2], ['papillon', 2, ['#d7b8ff', '#ffffff']], ['poule', 1]],
     densite: .6, mousse: true,
   },
 };

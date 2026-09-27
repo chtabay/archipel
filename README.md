@@ -74,7 +74,7 @@ Les autres cases : *ça tourne en boucle*, un sentier usé autour ; *ça continu
 
 ## Les paysages et les formes
 
-La personne choisit le **paysage** en commençant une île, avec un aperçu en 3D : la prairie, la forêt d’automne, l’île tropicale, l’île enneigée, la lande. Le paysage change les couleurs du sol, l’eau, les essences, les maisons, les cultures et le petit décor. Chaque chose a aussi plusieurs **formes**, tirées d’un nombre stable pour chaque île. Ni le paysage ni les formes ne disent quelque chose : ils rendent chaque île différente.
+La personne choisit le **paysage** en commençant une île, avec un aperçu en 3D : la prairie, la forêt d’automne, l’île tropicale, l’île enneigée, la lande. Le paysage change les couleurs du sol, l’eau, les essences, les maisons, les cultures, le petit décor, et la vie qui se promène. Chaque chose a aussi plusieurs **formes**, tirées d’un nombre stable pour chaque île. Ni le paysage ni les formes ne disent quelque chose : ils rendent chaque île différente.
 
 ## Le rendu en 3D
 
@@ -83,6 +83,7 @@ La personne choisit le **paysage** en commençant une île, avec un aperçu en 3
 - **La lumière.** Trois lumières, réglées pour chaque climat : un soleil franc, qui porte des ombres aux bords doux ; le ciel et le sol, en ambiance retenue ; un contre-jour froid, depuis l’autre côté, qui modèle les facettes à l’ombre. Le mappage tonal est filmique : les hautes lumières roulent au lieu de saturer. L’eau et le fond marin en sont exclus, pour garder leur couleur. Au pied de chaque chose, le sol s’assombrit un peu, une ombre de contact cuite dans sa couleur. La vue porte un léger vignettage, comme une image.
 - **Les arbres.** Chacun sort du sol par un pied évasé et des racines, et porte sa couronne sur des branches qui partent du tronc. Les pins ont des étages qui se recouvrent, aux bords ragués ; les palmiers, des palmes à folioles ; les arbres nus, des rameaux au bout des branches ; les bouleaux, leurs marques et leurs grappes. De loin, dans l’archipel et les aperçus, chaque arbre garde sa silhouette et laisse le fin : ni racines, ni rameaux, une seule feuille par palme.
 - **Les maisons.** Des murs qui montent en pignon sous un toit épais qui déborde, en rangs qui se recouvrent ; une porte encadrée sous un auvent, des fenêtres à croisée, appui et linteau, des volets ouverts ou clos, une jardinière ; une cheminée à chapeau, qui fume quand la maison est allumée. Le paysage habille les murs : colombages et arbalétriers dans les pignons, pierres avec leurs chaînages d’angle, planches à clins et un tas de bûches, crépi sur soubassement, ou une paillote sur pilotis sous un toit de chaume, avec son échelle. De loin, la maison garde ses murs, son toit, sa cheminée, sa porte et ses fenêtres.
+- **La vie qui ne dit rien.** Des buissons et des rochers dans le petit décor, jamais sur la case d’une chose. Et des bêtes, choisies par le paysage, jamais par une confession : des moutons en prairie, des poules près des maisons, des crabes sur le sable tropical, un renard en automne, des lièvres dans la lande, des rouges-gorges dans la neige, des papillons. Chacune va d’une place libre à une autre, s’arrête, broute, picore, flaire ou saute. On ne peut pas les toucher. Avec le mouvement réduit, elles restent en place.
 - **Le mouvement.** L’île tourne du doigt, et seule quand on la laisse. Des nuages passent, des oiseaux tournent, le phare balaie, les moulins tournent, les barques tanguent.
 - **L’intro.** Tout ce qu’elle montre se déduit de son temps. Elle se revoit donc depuis le début, et elle s’arrête quand la page est cachée. L’îlot grandit de trois tuiles par mot, depuis sous l’eau.
 - **L’archipel.** La caméra cadre les îles qui y sont : peu d’îles se voient de près, beaucoup de plus loin. Toutes les îles y ont la même échelle, pour que leurs tailles se comparent. De loin, chaque île est un seul maillage, sans animation ; celle qu’on approche se reconstruit comme dans sa vue, puis se libère quand on s’éloigne. Il n’a pas d’ombres, pour rester léger.
@@ -131,10 +132,11 @@ L’archipel vit dans la base du projet Supabase de Pyramides, dans un espace à
 | `contenu.js` | Les cases, les sujets et leurs poids, les mots-clés d’alerte, les numéros |
 | `grammaire.js` | Les familles par sujet, les espèces, les états, la composition, les phrases |
 | `lexique.js` | Les mots qui font pousser un sujet ou donnent une sensation, lus sur l’appareil |
-| `biomes.js` | Les paysages : couleurs, essences, maisons, cultures, décor |
+| `biomes.js` | Les paysages : couleurs, essences, maisons, cultures, décor, la vie qui s’y promène |
 | `ile.js` | La carte, les quartiers, l’île recalculée depuis ses dépôts, sa forme partagée, les îles inventées de l’intro |
 | `monde.js` | Le relief, la mer, le ciel, la lumière, la caméra, l’île, l’archipel, l’intro, l’îlot, les aperçus |
 | `modeles.js` | Les choses en 3D, leurs formes, leurs états, le petit décor |
+| `vie.js` | La vie qui ne dit rien : les bêtes du paysage, et leurs allées et venues |
 | `outils.js` | Les nombres stables et le mélange des couleurs |
 | `vendor/` | three.js 0.186, réduit aux pièces utilisées (licence MIT) |
 | `fonts/` | Nunito (licence SIL OFL 1.1) |

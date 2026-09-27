@@ -3,7 +3,7 @@
 // Unité : une tuile = 1. Chaque chose est construite à son pied, en (0, 0, 0).
 
 import * as THREE from './vendor/three.min.js?v=1';
-import { BIOMES } from './biomes.js?v=1';
+import { BIOMES } from './biomes.js?v=2';
 import { nuance } from './outils.js?v=1';
 
 const B0 = BIOMES.prairie;
@@ -616,6 +616,18 @@ export function decor(bati, kind, B, x, y, z, r = .5) {
     case 'baies': F(k, G.ico1, '#3f7a4f', { y: .035, s: .04, bosse: .2, graine: r, ao: .3 }); F(k, G.sph, '#e0413a', { x: .02, y: .05, z: .02, s: .01, ao: 0 }); F(k, G.sph, '#e0413a', { x: -.02, y: .045, z: .015, s: .01, ao: 0 }); break;
     case 'sapineau': F(k, cone(6), '#3f6f55', { y: .06, sx: .04, sy: .12, sz: .04, ao: .3 }); if (B.enneige) F(k, cone(6), '#ffffff', { y: .1, sx: .02, sy: .04, sz: .02, ao: 0 }); break;
     case 'bruyere': for (const [dx, dz] of [[-.02, 0], [.02, .01], [0, -.02]]) F(k, G.ico0, r > .5 ? '#a57dc4' : '#c299e0', { x: dx, y: .02, z: dz, s: .022, ao: 0 }); break;
+    case 'buisson': case 'buissonfleuri': { // trois masses de feuillage, la neige dessus ; fleuri : des fleurs du paysage posées dessus
+      const t = B.feuillu.tons[0], g = Math.round(r * 97);
+      F(k, G.ico1, t[1], { y: .085, sx: .13, sy: .1, sz: .12, bosse: .16, graine: g, ao: .4 }); F(k, G.ico1, t[0], { x: .06, y: .1, z: .03, sx: .08, sy: .07, sz: .08, bosse: .18, graine: g + 1, ao: .3 }); F(k, G.ico1, t[2], { x: -.07, y: .065, z: -.02, sx: .07, sy: .06, sz: .07, bosse: .18, graine: g + 2, ao: .35 });
+      if (B.enneige) F(k, G.ico1, '#ffffff', { y: .16, sx: .1, sy: .035, sz: .09, bosse: .15, graine: g + 3, ao: 0 });
+      else if (kind === 'buissonfleuri') { const pal = FLEURS[idDe(B)], rr = rngL(g + 5); for (let i = 0; i < 6; i++) { const an = rr() * 6.28, d = rr() * .09; F(k, G.ico0, pal[i % pal.length], { x: Math.cos(an) * d, y: .15 + rr() * .04, z: Math.sin(an) * d, s: .016, ao: 0 }); } }
+      break; }
+    case 'rocher': { // un bloc et son éclat, la mousse ou la neige dessus
+      const t = B.sol.roche, g = Math.round(r * 89);
+      F(k, G.dode, t[1], { y: .06, sx: .12, sy: .09, sz: .1, bosse: .14, graine: g, ry: r * 3, ao: .35 }); F(k, G.dode, t[0], { x: .09, y: .035, z: .04, sx: .06, sy: .05, sz: .05, bosse: .15, graine: g + 1, ao: .3 });
+      if (B.enneige) F(k, G.ico1, '#ffffff', { y: .13, sx: .09, sy: .03, sz: .08, bosse: .12, graine: g + 3, ao: 0 });
+      else if (B.mousse && r > .5) F(k, G.ico1, '#7fae4a', { x: -.02, y: .12, sx: .06, sy: .025, sz: .05, bosse: .2, graine: g + 2, ao: 0 });
+      break; }
     default: break;
   }
 }

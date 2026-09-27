@@ -3,10 +3,11 @@
 // La carte et les dépôts viennent de ile.js : l’île est recalculée à partir de ses dépôts.
 
 import * as THREE from './vendor/three.min.js?v=1';
-import { N, CLIMATS, eauDe, sol, carte, deriver, etape } from './ile.js?v=6';
-import { biomeDe, BIOMES } from './biomes.js?v=1';
+import { N, CLIMATS, eauDe, sol, carte, deriver, etape } from './ile.js?v=7';
+import { biomeDe, BIOMES } from './biomes.js?v=2';
 import { hash, melange, versHex, nuance } from './outils.js?v=1';
-import { Bati, MAT, modeleChose, modelePhare, decor, halo, nuageBati, F, G, cone, cyl, baton } from './modeles.js?v=8';
+import { Bati, MAT, modeleChose, modelePhare, decor, halo, nuageBati, F, G, cone, cyl, baton } from './modeles.js?v=9';
+import { vie } from './vie.js?v=1';
 
 const reduit = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 export const ECH_ARCH = .45; // la taille des îles dans l’archipel : la même pour toutes, pour que leurs tailles se comparent
@@ -127,13 +128,16 @@ function sol3d(bati, m, B, fond, R, occ = null) { // les triangles du sol, color
   bati.triangles(pos, cols); dessous.triangles(posD, colsD);
   return dessous.maillage(MAT.fond, false, true);
 }
-function decor3d(bati, m, B, part = 1) {
+const GROS = new Set(['buisson', 'buissonfleuri', 'rocher']); // le décor qui ne tient pas sous une chose : sur sa case, une touffe à la place
+const occupees = d => { const o = new Set(d.assets.map(a => a.tile[0] * N + a.tile[1])); if (d.phareTile) o.add(d.phareTile[0] * N + d.phareTile[1]); return o; };
+function decor3d(bati, m, B, part = 1, occ = null) {
   const h = relief(m);
   for (const [i, j, dx, dy, r1, r2] of m.decor) {
     if (r2 > B.densite * part) continue;
     const x = i + dx, z = j + dy, y = h(x, z);
     if (y < .06) continue;
-    const kind = tirer(B.decor[sol(m, i, j)] || [], r1);
+    let kind = tirer(B.decor[sol(m, i, j)] || [], r1);
+    if (kind && occ && GROS.has(kind) && occ.has(i * N + j)) kind = 'touffe';
     if (kind) decor(bati, kind, B, x - N / 2, y, z - N / 2, r2);
   }
 }
@@ -230,7 +234,7 @@ function soleil(scene, climat, portee, ombre = true) { // ombre : non pour l’a
 }
 function ileStatique(d, part = .5, R = 2, fond = null) { // une île entière en un seul maillage (et un pour ce qui éclaire), pour l’archipel et les aperçus
   const B = biomeDe(d.ile.biome), eau = eauDe(d.climat, B), b = new Bati(d.ile.seed % 997 + 1), lum = new Bati(3);
-  const dessous = sol3d(b, d.m, B, fond || fondUni(teintes(d.climat, B)), R, occlusionDe(d)); decor3d(b, d.m, B, part);
+  const dessous = sol3d(b, d.m, B, fond || fondUni(teintes(d.climat, B)), R, occlusionDe(d)); decor3d(b, d.m, B, part, occupees(d));
   for (const a of d.assets) { const [x, y, z] = posTuile(d.m, a.tile, a.espece === 'barque'); modeleChose(a, B, a.v ?? hash(`${a.key}:${d.ile.seed}`), { bati: b, lum, dx: x, dy: y, dz: z, s: ECH, eauHex: eau, leger: true }); } // v : la variante reçue avec la forme ; leger : vue de loin
   const grp = new THREE.Group(), m = b.maillage(); grp.add(m, dessous);
   if (!lum.vide()) grp.add(lum.maillage(MAT.lum, false));
@@ -239,8 +243,9 @@ function ileStatique(d, part = .5, R = 2, fond = null) { // une île entière en
 }
 function ileRiche(d, fond) { // l’île qu’on approche dans l’archipel : construite comme dans sa vue, décor entier, choses animées
   const B = biomeDe(d.ile.biome), eau = eauDe(d.climat, B), b = new Bati(d.ile.seed % 997 + 1), anims = [];
-  const dessous = sol3d(b, d.m, B, fond, 3, occlusionDe(d)); decor3d(b, d.m, B);
+  const dessous = sol3d(b, d.m, B, fond, 3, occlusionDe(d)); decor3d(b, d.m, B, 1, occupees(d));
   const grp = new THREE.Group(); grp.add(b.maillage(), dessous);
+  const v = vie(d, B, relief(d.m)); grp.add(v.grp); anims.push(...v.anims); // la vie qui ne dit rien
   for (const a of d.assets) {
     const r = modeleChose(a, B, a.v ?? hash(`${a.key}:${d.ile.seed}`), { eauHex: eau }), [x, y, z] = posTuile(d.m, a.tile, a.espece === 'barque');
     r.objet.position.set(x, y, z); r.objet.scale.setScalar(ECH); grp.add(r.objet); anims.push(...r.anims);
@@ -323,8 +328,9 @@ export class Vue3D {
     s.background = fondCiel(d.climat); s.fog = new THREE.Fog(T.brume, D * (d.climat === 'ED' ? 1.1 : 1.5), D * (d.climat === 'ED' ? 3.6 : 4.8));
     soleil(s, d.climat, 9);
     s.add(fondMarin(T)); this.eau = mer(T); s.add(this.eau);
-    const b = new Bati(d.ile.seed % 997 + 1), dessous = sol3d(b, d.m, B, fondIle(T), 3, occlusionDe(d)); decor3d(b, d.m, B);
+    const b = new Bati(d.ile.seed % 997 + 1), dessous = sol3d(b, d.m, B, fondIle(T), 3, occlusionDe(d)); decor3d(b, d.m, B, 1, occupees(d));
     const terrain = b.maillage(); terrain.castShadow = true; s.add(terrain, dessous);
+    const v = vie(d, B, relief(d.m)); s.add(v.grp); this.anims.push(...v.anims); // la vie qui ne dit rien
     for (const a of d.assets) {
       const r = modeleChose(a, B, hash(`${a.key}:${d.ile.seed}`), { eauHex: eau }), [x, y, z] = posTuile(d.m, a.tile, a.espece === 'barque');
       r.objet.position.set(x, y, z); r.objet.rotation.y = (hash(`rot:${a.key}:${d.ile.seed}`) - .5) * .8; r.objet.userData.ech = ECH;

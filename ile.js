@@ -4,7 +4,7 @@
 import { pousser, especeDe } from './grammaire.js?v=3';
 import { KEYS, MOCK } from './contenu.js?v=2';
 import { rng, hash, melange } from './outils.js?v=1';
-import { BIOMES, BIOME_IDS, biomeDe } from './biomes.js?v=1';
+import { BIOMES, BIOME_IDS, biomeDe } from './biomes.js?v=2';
 
 export { BIOMES, BIOME_IDS, biomeDe };
 export const N = 10; // tuiles par côté
