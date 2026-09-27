@@ -24,7 +24,7 @@ En bas de l’écran, trois onglets restent toujours à portée de pouce : **Dé
 
 Le site s’installe sur l’écran d’accueil, et s’ouvre alors en plein écran, comme une app, même sans réseau. Sur l’île, un lien discret, « installer l’app », paraît quand le navigateur le permet, et le menu **Plus** y mène toujours : sur Android et sur ordinateur, il ouvre la proposition du navigateur ; sur iPhone, il explique le bouton Partager de Safari, puis « Sur l’écran d’accueil ». Rien ne surgit tout seul au milieu d’un dépôt.
 
-- `manifest.webmanifest` donne le nom, les couleurs et les icônes. Les icônes sont dans `icones/`, avec leurs sources en SVG et le script qui les fabrique.
+- `manifest.webmanifest` donne le nom, les couleurs et les icônes. Les icônes sont dans `icones/` : trois images de départ dans `sources/`, l’emblème sur fond cyan, sa version masquable pour Android, et un symbole simplifié à trois couleurs pour l’en-tête et les favicons, faites avec un générateur d’images à partir d’un brief ; `fabriquer.js` en tire toutes les tailles.
 - `sw.js` est le service worker. Il garde les fichiers du site que la page a chargés, jamais ce qu’on dépose, et ne touche pas à l’archipel partagé. La page se prend d’abord sur le réseau, pour avoir la dernière version ; sans réseau, c’est celle gardée. Les fichiers numérotés, comme `app.js?v=12`, ne changent jamais : gardés, ils servent tels quels. Après un changement de `sw.js`, on change son nom de cache, `CACHE`.
 - Sur iPhone, l’app installée a sa propre mémoire : elle commence avec une île vide, et l’île de Safari reste dans Safari. Sur Android, on retrouve son île.
 
@@ -125,7 +125,7 @@ L’archipel vit dans la base du projet Supabase de Pyramides, dans un espace à
 | `musique.js` | Les deux musiques, le feu de camp et la mer, calculées et jouées par le navigateur |
 | `sw.js` | Le service worker : les fichiers du site, gardés pour s’ouvrir sans réseau |
 | `manifest.webmanifest` | Le manifeste de l’app installable : nom, couleurs, icônes |
-| `icones/` | Les icônes de l’app, leurs sources SVG et `fabriquer.js`, qui les dessine avec le Chromium des tests |
+| `icones/` | Les icônes de l’app : trois images de départ dans `sources/`, et `fabriquer.js`, qui en tire toutes les tailles avec le Chromium des tests |
 | `contenu.js` | Les cases, les sujets et leurs poids, les mots-clés d’alerte, les numéros |
 | `grammaire.js` | Les familles par sujet, les espèces, les états, la composition, les phrases |
 | `lexique.js` | Les mots qui font pousser un sujet ou donnent une sensation, lus sur l’appareil |

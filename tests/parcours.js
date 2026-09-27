@@ -23,7 +23,7 @@ const semer = ({ prefixe, ile }) => { localStorage.clear(); localStorage.setItem
   // 1. le parcours, depuis une île vide
   await p.goto(L); await p.evaluate(() => { localStorage.clear(); localStorage.setItem('archipel:intro', '1'); }); await p.reload(); await p.waitForTimeout(800);
   verifier(await p.evaluate(() => !!window.archipel?.vue), '3D disponible et application chargée');
-  verifier((await p.textContent('.brand')).trim() === 'L’archipel' && await p.$('.brand svg.logo') !== null && (await p.title()) === 'L’archipel', 'le titre : l’icône de l’île et « L’archipel », dans la page et l’onglet');
+  verifier((await p.textContent('.brand')).trim() === 'L’archipel' && await p.$('.brand img.logo') !== null && (await p.title()) === 'L’archipel', 'le titre : l’icône de l’île et « L’archipel », dans la page et l’onglet');
   verifier(!/limbes/i.test(await p.evaluate(() => document.documentElement.outerHTML)), 'le mot « limbes » n’apparaît nulle part dans la page');
   await p.screenshot({ path: `${OUT}/0-accueil.png`, clip: { x: 0, y: 0, width: 390, height: 420 } });
   const chevauche = await p.evaluate(() => { const c = document.querySelector('#ent').getBoundingClientRect(), h = document.querySelector('#ent-hint').getBoundingClientRect(); return h.top < c.bottom - 1; });
