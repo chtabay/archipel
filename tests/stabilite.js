@@ -100,7 +100,7 @@ const depot = (id, answers) => ({ id, date: new Date().toISOString(), quad: 'N',
   { const { c, p } = await nouvelle();
     await p.goto(BASE);
     const empilees = await p.evaluate(async () => {
-      const { deriver } = await import('./ile.js?v=6'), tous = Array.from({ length: 15 }, (_, i) => `s${i}`);
+      const { deriver } = await import('./ile.js?v=7'), tous = Array.from({ length: 15 }, (_, i) => `s${i}`);
       let pire = 0;
       for (let s = 1; s <= 40; s++) { const d = deriver({ id: 1, seed: 1000 + s * 7, biome: 'prairie', depots: [{ id: 1, quad: 'N', answers: { situ: ['regret', 'mal'], mots: [], sujets: tous, fait: [], subi: [] } }] }), vus = new Set(); let n = 0; for (const a of d.assets) { if (a.famille === 'meteo' && a.espece !== 'etang') continue; const k = a.tile.join(); if (vus.has(k)) n++; vus.add(k); } pire = Math.max(pire, n); }
       return pire;
