@@ -74,6 +74,10 @@ const stockee = (p, cle = 'ile') => p.evaluate(k => JSON.parse(localStorage.getI
     if (autre) { await p.mouse.click(autre.x, autre.y); await p.waitForTimeout(1500); }
     const leg = await lire(p, '#arch-caption');
     verifier(/^Une île avec .+\. Là depuis un moment\./.test(leg), `toucher l’île de quelqu’un d’autre : « ${leg.slice(0, 80)}… »`);
+    const pres = await p.evaluate(() => { const f = window.archipel.vue.focus; return f ? { riche: !!f.riche, anims: f.riche?.anims.length ?? -1, cachee: f.grp.visible === false, objets: f.riche?.grp.children.length ?? 0 } : null; });
+    verifier(!!pres?.riche && pres.cachee && pres.objets > 2, `de près, l’île se construit comme dans sa vue : ${pres?.objets} objets, ${pres?.anims} animations, la version légère cachée`);
+    await p.click('#arch-caption .quiet:has-text("revenir à l’archipel")'); await p.waitForTimeout(300);
+    verifier(await p.evaluate(() => !window.archipel.vue.focus && window.archipel.vue.items.every(i => !i.riche && i.grp.visible)), 'de loin, la version légère revient, et l’autre est libérée');
     await peupler(p, a, 1, 30); await p.evaluate(() => window.archipel.sonder()); await p.waitForTimeout(300);
     const arrivee = await p.evaluate(() => ({ n: window.archipel.vue.items.length, ligne: document.querySelector('#arch-line').textContent }));
     verifier(arrivee.n === 8 && /regardes\s*:\s*1\b/.test(arrivee.ligne), `une île posée ailleurs arrive de l’horizon (${arrivee.ligne})`);

@@ -227,6 +227,18 @@ function ileStatique(d, part = .5, R = 2, fond = null) { // une île entière en
   if (d.phareTile) { const p = modelePhare(), [x, y, z] = posTuile(d.m, d.phareTile); p.objet.position.set(x, y, z); p.objet.scale.setScalar(ECH); grp.add(p.objet); }
   return grp;
 }
+function ileRiche(d, fond) { // l’île qu’on approche dans l’archipel : construite comme dans sa vue, décor entier, choses animées
+  const B = biomeDe(d.ile.biome), eau = eauDe(d.climat, B), b = new Bati(d.ile.seed % 997 + 1), anims = [];
+  const dessous = sol3d(b, d.m, B, fond, 3); decor3d(b, d.m, B);
+  const grp = new THREE.Group(); grp.add(b.maillage(), dessous);
+  for (const a of d.assets) {
+    const r = modeleChose(a, B, a.v ?? hash(`${a.key}:${d.ile.seed}`), { eauHex: eau }), [x, y, z] = posTuile(d.m, a.tile, a.espece === 'barque');
+    r.objet.position.set(x, y, z); r.objet.scale.setScalar(ECH); grp.add(r.objet); anims.push(...r.anims);
+    if (a.espece === 'barque') { const o = r.objet; anims.push(T => { o.position.y = Math.sin(T * 1.3 + x) * .02; o.rotation.z = Math.sin(T * 1.1 + z) * .04; }); }
+  }
+  if (d.phareTile) { const p = modelePhare(), [x, y, z] = posTuile(d.m, d.phareTile); p.objet.position.set(x, y, z); p.objet.scale.setScalar(ECH); grp.add(p.objet); anims.push(...p.anims); }
+  return { grp, anims };
+}
 function etiquette(texte) {
   const c = document.createElement('canvas'); c.width = 256; c.height = 64;
   const x = c.getContext('2d'); x.font = '800 30px Nunito, system-ui, sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle';
@@ -332,7 +344,7 @@ export class Vue3D {
     s.background = fondCiel('ES'); s.fog = new THREE.Fog(T.brume, D * .95, D * 2.4);
     soleil(s, 'ES', Math.max(L, P) * .75, false);
     s.add(fondMarin(T, 200, { y: -.9 * .45 - .01, clair: false })); this.eau = mer(T, 200); s.add(this.eau); this.fondArch = fondUni(T);
-    for (const it of items) this.ajouterIle(it);
+    for (const it of items) { it.riche = null; this.ajouterIle(it); } // de loin, chaque île est légère
     const nu = nuages(6, false, Math.max(L, P) * .8, 3, false); s.add(nu.grp); this.anims.push(nu.anim);
     const oi = oiseaux(4, 16); s.add(oi.grp); this.anims.push(oi.anim);
     for (let k = 0; k < 3; k++) { const v = voilier(), r = 14 + k * 5, ph = k * 2.2; s.add(v); this.anims.push(T => { const a = T * (.025 + k * .008) + ph; v.position.set(Math.cos(a) * r, Math.sin(T + k) * .03, Math.sin(a) * r * .75); v.rotation.y = -a - Math.PI / 2; }); }
@@ -348,12 +360,13 @@ export class Vue3D {
   }
   arriver(it) { this.items.push(it); this.ajouterIle(it, [it.x + (Math.random() - .5) * 8, (this.centreArch?.[1] ?? 0) - 70]); } // une île qui vient d’être posée arrive de l’horizon
   remplacerIle(avant, apres) { // une île qui a grandi : sa nouvelle forme prend la place de l’ancienne
+    if (avant) this.eloigner(avant);
     for (const o of [avant?.grp, avant?.lab]) if (o) { this.scene.remove(o); liberer(o); }
     const i = this.items.indexOf(avant); if (i >= 0) this.items[i] = apres; else this.items.push(apres);
     this.ajouterIle(apres); if (this.focus === avant) this.viser(apres);
   }
   ajouterIle(it, depuis = null) {
-    const grp = ileStatique(it.d || (it.d = deriver(it.ile)), .35, 3, this.fondArch), e = ECH_ARCH;
+    const grp = ileStatique(it.d || (it.d = deriver(it.ile)), .5, 3, this.fondArch), e = ECH_ARCH;
     grp.scale.setScalar(e); grp.position.set(it.x, 0, it.z); grp.traverse(o => { o.userData.ile = it; });
     this.scene.add(grp); it.grp = grp;
     if (it.mine) { const lab = etiquette(it.label || 'la tienne'); lab.position.set(it.x, 2.6, it.z); this.scene.add(lab); it.lab = lab; }
@@ -364,9 +377,21 @@ export class Vue3D {
     this.anims.push(T => { const a = T - T0; if (a > 2) { m.visible = false; return; } m.scale.setScalar(1 + a * 2.2); m.material.opacity = (1 - a / 2) * .8; });
   }
   viser(it) { // s’approcher d’une île, ou revenir à l’archipel
+    if (this.focus && this.focus !== it) this.eloigner(this.focus);
     this.focus = it;
-    if (it) { const ray = (it.d || (it.d = deriver(it.ile))).m.rayon * ECH_ARCH; this.orbite.but.cible.set(it.x, .3, it.z); this.orbite.but.dist = 5 + ray * 2.6; this.orbite.but.elev = .62; this.anneau.visible = true; this.anneau.position.set(it.x, .03, it.z); this.anneau.scale.setScalar((ray + .35) / 2.6); }
+    if (it) { const ray = (it.d || (it.d = deriver(it.ile))).m.rayon * ECH_ARCH; this.orbite.but.cible.set(it.x, .3, it.z); this.orbite.but.dist = 5 + ray * 2.6; this.orbite.but.elev = .62; this.anneau.visible = true; this.anneau.position.set(it.x, .03, it.z); this.anneau.scale.setScalar((ray + .35) / 2.6); this.approcher(it); }
     else { const [cx, cz] = this.centreArch || [0, -1]; this.orbite.but.cible.set(cx, 0, cz); this.orbite.but.dist = this.distArch; this.orbite.but.elev = .72; this.anneau.visible = false; }
+  }
+  approcher(it) { // de près, l’île se construit comme dans sa vue ; sa version légère se cache en attendant
+    if (it.riche || !it.grp) return;
+    const r = ileRiche(it.d || (it.d = deriver(it.ile)), this.fondArch);
+    r.grp.scale.setScalar(ECH_ARCH); r.grp.position.copy(it.grp.position); r.grp.traverse(o => { o.userData.ile = it; });
+    this.scene.add(r.grp); it.grp.visible = false; it.riche = r;
+  }
+  eloigner(it) { // de loin, la version légère revient, et l’autre est libérée
+    if (!it.riche) return;
+    this.scene.remove(it.riche.grp); liberer(it.riche.grp); it.riche = null;
+    if (it.grp) it.grp.visible = true;
   }
 
   // L’intro : l’archipel, puis un îlot au premier plan. Des mots s’y posent un à un : à chacun la terre monte,
@@ -479,6 +504,7 @@ export class Vue3D {
     if (this.mode !== 'intro') this.orbite.maj(dt);
     if (this.eau) this.eau.position.y = Math.sin(T * .6) * .015; // la marée, à peine
     for (const f of this.anims) f(T);
+    if (this.focus?.riche) for (const f of this.focus.riche.anims) f(T); // l’île qu’on approche vit
     if (this.mode === 'intro') this.introFrame(Math.min(.1, ecart || .016)); // le temps de l’intro s’arrête quand la page est cachée
     const Tv = this.vieT ? this.vieT() : T;
     if (this.mode === 'ile') for (const [cle, o] of this.objets) o.scale.setScalar((o.userData.ech || 1) * pop(this.vie.get(cle), Tv));

@@ -4,7 +4,7 @@
 import { SUBJECTS, QUESTIONS, KEYS, BASE, LEX, HUMANS } from './contenu.js?v=2';
 import { graines, quadDe, nomDe, phrasesDe, casesDe, sujetLabel, listeDe, listeGraines, FAMILLES, ESPECES, NOMS } from './grammaire.js?v=3';
 import { nouvelleIle, deriver, resume, forme, depuisForme, archipelInvente, ileInventee, BIOMES, BIOME_IDS, biomeDe } from './ile.js?v=6';
-import { Vue3D, Ilot3D, apercu, disponible, ECH_ARCH, ILE_INTRO } from './monde.js?v=8';
+import { Vue3D, Ilot3D, apercu, disponible, ECH_ARCH, ILE_INTRO } from './monde.js?v=9';
 import { lireArchipel, poserIle, retirerIle, nouveauJeton } from './serveur.js?v=1';
 import { musique } from './musique.js?v=2';
 import { lire } from './lexique.js?v=2';
@@ -915,16 +915,22 @@ function boutonSon(piece) {
 /* ───────── Le menu Plus ───────── */
 // Dans la barre du bas : ce qui sert partout, à portée de pouce. Ce sont des actions qu’on trouve aussi ailleurs, à leur place.
 
-function plusSheet() {
+const ICONES_MENU = {
+  quitter: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 5H6.5A1.5 1.5 0 0 0 5 6.5v11A1.5 1.5 0 0 0 6.5 19H13"/><path d="M16 8.5l3.5 3.5-3.5 3.5M9.5 12h10"/></svg>',
+  installer: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4.5v10M8.5 11l3.5 3.5 3.5-3.5"/><path d="M5 16.5v2A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5v-2"/></svg>',
+  parler: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 4.5h3l1.5 4-2 1.5a10 10 0 0 0 5 5l1.5-2 4 1.5v3a1.5 1.5 0 0 1-1.5 1.5A14 14 0 0 1 5 6a1.5 1.5 0 0 1 1.5-1.5z"/></svg>',
+  intro: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10-6.5z"/></svg>',
+};
+function plusSheet() { // compact : une icône et quelques mots par ligne
   note('geste : menu plus');
-  const ligne = (titre, sous, fn) => { const b = el('button', { type: 'button', className: 'row' }, titre, el('small', { textContent: sous })); b.addEventListener('click', fn); return b; };
-  const ligneMusique = () => { const on = musiqueVoulue(), b = ligne(on ? 'Couper la musique' : 'Allumer la musique', on ? `Allumée${NB}: le feu de camp sur ton île, la mer dans l’archipel. Ailleurs, le silence.` : 'Le feu de camp sur ton île, la mer dans l’archipel. Rien ne part.', () => { basculerMusique(); b.replaceWith(ligneMusique()); }); return b; };
-  const liste = el('div', { className: 'list' },
-    ligne('Quitter vite ce site', 'L’écran se vide, et le bouton retour ne ramène pas ici.', () => quitter($('#exit').href)),
+  const ligne = (icone, titre, fn) => { const b = el('button', { type: 'button', className: 'row' }); b.innerHTML = icone; b.append(el('span', { textContent: titre })); b.addEventListener('click', fn); return b; };
+  const ligneMusique = () => { const on = musiqueVoulue(), b = ligne(ICONE_SON[on], on ? 'Couper la musique' : 'Allumer la musique', () => { basculerMusique(); b.replaceWith(ligneMusique()); }); return b; };
+  const liste = el('div', { className: 'list menu' },
+    ligne(ICONES_MENU.quitter, 'Quitter vite ce site', () => quitter($('#exit').href)),
     ...(musique.disponible ? [ligneMusique()] : []),
-    ligne('Installer l’app', installee() ? 'Déjà installée : tu es dedans.' : 'Sur ton écran d’accueil, même sans réseau.', installerSheet),
-    ligne('Parler à quelqu’un', 'Des gens répondent, à toute heure. Ici, personne ne lit.', () => humansSheet()),
-    ...(vue ? [ligne('Revoir l’intro', 'L’archipel, une île qui pousse, et comment elle le rejoint.', () => { closeSheet(); revue = true; go('intro'); })] : []));
+    ligne(ICONES_MENU.installer, installee() ? 'L’app est installée' : 'Installer l’app', installerSheet),
+    ligne(ICONES_MENU.parler, 'Parler à quelqu’un', () => humansSheet()),
+    ...(vue ? [ligne(ICONES_MENU.intro, 'Revoir l’intro', () => { closeSheet(); revue = true; go('intro'); })] : []));
   openSheet(el('div', {}, el('h2', { textContent: 'Plus' }), liste, footRow(quiet('revenir', closeSheet))));
 }
 let fuite = false; // on part : plus rien ne s’affiche
