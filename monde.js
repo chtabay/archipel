@@ -6,7 +6,7 @@ import * as THREE from './vendor/three.min.js?v=1';
 import { N, CLIMATS, eauDe, sol, carte, deriver, etape } from './ile.js?v=6';
 import { biomeDe, BIOMES } from './biomes.js?v=1';
 import { hash, melange, versHex, nuance } from './outils.js?v=1';
-import { Bati, MAT, modeleChose, modelePhare, decor, halo, nuageBati, F, G, cone, cyl, baton } from './modeles.js?v=5';
+import { Bati, MAT, modeleChose, modelePhare, decor, halo, nuageBati, F, G, cone, cyl, baton } from './modeles.js?v=6';
 
 const reduit = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 export const ECH_ARCH = .45; // la taille des îles dans l’archipel : la même pour toutes, pour que leurs tailles se comparent
@@ -20,8 +20,8 @@ export function disponible() { try { const gl = document.createElement('canvas')
 function creerRendu(canvas, { alpha = false, ombres = true } = {}) {
   const r = new THREE.WebGLRenderer({ canvas, antialias: true, alpha, powerPreference: 'default' });
   r.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
-  r.outputColorSpace = THREE.SRGBColorSpace; r.toneMapping = THREE.NeutralToneMapping; r.toneMappingExposure = 1;
-  r.shadowMap.enabled = ombres; r.shadowMap.type = THREE.PCFShadowMap;
+  r.outputColorSpace = THREE.SRGBColorSpace; r.toneMapping = THREE.ACESFilmicToneMapping; r.toneMappingExposure = 1.1; // filmique : des hautes lumières qui roulent, des couleurs qui tiennent
+  r.shadowMap.enabled = ombres; r.shadowMap.type = THREE.PCFSoftShadowMap; // des ombres aux bords doux
   if (alpha) r.setClearColor(0x000000, 0);
   return r;
 }
@@ -87,7 +87,14 @@ function couleurSol(B, fond, y, ny, x, z, r, s) {
   const h = doux(B.sol.herbe);
   return bruit(x * .6, z * .6, s + 9) < B.taches[1] * 1.15 ? melange(h, B.taches[0], .4) : h;
 }
-function sol3d(bati, m, B, fond, R) { // les triangles du sol, colorés un par un ; fond(x, z) : la couleur du fond marin à cet endroit
+function occlusionDe(d) { // au pied de chaque chose, le sol s’assombrit un peu : l’ombre de contact, cuite dans la couleur du sol
+  const RAYONS = { arbre: .6, maison: .8, pierre: .5, culture: .55, caillou: .3 }, pieds = [];
+  for (const a of d.assets) { const r = a.espece === 'champ' || a.espece === 'barque' ? 0 : RAYONS[a.famille] || 0; if (r) pieds.push([a.tile[0] + .5, a.tile[1] + .5, r]); }
+  if (d.phareTile) pieds.push([d.phareTile[0] + .5, d.phareTile[1] + .5, .5]);
+  if (!pieds.length) return null;
+  return (x, z) => { let k = 1; for (const [px, pz, r] of pieds) { const t = Math.hypot(x - px, z - pz) / r; if (t < 1.5) { const s = Math.min(1, (1.5 - t) / 1.3); k *= 1 - .36 * s * s * (3 - 2 * s); } } return k; };
+}
+function sol3d(bati, m, B, fond, R, occ = null) { // les triangles du sol, colorés un par un ; fond(x, z) : la couleur du fond marin à cet endroit ; occ(x, z) : l’ombre de contact
   // renvoie un second maillage : la pente sous l’eau, éclairée sans facettes, qui se fond dans le fond marin
   const h = relief(m), n = Math.round((N + 2 * MARGE) * R), pas = 1 / R, x0 = -MARGE, H = [], s = m.seed % 991, dessous = new Bati(2);
   for (let i = 0; i <= n; i++) for (let j = 0; j <= n; j++) H.push(h(x0 + i * pas, x0 + j * pas));
@@ -102,7 +109,7 @@ function sol3d(bati, m, B, fond, R) { // les triangles du sol, colorés un par u
       for (const v of [a, c, b]) { _c.set(couleurSol(B, fond, Math.min(v[1], NIV - .001), 1, v[0] + N / 2, v[2] + N / 2, r, s)); colsD.push(_c.r, _c.g, _c.b); }
       return;
     }
-    _c.set(couleurSol(B, fond, Math.max(yc, NIV), Math.abs(ny / l), xc, zc, r, s)); const k = 1 + (r - .5) * .035;
+    _c.set(couleurSol(B, fond, Math.max(yc, NIV), Math.abs(ny / l), xc, zc, r, s)); const k = (1 + (r - .5) * .035) * (occ && yc >= NIV ? occ(xc, zc) : 1);
     pos.push(...a, ...c, ...b); for (let v = 0; v < 3; v++) cols.push(_c.r * k, _c.g * k, _c.b * k);
   };
   const tri = (a, b, c, r) => { // un triangle qui traverse la ligne d’eau est coupé en deux : la terre au-dessus, le haut-fond en dessous
@@ -144,7 +151,7 @@ function fondMarin(T, rayon = 90, { y = -.92, clair = true } = {}) { // le fond 
   return m;
 }
 function mer(T, rayon = 90) { // la surface : elle garde son bleu même sous un soleil orangé, et le soleil y brille
-  const m = new THREE.Mesh(new THREE.CircleGeometry(rayon, 64).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ color: T.surface, emissive: T.lueur, emissiveIntensity: T.chaud ? .42 : .32, transparent: true, opacity: .5, roughness: .14, metalness: 0, depthWrite: false }));
+  const m = new THREE.Mesh(new THREE.CircleGeometry(rayon, 64).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ color: T.surface, emissive: T.lueur, emissiveIntensity: T.chaud ? .42 : .32, transparent: true, opacity: .5, roughness: .14, metalness: 0, depthWrite: false, toneMapped: false })); // sa couleur est réglée à la main : pas de mappage
   m.receiveShadow = true; m.renderOrder = 1;
   return m;
 }
@@ -209,18 +216,21 @@ class Orbite {
 /* ───────── L’île et l’archipel ───────── */
 
 function soleil(scene, climat, portee, ombre = true) { // ombre : non pour l’archipel, où elles ne se voient pas et coûtent cher
-  const L = LUM[climat] || LUM.N, sun = new THREE.DirectionalLight(L.soleil, L.i), el = L.elev * Math.PI / 180, az = L.azim * Math.PI / 180;
+  // trois lumières : le soleil, franc, qui porte les ombres ; le ciel et le sol, en ambiance retenue ; un contre-jour froid, depuis l’autre côté, qui modèle les facettes à l’ombre
+  const L = LUM[climat] || LUM.N, sun = new THREE.DirectionalLight(L.soleil, L.i * 1.3), el = L.elev * Math.PI / 180, az = L.azim * Math.PI / 180;
   sun.position.set(Math.cos(el) * Math.sin(az) * 30, Math.sin(el) * 30, Math.cos(el) * Math.cos(az) * 30);
   sun.castShadow = ombre; sun.shadow.mapSize.set(mobile ? 1024 : 2048, mobile ? 1024 : 2048);
   Object.assign(sun.shadow.camera, { left: -portee, right: portee, top: portee, bottom: -portee, near: 1, far: 80 });
-  sun.shadow.bias = -.0004; sun.shadow.normalBias = .03; sun.shadow.radius = 3;
-  scene.add(sun, sun.target, new THREE.HemisphereLight(L.ciel, L.sol, L.hi));
+  sun.shadow.bias = -.0004; sun.shadow.normalBias = .03;
+  const contre = new THREE.DirectionalLight(melange(L.ciel, '#8fb4ff', .5), L.i * .18), el2 = .5, az2 = az + Math.PI;
+  contre.position.set(Math.cos(el2) * Math.sin(az2) * 30, Math.sin(el2) * 30, Math.cos(el2) * Math.cos(az2) * 30);
+  scene.add(sun, sun.target, contre, new THREE.HemisphereLight(L.ciel, L.sol, L.hi * .72));
   const disque = halo(L.soleil, 26, climat === 'ED' ? .5 : .9); disque.material.fog = false; disque.position.copy(sun.position).normalize().multiplyScalar(70); scene.add(disque);
   return sun;
 }
 function ileStatique(d, part = .5, R = 2, fond = null) { // une île entière en un seul maillage (et un pour ce qui éclaire), pour l’archipel et les aperçus
   const B = biomeDe(d.ile.biome), eau = eauDe(d.climat, B), b = new Bati(d.ile.seed % 997 + 1), lum = new Bati(3);
-  const dessous = sol3d(b, d.m, B, fond || fondUni(teintes(d.climat, B)), R); decor3d(b, d.m, B, part);
+  const dessous = sol3d(b, d.m, B, fond || fondUni(teintes(d.climat, B)), R, occlusionDe(d)); decor3d(b, d.m, B, part);
   for (const a of d.assets) { const [x, y, z] = posTuile(d.m, a.tile, a.espece === 'barque'); modeleChose(a, B, a.v ?? hash(`${a.key}:${d.ile.seed}`), { bati: b, lum, dx: x, dy: y, dz: z, s: ECH, eauHex: eau }); } // v : la variante reçue avec la forme
   const grp = new THREE.Group(), m = b.maillage(); grp.add(m, dessous);
   if (!lum.vide()) grp.add(lum.maillage(MAT.lum, false));
@@ -229,7 +239,7 @@ function ileStatique(d, part = .5, R = 2, fond = null) { // une île entière en
 }
 function ileRiche(d, fond) { // l’île qu’on approche dans l’archipel : construite comme dans sa vue, décor entier, choses animées
   const B = biomeDe(d.ile.biome), eau = eauDe(d.climat, B), b = new Bati(d.ile.seed % 997 + 1), anims = [];
-  const dessous = sol3d(b, d.m, B, fond, 3); decor3d(b, d.m, B);
+  const dessous = sol3d(b, d.m, B, fond, 3, occlusionDe(d)); decor3d(b, d.m, B);
   const grp = new THREE.Group(); grp.add(b.maillage(), dessous);
   for (const a of d.assets) {
     const r = modeleChose(a, B, a.v ?? hash(`${a.key}:${d.ile.seed}`), { eauHex: eau }), [x, y, z] = posTuile(d.m, a.tile, a.espece === 'barque');
@@ -313,7 +323,7 @@ export class Vue3D {
     s.background = fondCiel(d.climat); s.fog = new THREE.Fog(T.brume, D * (d.climat === 'ED' ? 1.1 : 1.5), D * (d.climat === 'ED' ? 3.6 : 4.8));
     soleil(s, d.climat, 9);
     s.add(fondMarin(T)); this.eau = mer(T); s.add(this.eau);
-    const b = new Bati(d.ile.seed % 997 + 1), dessous = sol3d(b, d.m, B, fondIle(T), 3); decor3d(b, d.m, B);
+    const b = new Bati(d.ile.seed % 997 + 1), dessous = sol3d(b, d.m, B, fondIle(T), 3, occlusionDe(d)); decor3d(b, d.m, B);
     const terrain = b.maillage(); terrain.castShadow = true; s.add(terrain, dessous);
     for (const a of d.assets) {
       const r = modeleChose(a, B, hash(`${a.key}:${d.ile.seed}`), { eauHex: eau }), [x, y, z] = posTuile(d.m, a.tile, a.espece === 'barque');
@@ -518,8 +528,9 @@ export class Ilot3D {
   constructor(canvas) {
     this.canvas = canvas; this.rendu = creerRendu(canvas, { alpha: true, ombres: true });
     this.scene = new THREE.Scene(); this.camera = new THREE.PerspectiveCamera(28, 2, .1, 50);
-    const sun = this.sun = new THREE.DirectionalLight('#fff4e4', 2.2); sun.position.set(3, 6, 4); sun.castShadow = true; sun.shadow.mapSize.set(512, 512); Object.assign(sun.shadow.camera, { left: -2, right: 2, top: 2, bottom: -2, near: .5, far: 20 }); sun.shadow.normalBias = .02;
-    this.scene.add(sun, new THREE.HemisphereLight('#eef8ff', '#e2d2b8', 1.6));
+    const sun = this.sun = new THREE.DirectionalLight('#fff4e4', 2.8); sun.position.set(3, 6, 4); sun.castShadow = true; sun.shadow.mapSize.set(512, 512); Object.assign(sun.shadow.camera, { left: -2, right: 2, top: 2, bottom: -2, near: .5, far: 20 }); sun.shadow.normalBias = .02;
+    const contre = new THREE.DirectionalLight('#b9cfff', .5); contre.position.set(-3, 2.5, -4);
+    this.scene.add(sun, contre, new THREE.HemisphereLight('#eef8ff', '#e2d2b8', 1.15));
     this.groupe = new THREE.Group(); this.scene.add(this.groupe); this.anims = []; this.cle = null; this.t0 = performance.now(); this.objets = [];
   }
   redim() { const w = this.canvas.clientWidth || 300, h = this.canvas.clientHeight || 120; this.rendu.setSize(w, h, false); this.camera.aspect = w / h; this.camera.updateProjectionMatrix(); this.cadrer(); }
