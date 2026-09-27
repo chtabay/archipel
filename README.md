@@ -28,6 +28,12 @@ Le site s’installe sur l’écran d’accueil, et s’ouvre alors en plein éc
 - `sw.js` est le service worker. Il garde les fichiers du site que la page a chargés, jamais ce qu’on dépose, et ne touche pas à l’archipel partagé. La page se prend d’abord sur le réseau, pour avoir la dernière version ; sans réseau, c’est celle gardée. Les fichiers numérotés, comme `app.js?v=12`, ne changent jamais : gardés, ils servent tels quels. Après un changement de `sw.js`, on change son nom de cache, `CACHE`.
 - Sur iPhone, l’app installée a sa propre mémoire : elle commence avec une île vide, et l’île de Safari reste dans Safari. Sur Android, on retrouve son île.
 
+## La musique
+
+Une petite musique de feu de camp, coupée par défaut. Le bouton « musique », en bas de page, l’allume ; le choix reste sur le téléphone. Rallumée au retour, elle attend un premier geste : le navigateur n’ouvre le son qu’à ce moment-là. Elle se tait quand la page est cachée, et quand on quitte.
+
+Elle est jouée par le navigateur lui-même, sans fichier son : `musique.js` calcule les cordes d’une guitare, une anche d’harmonica et le feu qui crépite, puis les assemble avec la Web Audio API. Ré majeur, des accords ouverts, des arpèges en 6/8 dont une note manque parfois, un air par-dessus un tour sur deux, et un tour sur trois sans lui. Elle est planifiée au fur et à mesure, quelques secondes devant, et ne se répète jamais tout à fait. Rien de ce qu’on dépose n’y entre, pour l’instant.
+
 ## La grammaire : quatre axes lus dans les cases
 
 Une confession ne se réduit pas à quelques nombres. Elle garde toutes ses cases, dans un « dépôt », et l’île est recalculée à partir des dépôts. La grammaire est dans `grammaire.js`. Elle lit les cases. Le texte est lu par `lexique.js`, sur l’appareil seulement, pour y trouver des sujets et une sensation, qui poussent comme des cases cochées. Sur l’île, le texte allume des lanternes, jamais ses mots.
@@ -111,6 +117,7 @@ L’archipel vit dans la base du projet Supabase de Pyramides, dans un espace à
 | `style.css` | Le style |
 | `app.js` | Les écrans, les feuilles, les gestes, le stockage local, l’archipel partagé |
 | `serveur.js` | Les appels au serveur de l’archipel : lire, poser, faire grandir, retirer une île |
+| `musique.js` | La musique de feu de camp, calculée et jouée par le navigateur |
 | `sw.js` | Le service worker : les fichiers du site, gardés pour s’ouvrir sans réseau |
 | `manifest.webmanifest` | Le manifeste de l’app installable : nom, couleurs, icônes |
 | `icones/` | Les icônes de l’app, leurs sources SVG et `fabriquer.js`, qui les dessine avec le Chromium des tests |
@@ -126,7 +133,7 @@ L’archipel vit dans la base du projet Supabase de Pyramides, dans un espace à
 | `fonts/` | Nunito (licence SIL OFL 1.1) |
 | `404.html` | Page introuvable ; les anciennes adresses des maquettes et de `limbes/` mènent à l’accueil |
 | `base/archipel.sql` | La base de l’archipel partagé, telle qu’elle est dans le projet de Pyramides |
-| `tests/` | Les tests, dans Chromium avec une 3D logicielle : le parcours, l’intro, le retour, la stabilité, l’archipel partagé, l’installation. Ils parlent à un faux serveur, en mémoire, jamais à la vraie base |
+| `tests/` | Les tests, dans Chromium avec une 3D logicielle : le parcours, l’intro, le retour, la stabilité, l’archipel partagé, l’installation, la musique. Ils parlent à un faux serveur, en mémoire, jamais à la vraie base |
 | `package.json` | Seulement pour les tests ; le site n’a besoin de rien |
 | `.nojekyll` | Sert les fichiers tels quels sur GitHub Pages |
 
@@ -146,7 +153,7 @@ Lancer les tests, qui servent eux-mêmes le site, en une dizaine de minutes :
 ```sh
 npm install
 npm test            # toutes les suites
-npm test -- archipel    # une seule : parcours, intro, retour, stabilite, archipel ou pwa
+npm test -- archipel    # une seule : parcours, intro, retour, stabilite, archipel, pwa ou musique
 ```
 
 Les captures d’écran des tests vont dans un dossier temporaire, ou dans celui que désigne `CAPTURES`. Sur GitHub, les tests tournent à chaque proposition de changement.
