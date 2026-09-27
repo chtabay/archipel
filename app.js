@@ -6,7 +6,7 @@ import { graines, quadDe, nomDe, phrasesDe, casesDe, sujetLabel, listeDe, listeG
 import { nouvelleIle, deriver, resume, forme, depuisForme, archipelInvente, ileInventee, BIOMES, BIOME_IDS, biomeDe } from './ile.js?v=6';
 import { Vue3D, Ilot3D, apercu, disponible, ECH_ARCH, ILE_INTRO } from './monde.js?v=8';
 import { lireArchipel, poserIle, retirerIle, nouveauJeton } from './serveur.js?v=1';
-import { musique } from './musique.js?v=1';
+import { musique } from './musique.js?v=2';
 import { lire } from './lexique.js?v=2';
 
 const $ = s => document.querySelector(s);
@@ -160,6 +160,7 @@ function renderIle() {
   const tourner = el('button', { type: 'button', className: 'tourner', innerHTML: ICONE_TOURNER }); // tourner, sur la vue elle-même
   tourner.setAttribute('aria-label', 'Tourner l’île'); tourner.addEventListener('click', () => { vue.tourner(); note('geste : tourner l’île'); });
   wrap.append(tourner);
+  if (musique.disponible) wrap.append(boutonSon('ile')); // le son, sur la vue aussi
   vue.montrerIle(d, { vie }); vue.choisir(null);
   vue.onTouche = key => {
     const best = key ? { key } : null;
@@ -316,7 +317,7 @@ function renderArchipel() {
   );
   arch.arrivals = 0;
   if (!vue) { wrap.classList.add('sans'); wrap.append(el('p', { className: 'sans3d', textContent: 'Cet appareil n’affiche pas la 3D : l’archipel ne peut pas se montrer ici. Ton île y est quand même, si tu l’y as mise.' })); }
-  else { vue.attacher(wrap); vue.canvas.setAttribute('aria-label', 'L’archipel en 3D : les îles des autres, et les tiennes'); }
+  else { vue.attacher(wrap); vue.canvas.setAttribute('aria-label', 'L’archipel en 3D : les îles des autres, et les tiennes'); if (musique.disponible) wrap.append(boutonSon('archipel')); }
   placerArchipel(); montrerArchipel(caption); updateArchLine(); // les tiennes d’abord, tout de suite
   chargerArchipel().then(() => { // puis celles des autres
     if (ecran !== 'archipel') return;
@@ -429,13 +430,17 @@ function secours(screen) { // un écran qui a échoué : jamais de page vide, to
 
 const bouton = (text, fn) => { const b = el('button', { type: 'button', className: 'btn', textContent: text }); b.addEventListener('click', fn); return b; };
 const ICONE_TOURNER = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3"/><path d="M19.5 4.5v4.2h-4.2"/></svg>';
+const ICONE_SON = { // un haut-parleur : avec ses ondes quand la musique joue, barré sinon
+  true: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 9.6v4.8h3.4l4.6 3.9V5.7L7.9 9.6z"/><path d="M15.4 9.3a3.9 3.9 0 0 1 0 5.4"/><path d="M18 6.7a7.4 7.4 0 0 1 0 10.6"/></svg>',
+  false: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 9.6v4.8h3.4l4.6 3.9V5.7L7.9 9.6z"/><path d="M15.6 9.8l4.4 4.4M20 9.8l-4.4 4.4"/></svg>',
+};
 const quiet = (text, fn) => { const b = el('button', { type: 'button', className: 'quiet', textContent: text }); b.addEventListener('click', fn); return b; };
 
 function go(screen) { history.pushState({ screen, n: (history.state?.n || 0) + 1 }, '', ''); render(screen); } // n : combien d’écrans de l’app le précèdent
 
 let ecran = 'q:situ';
 const ongletDe = screen => (screen === 'ile' || screen === 'archipel' ? screen : 'deposer');
-const ONGLETS = { deposer: () => go('q:situ'), ile: () => { regard = null; go('ile'); }, archipel: () => go('archipel') };
+const ONGLETS = { deposer: () => go('q:situ'), ile: () => { regard = null; go('ile'); }, archipel: () => go('archipel'), plus: () => plusSheet() }; // Plus : un menu, pas un écran
 function updateOnglets() {
   const actif = ongletDe(ecran), n = courant.assets.length, c = $('.onglets .compte');
   for (const b of document.querySelectorAll('.onglets button')) { if (b.dataset.onglet === actif) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); }
@@ -443,7 +448,7 @@ function updateOnglets() {
 }
 
 function render(screen) {
-  ecran = screen;
+  ecran = screen; majSon = null;
   suivi?.disconnect(); suivi = null; clearInterval(sondage); sondage = null;
   document.body.classList.toggle('short', state.short && screen === 'page');
   document.body.classList.toggle('en-intro', screen === 'intro');
@@ -461,6 +466,7 @@ function render(screen) {
   const h = app.querySelector('h1, .big');
   if (h) { h.setAttribute('tabindex', '-1'); h.focus({ preventScroll: true }); }
   updateOnglets();
+  suivreMusique(screen);
 }
 
 /* ───────── Les questions ───────── */
@@ -815,9 +821,10 @@ addEventListener('beforeinstallprompt', e => { e.preventDefault(); invitation = 
 addEventListener('appinstalled', () => { invitation = null; lienInstaller(); note('app : installée'); });
 
 function installerSheet() {
-  const body = el('div', {}, el('h2', { textContent: 'L’installer comme une app' }),
-    el('p', { className: 'intro', textContent: 'L’archipel s’ouvrira depuis ton écran d’accueil, en plein écran, même sans réseau. Seul l’archipel partagé a besoin du réseau.' }));
-  if (invitation) {
+  const body = el('div', {}, el('h2', { textContent: 'L’installer comme une app' }));
+  if (installee()) body.append(el('p', { className: 'intro', textContent: 'Elle est installée sur cet appareil : tu es dedans. Elle s’ouvre depuis ton écran d’accueil, même sans réseau.' }));
+  else body.append(el('p', { className: 'intro', textContent: 'L’archipel s’ouvrira depuis ton écran d’accueil, en plein écran, même sans réseau. Seul l’archipel partagé a besoin du réseau.' }));
+  if (installee()) { /* rien à faire */ } else if (invitation) {
     const b = el('button', { type: 'button', className: 'gesture', textContent: 'L’installer' });
     b.addEventListener('click', async () => {
       const i = invitation; invitation = null; closeSheet(); note('geste : installer l’app');
@@ -825,10 +832,11 @@ function installerSheet() {
       lienInstaller();
     });
     body.append(el('p', { className: 'tiny', textContent: 'Tu y retrouveras ton île. Son icône, « L’archipel », sera visible sur ton écran d’accueil.' }), b);
-  } else body.append(
+  } else if (surIPhone()) body.append(
     el('p', { className: 'intro', textContent: 'Dans Safari, touche le bouton Partager, puis « Sur l’écran d’accueil ».' }),
     el('p', { className: 'tiny', textContent: 'Sur iPhone, l’app installée a sa propre mémoire : elle commence avec une île vide, et celle d’ici reste dans Safari. Son icône, « L’archipel », sera visible sur ton écran d’accueil.' }));
-  body.append(footRow(quiet('pas maintenant', closeSheet)));
+  else body.append(el('p', { className: 'intro', textContent: 'Ce navigateur ne le propose pas. Sur Android, Chrome le propose ; sur iPhone, Safari, avec le bouton Partager.' }));
+  body.append(footRow(quiet(installee() ? 'revenir' : 'pas maintenant', closeSheet)));
   openSheet(body);
 }
 
@@ -885,17 +893,39 @@ derive();
 for (const b of document.querySelectorAll('.onglets button')) b.addEventListener('click', () => ONGLETS[b.dataset.onglet]());
 $('#humans').addEventListener('click', () => humansSheet());
 /* ───────── La musique ───────── */
-// Coupée par défaut. Un bouton discret l’allume ; le choix reste sur ce téléphone. Rallumée au retour, elle attend un geste :
-// le navigateur n’ouvre le son qu’à ce moment-là.
-const boutonMusique = $('#musique');
-function afficherMusique() { const m = musique.enMarche; boutonMusique.textContent = m ? 'couper la musique' : 'musique'; boutonMusique.setAttribute('aria-pressed', String(m)); }
-if (musique.disponible) {
-  boutonMusique.hidden = false;
-  boutonMusique.addEventListener('click', () => { const m = musique.basculer(); store.set('musique', m ? 1 : 0); note(m ? 'musique : allumée' : 'musique : coupée'); afficherMusique(); });
-  if (store.get('musique', 0)) { // allumée la dernière fois : elle reprend au premier geste, sauf si ce geste est pour quitter
-    const reprendre = e => { if (e.target?.closest?.('#exit, #musique')) return; if (musique.demarrer()) afficherMusique(); };
-    addEventListener('pointerdown', reprendre, { once: true }); addEventListener('keydown', reprendre, { once: true });
-  }
+// Coupée par défaut. Un bouton de son sur la vue de l’île, et sur celle de l’archipel, l’allume ; le choix reste sur ce
+// téléphone. Chaque vue a sa pièce : le feu de camp sur l’île, la mer dans l’archipel ; ailleurs, le silence.
+// Rallumée au retour, elle attend un premier geste : le navigateur n’ouvre le son qu’à ce moment-là.
+const musiqueVoulue = () => !!store.get('musique', 0);
+const PIECE_DE = { ile: 'ile', archipel: 'archipel' };
+function suivreMusique(screen) { if (!musique.disponible || !musiqueVoulue()) return; if (PIECE_DE[screen]) musique.jouer(PIECE_DE[screen]); else musique.taire(); }
+let majSon = null; // le bouton de son de la vue en cours, pour le tenir à jour quand le menu change la musique
+function basculerMusique(piece = PIECE_DE[ecran]) { // depuis le bouton d’une vue, ou depuis le menu
+  const on = !musiqueVoulue(); store.set('musique', on ? 1 : 0); note(on ? 'musique : allumée' : 'musique : coupée');
+  if (!on) musique.arreter(); else if (piece) musique.jouer(piece);
+  majSon?.(); return on;
+}
+function boutonSon(piece) {
+  const b = el('button', { type: 'button', className: 'son' });
+  const maj = () => { const on = musiqueVoulue(); b.innerHTML = ICONE_SON[on]; b.setAttribute('aria-pressed', String(on)); b.setAttribute('aria-label', on ? 'Couper la musique' : 'Allumer la musique'); };
+  b.addEventListener('click', () => basculerMusique(piece));
+  maj(); majSon = maj; return b;
+}
+
+/* ───────── Le menu Plus ───────── */
+// Dans la barre du bas : ce qui sert partout, à portée de pouce. Ce sont des actions qu’on trouve aussi ailleurs, à leur place.
+
+function plusSheet() {
+  note('geste : menu plus');
+  const ligne = (titre, sous, fn) => { const b = el('button', { type: 'button', className: 'row' }, titre, el('small', { textContent: sous })); b.addEventListener('click', fn); return b; };
+  const ligneMusique = () => { const on = musiqueVoulue(), b = ligne(on ? 'Couper la musique' : 'Allumer la musique', on ? `Allumée${NB}: le feu de camp sur ton île, la mer dans l’archipel. Ailleurs, le silence.` : 'Le feu de camp sur ton île, la mer dans l’archipel. Rien ne part.', () => { basculerMusique(); b.replaceWith(ligneMusique()); }); return b; };
+  const liste = el('div', { className: 'list' },
+    ligne('Quitter vite ce site', 'L’écran se vide, et le bouton retour ne ramène pas ici.', () => quitter($('#exit').href)),
+    ...(musique.disponible ? [ligneMusique()] : []),
+    ligne('Installer l’app', installee() ? 'Déjà installée : tu es dedans.' : 'Sur ton écran d’accueil, même sans réseau.', installerSheet),
+    ligne('Parler à quelqu’un', 'Des gens répondent, à toute heure. Ici, personne ne lit.', () => humansSheet()),
+    ...(vue ? [ligne('Revoir l’intro', 'L’archipel, une île qui pousse, et comment elle le rejoint.', () => { closeSheet(); revue = true; go('intro'); })] : []));
+  openSheet(el('div', {}, el('h2', { textContent: 'Plus' }), liste, footRow(quiet('revenir', closeSheet))));
 }
 let fuite = false; // on part : plus rien ne s’affiche
 function quitter(url) { // partir vite : l’écran se vide, on remonte l’historique de l’app, puis on le remplace. « Retour » ne ramène plus ici.

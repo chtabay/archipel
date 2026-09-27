@@ -6,7 +6,7 @@ Un endroit où l’on peut tout déposer, sans jugement. On coche quelques cases
 
 ## Le parcours
 
-En bas de l’écran, trois onglets restent toujours à portée de pouce : **Déposer**, **Ton île** et **L’archipel**. Chaque écran n’a qu’une action principale.
+En bas de l’écran, trois onglets restent toujours à portée de pouce : **Déposer**, **Ton île** et **L’archipel**. Chaque écran n’a qu’une action principale. Un quatrième bouton, **Plus**, ouvre un menu avec ce qui sert partout : quitter vite ce site, allumer ou couper la musique, installer l’app, parler à quelqu’un, revoir l’intro. Ce sont des actions qu’on trouve aussi ailleurs, à leur place.
 
 **La première fois**, une courte intro, d’une quinzaine de secondes, montre l’idée sans aucun exemple. D’abord l’archipel au soir. Puis un îlot au premier plan, au-dessus duquel flottent des mots sans lettres, des pastilles de lumière. Ils tombent un à un : à chacun, la terre monte de l’eau et une chose pousse. Leur lumière reste au-dessus, en lanternes. Enfin l’île rejoint sa place parmi les autres, et « ton île » s’affiche. Quatre phrases l’accompagnent. Les îles de l’intro sont inventées, pour montrer l’idée ; l’archipel, lui, ne montre que des îles réelles. On peut la passer à tout moment, puis la revoir depuis l’archipel. « Parler à quelqu’un » et « quitter » restent visibles. Sans mouvement ou sans 3D, les quatre phrases se lisent d’un coup.
 
@@ -22,7 +22,7 @@ En bas de l’écran, trois onglets restent toujours à portée de pouce : **Dé
 
 ## L’installer comme une app
 
-Le site s’installe sur l’écran d’accueil, et s’ouvre alors en plein écran, comme une app, même sans réseau. Sur l’île, un lien discret, « installer l’app », paraît quand le navigateur le permet : sur Android et sur ordinateur, il ouvre la proposition du navigateur ; sur iPhone, il explique le bouton Partager de Safari, puis « Sur l’écran d’accueil ». Rien ne surgit tout seul au milieu d’un dépôt.
+Le site s’installe sur l’écran d’accueil, et s’ouvre alors en plein écran, comme une app, même sans réseau. Sur l’île, un lien discret, « installer l’app », paraît quand le navigateur le permet, et le menu **Plus** y mène toujours : sur Android et sur ordinateur, il ouvre la proposition du navigateur ; sur iPhone, il explique le bouton Partager de Safari, puis « Sur l’écran d’accueil ». Rien ne surgit tout seul au milieu d’un dépôt.
 
 - `manifest.webmanifest` donne le nom, les couleurs et les icônes. Les icônes sont dans `icones/`, avec leurs sources en SVG et le script qui les fabrique.
 - `sw.js` est le service worker. Il garde les fichiers du site que la page a chargés, jamais ce qu’on dépose, et ne touche pas à l’archipel partagé. La page se prend d’abord sur le réseau, pour avoir la dernière version ; sans réseau, c’est celle gardée. Les fichiers numérotés, comme `app.js?v=12`, ne changent jamais : gardés, ils servent tels quels. Après un changement de `sw.js`, on change son nom de cache, `CACHE`.
@@ -30,9 +30,14 @@ Le site s’installe sur l’écran d’accueil, et s’ouvre alors en plein éc
 
 ## La musique
 
-Une petite musique de feu de camp, coupée par défaut. Le bouton « musique », en bas de page, l’allume ; le choix reste sur le téléphone. Rallumée au retour, elle attend un premier geste : le navigateur n’ouvre le son qu’à ce moment-là. Elle se tait quand la page est cachée, et quand on quitte.
+Deux petites musiques, coupées par défaut. Un bouton de son, en bas à gauche de la vue de l’île et de celle de l’archipel, les allume, comme le menu **Plus** ; le choix reste sur le téléphone. Chaque vue a sa pièce : sur l’île, un feu de camp ; dans l’archipel, la mer au soir. On passe de l’une à l’autre en fondu, et ailleurs, sur les questions ou la page, c’est le silence. Rallumée au retour, la musique attend un premier geste : le navigateur n’ouvre le son qu’à ce moment-là. Elle se tait quand la page est cachée, et quand on quitte.
 
-Elle est jouée par le navigateur lui-même, sans fichier son : `musique.js` calcule les cordes d’une guitare, une anche d’harmonica et le feu qui crépite, puis les assemble avec la Web Audio API. Ré majeur, des accords ouverts, des arpèges en 6/8 dont une note manque parfois, un air par-dessus un tour sur deux, et un tour sur trois sans lui. Elle est planifiée au fur et à mesure, quelques secondes devant, et ne se répète jamais tout à fait. Rien de ce qu’on dépose n’y entre, pour l’instant.
+Elles sont jouées par le navigateur lui-même, sans fichier son, avec la Web Audio API, dans `musique.js`.
+
+- **Le feu de camp.** Les cordes d’une guitare, calculées, une anche d’harmonica, le feu qui crépite. Ré majeur, des accords ouverts, des arpèges en 6/8 dont une note manque parfois, un air par-dessus un tour sur deux, et un tour sur trois sans lui.
+- **La mer au soir.** Une boîte à musique sur huit temps lents, avec des silences, une nappe sur la basse, un air certains tours, une cloche au loin de temps en temps, et les vagues tout du long. Mi mineur.
+
+Chaque pièce est planifiée au fur et à mesure, quelques secondes devant, et ne se répète jamais tout à fait. Rien de ce qu’on dépose n’y entre, pour l’instant.
 
 ## La grammaire : quatre axes lus dans les cases
 
@@ -117,7 +122,7 @@ L’archipel vit dans la base du projet Supabase de Pyramides, dans un espace à
 | `style.css` | Le style |
 | `app.js` | Les écrans, les feuilles, les gestes, le stockage local, l’archipel partagé |
 | `serveur.js` | Les appels au serveur de l’archipel : lire, poser, faire grandir, retirer une île |
-| `musique.js` | La musique de feu de camp, calculée et jouée par le navigateur |
+| `musique.js` | Les deux musiques, le feu de camp et la mer, calculées et jouées par le navigateur |
 | `sw.js` | Le service worker : les fichiers du site, gardés pour s’ouvrir sans réseau |
 | `manifest.webmanifest` | Le manifeste de l’app installable : nom, couleurs, icônes |
 | `icones/` | Les icônes de l’app, leurs sources SVG et `fabriquer.js`, qui les dessine avec le Chromium des tests |
@@ -133,7 +138,7 @@ L’archipel vit dans la base du projet Supabase de Pyramides, dans un espace à
 | `fonts/` | Nunito (licence SIL OFL 1.1) |
 | `404.html` | Page introuvable ; les anciennes adresses des maquettes et de `limbes/` mènent à l’accueil |
 | `base/archipel.sql` | La base de l’archipel partagé, telle qu’elle est dans le projet de Pyramides |
-| `tests/` | Les tests, dans Chromium avec une 3D logicielle : le parcours, l’intro, le retour, la stabilité, l’archipel partagé, l’installation, la musique. Ils parlent à un faux serveur, en mémoire, jamais à la vraie base |
+| `tests/` | Les tests, dans Chromium avec une 3D logicielle : le parcours, l’intro, le retour, la stabilité, l’archipel partagé, l’installation, la musique, le menu Plus. Ils parlent à un faux serveur, en mémoire, jamais à la vraie base |
 | `package.json` | Seulement pour les tests ; le site n’a besoin de rien |
 | `.nojekyll` | Sert les fichiers tels quels sur GitHub Pages |
 
@@ -153,7 +158,7 @@ Lancer les tests, qui servent eux-mêmes le site, en une dizaine de minutes :
 ```sh
 npm install
 npm test            # toutes les suites
-npm test -- archipel    # une seule : parcours, intro, retour, stabilite, archipel, pwa ou musique
+npm test -- archipel    # une seule : parcours, intro, retour, stabilite, archipel, pwa, musique ou plus
 ```
 
 Les captures d’écran des tests vont dans un dossier temporaire, ou dans celui que désigne `CAPTURES`. Sur GitHub, les tests tournent à chaque proposition de changement.
