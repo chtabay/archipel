@@ -8,7 +8,7 @@ const attendre = async (p, test, delai = 8000) => { const fin = Date.now() + del
 const ile = JSON.stringify({ id: 1, seed: 4242, nee: new Date().toISOString(), biome: 'prairie', depots: [{ id: 1, date: new Date().toISOString(), quad: 'N', texte: false, answers: { situ: [], mots: [], sujets: ['s4', 's11'], fait: [], subi: [] } }], envoyee: false, quittee: null });
 const semer = p => p.evaluate(i => { localStorage.clear(); localStorage.setItem('archipel:intro', '1'); localStorage.setItem('archipel:ile', i); }, ile);
 const ouvrirMenu = async p => { await p.click('[data-onglet="plus"]'); await p.waitForSelector('.sheet .row'); };
-const lignes = p => p.$$eval('.sheet .row', l => l.map(x => x.firstChild.textContent));
+const lignes = p => p.$$eval('.sheet .row', l => l.map(x => x.textContent.trim()));
 const sonore = p => p.evaluate(() => window.archipel.musique.etat());
 
 (async () => {
@@ -74,7 +74,7 @@ const sonore = p => p.evaluate(() => window.archipel.musique.etat());
     const c2 = await contexte(b, IPHONE); await c2.addInitScript(() => { Object.defineProperty(navigator, 'standalone', { get: () => true }); });
     const p2 = await c2.newPage(); await p2.goto(BASE); await semer(p2); await p2.reload(); await p2.waitForTimeout(1000);
     await ouvrirMenu(p2);
-    verifier(/Déjà installée/.test(await p2.$eval('.sheet .row:has-text("app") small', s => s.textContent)), 'déjà installée : le menu le dit');
+    verifier((await lignes(p2)).includes('L’app est installée'), 'déjà installée : le menu le dit');
     await c2.close(); }
 
   // 9. sans 3D : le menu est là, sans « revoir l’intro »
