@@ -1,7 +1,7 @@
 // L’archipel : le parcours, les paysages, l’archipel, la reprise des îles d’avant, le repli sans 3D, les anciennes adresses.
 const { chromium } = require('playwright');
 const fs = require('fs'), path = require('path');
-const { BASE, OUT: CAPTURES, RACINE, GL, verifier, bilan, surveiller } = require('./commun');
+const { BASE, OUT: CAPTURES, RACINE, GL, verifier, bilan, surveiller, contexte, peupler, formeValide } = require('./commun');
 const OUT = path.join(CAPTURES, 'parcours'), L = BASE;
 fs.rmSync(OUT, { recursive: true, force: true }); fs.mkdirSync(OUT, { recursive: true });
 const RICHE = [
@@ -16,7 +16,7 @@ const semer = ({ prefixe, ile }) => { localStorage.clear(); localStorage.setItem
 (async () => {
   const browser = await chromium.launch({ args: GL });
   const errors = [], external = [], requetes = [];
-  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
+  const ctx = await contexte(browser); // avec son faux archipel : jamais la vraie base
   const p = await ctx.newPage(); surveiller(p, errors, external);
   p.on('request', r => requetes.push(r.url()));
 
@@ -102,18 +102,26 @@ const semer = ({ prefixe, ile }) => { localStorage.clear(); localStorage.setItem
   const az0 = await p.evaluate(() => window.archipel.vue.orbite.but.azim); await p.click('.tourner');
   verifier(await p.evaluate(a => window.archipel.vue.orbite.but.azim > a + 1, az0), 'le bouton tourner fait tourner l’île');
 
-  // 3. l’archipel
-  await p.click('[data-onglet="archipel"]'); await p.waitForTimeout(3500);
-  const nIles = await p.evaluate(() => window.archipel.arch.items.length);
-  verifier(nIles >= 27, `l’archipel montre ${nIles} îles`);
-  const tailles = await p.evaluate(() => window.archipel.arch.items.map(it => it.d.m.taille));
+  // 3. l’archipel : seulement des îles reçues du serveur ; la tienne y va d’un geste, et seulement sa forme
+  const serveur = ctx.archipel;
+  await peupler(p, serveur, 27);
+  await p.click('[data-onglet="archipel"]'); await p.waitForFunction(() => window.archipel.arch.lu, null, { timeout: 10000 }); await p.waitForTimeout(2500);
+  const recues = await p.evaluate(() => window.archipel.arch.items.map(it => ({ id: it.id, mine: !!it.mine, taille: it.d.m.taille })));
+  const ids = new Set(serveur.etat.iles.map(i => i.ile));
+  verifier(recues.length === 27 && recues.every(r => ids.has(r.id) && !r.mine), `l’archipel montre les ${recues.length} îles du serveur, aucune inventée`);
+  const tailles = recues.map(r => r.taille);
   verifier(new Set(tailles).size >= 5, `les îles de l’archipel ont des tailles différentes (de ${Math.min(...tailles)} à ${Math.max(...tailles)} tuiles)`);
   await p.screenshot({ path: `${OUT}/3-archipel.png`, clip: { x: 0, y: 170, width: 390, height: 560 } });
+  await p.click('#mettre-ile'); await p.waitForSelector('.sheet'); await p.click('.sheet .gesture:has-text("Y mettre ton île")');
+  await p.waitForSelector('.sheet', { state: 'detached', timeout: 10000 }); await p.waitForTimeout(2500);
+  const envoi = serveur.etat.appels.filter(a => a.f === 'archipel_poser');
+  verifier(envoi.length === 1 && formeValide(envoi[0].c.p_forme) && !serveur.etat.refus.length && serveur.etat.iles.length === 28, `« Y mettre ton île » : seule sa forme part, et le serveur l’accepte (${envoi[0]?.corps.length} octets)`);
   const ile = await p.evaluate(() => { const v = window.archipel.vue, it = window.archipel.arch.items.find(i => i.mine), w = it.grp.position.clone(); w.project(v.camera); const r = v.canvas.getBoundingClientRect(); return { x: r.left + (w.x + 1) / 2 * r.width, y: r.top + (1 - w.y) / 2 * r.height }; });
   await p.mouse.click(ile.x, ile.y); await p.waitForTimeout(2000);
   verifier((await p.textContent('#arch-caption')).startsWith('La tienne'), 'toucher sa propre île la désigne');
-  await p.waitForTimeout(6000);
-  verifier(/arrivées depuis que tu regardes\s*:\s*[1-9]/.test(await p.textContent('#arch-line')), 'de nouvelles îles arrivent');
+  await p.screenshot({ path: `${OUT}/3-archipel-la-tienne.png`, clip: { x: 0, y: 170, width: 390, height: 560 } });
+  await peupler(p, serveur, 1, 40); await p.evaluate(() => window.archipel.sonder()); await p.waitForTimeout(300);
+  verifier(/arrivées depuis que tu regardes\s*:\s*1\b/.test(await p.textContent('#arch-line')), 'une île posée ailleurs arrive');
 
   // 4. les aperçus des paysages
   await p.evaluate(() => { localStorage.clear(); localStorage.setItem('archipel:intro', '1'); localStorage.setItem('archipel:ile', JSON.stringify({ id: 9, seed: 777, nee: new Date().toISOString(), biome: 'prairie', depots: [], envoyee: false })); });
@@ -140,7 +148,7 @@ const semer = ({ prefixe, ile }) => { localStorage.clear(); localStorage.setItem
 
   // 5 bis. l’île grandit avec les dépôts
   const croit = await p.evaluate(async deps => {
-    const { deriver } = await import('./ile.js?v=2');
+    const { deriver } = await import('./ile.js?v=6');
     const base = { id: 1, seed: 4242, nee: '', biome: 'prairie', envoyee: false };
     return [0, 1, 3, 5].map(k => deriver({ ...base, depots: deps.slice(0, k).map((d, i) => ({ id: i + 1, ...d })) }).m.taille);
   }, RICHE);
@@ -156,8 +164,8 @@ const semer = ({ prefixe, ile }) => { localStorage.clear(); localStorage.setItem
   // 7. la mise en page à 320 px et sur ordinateur
   for (const [nom, vp, mob] of [['320', { width: 320, height: 640 }, true], ['bureau', { width: 1280, height: 800 }, false]]) {
     const errs = [], ext = [];
-    const c2 = await browser.newContext({ viewport: vp, deviceScaleFactor: mob ? 2 : 1, isMobile: mob, hasTouch: mob }); const q = await c2.newPage(); surveiller(q, errs, ext);
-    await q.goto(L); await q.evaluate(semer, ileDe(9090, 'tropique', RICHE)); await q.reload(); await q.waitForTimeout(1500);
+    const c2 = await contexte(browser, { viewport: vp, deviceScaleFactor: mob ? 2 : 1, isMobile: mob, hasTouch: mob }); const q = await c2.newPage(); surveiller(q, errs, ext);
+    await q.goto(L); await q.evaluate(semer, ileDe(9090, 'tropique', RICHE)); await q.reload(); await q.waitForTimeout(1500); await peupler(q, c2.archipel, 12);
     let deborde = 0; const mesurer = async () => { deborde = Math.max(deborde, await q.evaluate(() => document.documentElement.scrollWidth - innerWidth)); };
     verifier(await q.$eval('[data-onglet="ile"]', b => b.getAttribute('aria-current') === 'page'), `${nom} : au retour, l’île déjà commencée s’ouvre sur l’onglet Ton île`); await mesurer();
     await q.click('[data-onglet="deposer"]'); await q.waitForTimeout(400);
@@ -170,7 +178,7 @@ const semer = ({ prefixe, ile }) => { localStorage.clear(); localStorage.setItem
     await c2.close();
   }
   // 7 bis. un téléphone en mode sombre : l’application reste claire
-  { const c5 = await browser.newContext({ viewport: { width: 390, height: 844 }, colorScheme: 'dark' }); const q = await c5.newPage();
+  { const c5 = await contexte(browser, { viewport: { width: 390, height: 844 }, colorScheme: 'dark' }); const q = await c5.newPage();
     await q.goto(L); await q.waitForTimeout(500);
     const fond = await q.evaluate(() => getComputedStyle(document.body).backgroundColor);
     verifier(fond === 'rgb(246, 242, 234)', `en mode sombre, le fond reste clair (${fond})`);
@@ -180,7 +188,7 @@ const semer = ({ prefixe, ile }) => { localStorage.clear(); localStorage.setItem
 
   // 8. un appareil sans 3D
   const sans = await chromium.launch({ args: ['--disable-3d-apis', '--disable-webgl'] });
-  const c3 = await sans.newContext({ viewport: { width: 390, height: 844 } }); const s = await c3.newPage(); const e3 = [], x3 = []; surveiller(s, e3, x3);
+  const c3 = await contexte(sans, { viewport: { width: 390, height: 844 } }); const s = await c3.newPage(); const e3 = [], x3 = []; surveiller(s, e3, x3);
   await s.goto(L); await s.evaluate(semer, ileDe(3131, 'prairie', RICHE)); await s.reload(); await s.waitForTimeout(600);
   verifier(await s.evaluate(() => !window.archipel.vue && document.querySelector('#ent').hidden), 'sans 3D : pas d’îlot, la page reste là');
   verifier(await s.evaluate(() => document.querySelector('[data-onglet="ile"]').getAttribute('aria-current') === 'page' && !!document.querySelector('.sans3d')), 'sans 3D : au retour, on retrouve aussi son île, en mots');
@@ -194,7 +202,7 @@ const semer = ({ prefixe, ile }) => { localStorage.clear(); localStorage.setItem
   await sans.close();
 
   // 9. les anciennes adresses : GitHub Pages sert 404.html ; on le simule
-  const b4 = await chromium.launch(); const r = await b4.newPage();
+  const b4 = await chromium.launch(); const r = await (await contexte(b4, {})).newPage();
   const page404 = fs.readFileSync(path.join(RACINE, '404.html'), 'utf8');
   await r.route(/\/(limbes(-[a-z]+)?|maquettes|entites|nulle-part)(\/.*)?$/, route => route.fulfill({ status: 404, contentType: 'text/html', body: page404 }));
   for (const vieille of ['limbes/', 'limbes-e/', 'limbes-d/planche.html', 'maquettes/', 'entites/', 'limbes-b']) {
