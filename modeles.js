@@ -224,25 +224,65 @@ function arbre(a, k) {
 }
 
 /* ───────── Les pierres ───────── */
+// Ce qu’on a commis : une pierre sur la colline. Chaque espèce a trois formes, tirées de la variante ; une pierre est faite de
+// blocs qui se recoupent, aux facettes franches, tournée de son côté, avec des éclats au pied, du lichen ou de la mousse sur
+// les flancs, la neige dessus. Redit trois fois : une pierre levée. De loin (k.leger), les blocs seuls.
 
+const LICHEN = ['#c9cf9a', '#aebb86'];
+function eclats(k, tons, w, g, n = 3) { const r = rngL(g + 21); for (let i = 0; i < n; i++) { const an = r() * 6.28, d = w * (.5 + r() * .3); F(k, G.tetra, tons[(i + 1) % 3], { x: Math.cos(an) * d, y: .02, z: Math.sin(an) * d, s: .026 + r() * .02, rx: r() * 3, ry: r() * 3, ao: 0 }); } } // des éclats au pied
+function lichen(k, w, y0, y1, g, n = 3) { const r = rngL(g + 33); for (let i = 0; i < n; i++) { const an = r() * 6.28, rr = w * .46; F(k, G.ico0, LICHEN[i % 2], { x: Math.cos(an) * rr, y: y0 + r() * (y1 - y0), z: Math.sin(an) * rr, sx: .05, sy: .022, sz: .042, ao: 0 }); } } // du lichen sur les flancs
+function mousses(k, w, y0, y1, g, n = 3) { const r = rngL(g + 45); for (let i = 0; i < n; i++) { const an = r() * 6.28, rr = w * .4; F(k, G.ico1, i % 2 ? '#86b94f' : '#6fa63f', { x: Math.cos(an) * rr, y: y0 + r() * (y1 - y0), z: Math.sin(an) * rr, sx: .08, sy: .04, sz: .07, bosse: .2, graine: g + i, ao: .1 }); } } // de la mousse qui grimpe
 function pierre(a, k) {
-  const B = k.B, e = a.espece, st = a.stade, v = k.v, tons = PIERRES[e] || PIERRES.pierre, g = v * 13;
-  const forme = ['cairn', 'caillou', 'galet'].includes(e) ? e : st >= 3 ? 'menhir' : choix(['bloc', 'rond', 'dalle'], v);
-  const w = [.3, .45, .62, .38][st], h = [.22, .34, .48, 1.05][st], bas = a.etats.ferme && st < 3 ? -h * .45 : 0;
-  let hh = h;
-  if (forme === 'caillou') { const c = [.09, .15, .22, .26][st]; F(k, G.dode, tons[1], { y: c * .55 + bas * .6, sx: c, sy: c * .7, sz: c * .85, bosse: .18, graine: g }); if (v > .5) F(k, G.dode, tons[0], { x: c + .04, y: .04, z: .08, s: .05, bosse: .2, graine: g + 1 }); hh = 0; } // récent, il est petit ; ancien, il est gros
-  else if (forme === 'galet') { [[-.1, .02, 1], [.13, .08, .75], [0, -.1, .6]].slice(0, 1 + Math.min(2, st)).forEach(([x, z, s], i) => F(k, G.sphL, tons[i % 2], { x, y: .045 * s, z, sx: .14 * s, sy: .06 * s, sz: .11 * s, ao: .3 })); hh = 0; }
-  else if (forme === 'cairn') { let y = 0, r = .2 + st * .03; for (let i = 0; i < 2 + st; i++) { const hi = .07 + .015 * (2 + st - i); F(k, G.dode, tons[i % 3], { x: (i % 2 ? .02 : -.02), y: y + hi * .5, sx: r, sy: hi, sz: r * .85, ry: i, bosse: .12, graine: g + i }); y += hi * .9; r *= .8; } hh = 0; }
-  else if (forme === 'menhir') { F(k, G.box, tons[1], { y: h / 2, sx: w * .55, sy: h, sz: w * .3, ry: v * 2, bosse: .1, graine: g }); const r = rngL(g); for (let i = 0; i < 14; i++) { const t = i / 14, an = t * 12.5, rr = .02 + t * .08; F(k, G.sph, '#e6e2d8', { x: Math.cos(v * 2) * Math.cos(an) * rr, y: h * .56 + Math.sin(an) * rr, z: w * .16 + .01 - Math.sin(v * 2) * Math.cos(an) * rr * .2, s: .012, ao: 0 }); } r(); }
-  else if (forme === 'rond') F(k, G.ico1, tons[1], { y: h * .42 + bas, sx: w * .55, sy: h * .52, sz: w * .5, bosse: .12, graine: g, ao: .35 });
-  else if (forme === 'dalle') { F(k, G.box, tons[1], { y: h * .7 + bas, sx: w * .6, sy: h * 1.4, sz: w * .22, ry: v * 2, bosse: .09, graine: g }); hh = h * 1.4; }
-  else F(k, G.dode, tons[1], { y: h * .45 + bas, sx: w * .55, sy: h * .56, sz: w * .46, ry: v * 3, bosse: .16, graine: g, ao: .35 });
-  if (hh && !B.enneige && (e === 'moussue' || (B.mousse && e !== 'sombre' && v > .45))) F(k, G.ico1, '#86b94f', { y: hh * .9 + bas, sx: w * .38, sy: hh * .14, sz: w * .34, bosse: .18, graine: g + 3, ao: .2 });
-  if (hh && B.enneige) F(k, G.ico1, '#ffffff', { y: hh * .92 + bas, sx: w * .42, sy: hh * .15, sz: w * .36, bosse: .15, graine: g + 4, ao: 0 });
-  if (a.etats.ferme && st < 3) { // jamais dit : la terre la recouvre à moitié
-    const f = B.falaise || B0.falaise; F(k, G.ico1, f[0], { y: .02, sx: w * .82, sy: .11, sz: w * .7, bosse: .14, graine: g + 5, ao: .25 }); F(k, G.ico1, (B.sol.herbe || B0.sol.herbe)[1], { y: .07, sx: w * .6, sy: .05, sz: w * .5, bosse: .12, graine: g + 6, ao: .1 });
+  const B = k.B, e = a.espece, st = a.stade, v = k.v, tons = PIERRES[e] || PIERRES.pierre, g = Math.round(v * 13) + 1, kk = { ...k, ry: v * 6.28 };
+  const w = [.3, .45, .62, .38][st], h = [.22, .34, .48, 1.05][st], bas = a.etats.ferme && st < 3 ? -h * .45 : 0, fin = !k.leger;
+  const bloc = (geo, col, t) => F(kk, geo, col, { bosse: .14, ao: .35, varie: .05, ...t }); // un bloc : des bosses, le bas plus sombre
+  let hh = h, forme = e;
+  if (e === 'caillou') { const c = [.09, .15, .22, .26][st]; bloc(G.dode, tons[1], { y: c * .55 + bas * .6, sx: c, sy: c * .7, sz: c * .85, bosse: .18, graine: g }); if (v > .5) bloc(G.dode, tons[0], { x: c + .04, y: .04, z: .08, s: .05, bosse: .2, graine: g + 1 }); hh = 0; } // récent, il est petit ; ancien, il est gros
+  else if (e === 'galet') { // lisses : un gros et deux petits, trois en file, ou trois en tas
+    forme = choix(['un', 'file', 'tas'], v); const n = 1 + Math.min(2, st);
+    const places = forme === 'file' ? [[-.14, 0, .85, 0], [0, .02, 1, 0], [.14, -.01, .8, 0]] : forme === 'tas' ? [[-.07, 0, 1, 0], [.08, .02, .9, 0], [0, 0, .75, .07]] : [[0, 0, 1, 0], [.17, .09, .5, 0], [-.12, -.13, .4, 0]];
+    places.slice(0, forme === 'un' ? 1 + n : 3).forEach(([x, z, s, dy], i) => F(kk, G.sphL, tons[i % 2], { x, y: .045 * s + dy, z, sx: .14 * s, sy: .06 * s, sz: .11 * s, ry: i * .8, ao: .3, varie: .03 })); hh = 0;
   }
-  if (a.etats.fissure && hh) F(k, G.box, '#3d3948', { y: hh * .5 + bas, z: w * .22, sx: .02, sy: hh * .7, sz: .02, rz: .2, ao: 0 });
+  else if (e === 'cairn') { // des pierres plates empilées, une sur deux tournée, un galet au sommet, deux au pied
+    let y = 0, r = .2 + st * .03;
+    for (let i = 0; i < 2 + st; i++) { const hi = .06 + .014 * (2 + st - i); bloc(G.dode, tons[i % 3], { x: (i % 2 ? .02 : -.02), y: y + hi * .5, z: (i % 3 === 2 ? .015 : 0), sx: r, sy: hi, sz: r * .82, ry: i * 1.1, bosse: .1, graine: g + i }); y += hi * .88; r *= .82; }
+    F(kk, G.sphL, tons[0], { y: y + .02, sx: r * .5, sy: .025, sz: r * .42, ao: .2 });
+    if (fin) for (const [x, z] of [[.22 + st * .03, .08], [-.18 - st * .03, -.12]]) F(kk, G.sphL, tons[2], { x, y: .02, z, sx: .045, sy: .022, sz: .035, ao: .2 });
+    hh = 0;
+  }
+  else if (st >= 3) { // une pierre levée : un fût qui s’effile, ou un éclat sombre dressé ; une pierre plate à son pied
+    forme = 'menhir';
+    if (e === 'sombre') { bloc(G.dode, tons[1], { y: h * .5, sx: w * .4, sy: h * .54, sz: w * .34, bosse: .08, graine: g, ao: .45 }); bloc(G.octa, tons[2], { x: w * .3, y: h * .22, z: w * .12, sx: w * .16, sy: h * .28, sz: w * .16, rz: -.3, bosse: .06, graine: g + 1, ao: .3 }); }
+    else { bloc(cyl(w * .2, w * .3, 6), tons[1], { y: h / 2, sy: h, bosse: .07, graine: g, ao: .4 }); if (fin) lichen(kk, w * .55, h * .3, h * .85, g, 4); }
+    if (fin) { bloc(G.dode, tons[0], { x: w * .32, y: .04, z: w * .2, sx: w * .28, sy: .07, sz: w * .22, bosse: .1, graine: g + 2 }); eclats(kk, tons, w * .8, g, 2); }
+  }
+  else if (e === 'sombre') { // agité et douloureux : des éclats dressés, une pointe, ou un bloc fendu
+    forme = choix(['pointe', 'eclats', 'fendue'], v);
+    if (forme === 'pointe') { bloc(G.dode, tons[1], { y: h * .55 + bas, sx: w * .36, sy: h * .68, sz: w * .32, bosse: .1, graine: g, ao: .4 }); bloc(G.octa, tons[2], { x: w * .28, y: h * .32 + bas, z: w * .1, sx: w * .17, sy: h * .5, sz: w * .17, rz: -.4, bosse: .06, graine: g + 1, ao: .3 }); hh = h * 1.2; }
+    else if (forme === 'eclats') { [[0, 0, 1, 0, 0], [w * .32, w * .12, .8, .38, .15], [-w * .3, w * .16, .65, -.42, -.1]].forEach(([x, z, s, rz, rx], i) => bloc(i ? G.octa : G.dode, tons[i % 3], { x, y: h * .5 * s + bas, z, sx: w * .3 * s, sy: h * .62 * s, sz: w * .26 * s, rz, rx, bosse: .09, graine: g + i, ao: .4 })); hh = h; }
+    else { for (const c of [-1, 1]) bloc(G.box, tons[1], { x: c * w * .19, y: h * .48 + bas, sx: w * .3, sy: h * .96, sz: w * .5, rz: c * .1, ry: c * .12, bosse: .1, graine: g + (c > 0 ? 1 : 0), ao: .4 }); F(kk, G.box, '#1d1a22', { y: h * .45 + bas, sx: w * .1, sy: h * .86, sz: w * .42, ao: 0 }); hh = h; } // fendu : deux moitiés, le noir entre
+  }
+  else if (e === 'moussue') { // éteint et douloureux : la mousse la gagne, ronde, couchée ou en bloc
+    forme = choix(['rond', 'couchee', 'bloc'], v);
+    if (forme === 'rond') bloc(G.ico1, tons[1], { y: h * .42 + bas, sx: w * .55, sy: h * .52, sz: w * .5, bosse: .12, graine: g });
+    else if (forme === 'couchee') { bloc(G.box, tons[1], { y: h * .2 + bas, sx: w * .72, sy: h * .38, sz: w * .46, ry: .3, bosse: .1, graine: g }); hh = h * .4; }
+    else { bloc(G.dode, tons[1], { y: h * .45 + bas, sx: w * .52, sy: h * .56, sz: w * .46, bosse: .16, graine: g }); bloc(G.dode, tons[2], { x: w * .3, y: h * .18 + bas, z: -w * .1, sx: w * .26, sy: h * .3, sz: w * .24, bosse: .16, graine: g + 1 }); }
+    if (fin && !B.enneige) mousses(kk, w, bas + hh * .2, bas + hh * .6, g, 3);
+  }
+  else { // ce qu’on a commis, sans plus : un bloc, une pierre ronde, ou une dalle dressée
+    forme = choix(['bloc', 'rond', 'dalle'], v);
+    if (forme === 'rond') { bloc(G.ico1, tons[1], { y: h * .42 + bas, sx: w * .55, sy: h * .52, sz: w * .5, bosse: .12, graine: g }); bloc(G.ico0, tons[2], { x: w * .34, y: h * .15 + bas, z: w * .12, sx: w * .18, sy: h * .22, sz: w * .16, bosse: .12, graine: g + 1 }); }
+    else if (forme === 'dalle') { bloc(G.box, tons[1], { y: h * .7 + bas, sx: w * .6, sy: h * 1.4, sz: w * .22, rz: .12, bosse: .09, graine: g }); bloc(G.dode, tons[2], { x: -w * .26, y: .06 + bas, z: w * .06, sx: w * .24, sy: h * .28, sz: w * .2, bosse: .14, graine: g + 1 }); hh = h * 1.4; }
+    else { bloc(G.dode, tons[1], { y: h * .45 + bas, sx: w * .52, sy: h * .56, sz: w * .46, bosse: .16, graine: g }); bloc(G.dode, tons[0], { x: w * .3, y: h * .22 + bas, z: w * .12, sx: w * .3, sy: h * .34, sz: w * .26, bosse: .16, graine: g + 1 }); }
+  }
+  if (hh && !B.enneige && (e === 'moussue' || (B.mousse && e !== 'sombre' && v > .45))) F(kk, G.ico1, '#86b94f', { y: hh * .9 + bas, sx: w * .38, sy: hh * .14, sz: w * .34, bosse: .18, graine: g + 3, ao: .2 }); // la mousse dessus
+  if (hh && B.enneige) F(kk, G.ico1, '#ffffff', { y: hh * .92 + bas, sx: w * .42, sy: hh * .15, sz: w * .36, bosse: .15, graine: g + 4, ao: 0 });
+  if (fin && hh && !['sombre', 'moussue'].includes(e) && st < 3 && B.mousse) lichen(kk, w, bas + hh * .3, bas + hh * .7, g, 2);
+  if (fin && hh && st < 3) eclats(kk, tons, w, g, e === 'sombre' ? 4 : 2);
+  if (a.etats.ferme && st < 3) { // jamais dit : la terre la recouvre à moitié
+    const f = B.falaise || B0.falaise; F(kk, G.ico1, f[0], { y: .02, sx: w * .82, sy: .11, sz: w * .7, bosse: .14, graine: g + 5, ao: .25 }); F(kk, G.ico1, (B.sol.herbe || B0.sol.herbe)[1], { y: .07, sx: w * .6, sy: .05, sz: w * .5, bosse: .12, graine: g + 6, ao: .1 });
+  }
+  if (a.etats.fissure && hh && forme !== 'fendue') F(kk, G.box, '#3d3948', { y: hh * .5 + bas, z: w * .22, sx: .02, sy: hh * .7, sz: .02, rz: .2, ao: 0 });
   if (a.etats.mousse) { for (const [x, z] of [[-.2, .1], [.18, .12], [0, -.18]]) F(k, G.ico1, '#7bb661', { x, y: .02, z, sx: .08, sy: .03, sz: .07, bosse: .2, ao: 0 }); fleurette(k, -.26, .16, '#ff6b6b'); fleurette(k, .25, .18, '#ffd166'); }
 }
 function fleurette(k, x, z, col, h = .1, t = .028) { F(k, cyl(.006, .008, 4), '#5f9e34', { x, y: h / 2, z, sy: h, ao: 0 }); F(k, G.ico0, col, { x, y: h + t * .5, z, s: t, ao: 0 }); }

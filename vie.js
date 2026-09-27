@@ -6,7 +6,7 @@
 
 import * as THREE from './vendor/three.min.js?v=1';
 import { N, sol } from './ile.js?v=8';
-import { BETES, bete, activite } from './modeles.js?v=10';
+import { BETES, bete, activite } from './modeles.js?v=11';
 import { rng } from './outils.js?v=1';
 
 const immobile = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
