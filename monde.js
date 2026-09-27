@@ -6,7 +6,7 @@ import * as THREE from './vendor/three.min.js?v=1';
 import { N, CLIMATS, eauDe, sol, carte, deriver, etape } from './ile.js?v=6';
 import { biomeDe, BIOMES } from './biomes.js?v=1';
 import { hash, melange, versHex, nuance } from './outils.js?v=1';
-import { Bati, MAT, modeleChose, modelePhare, decor, halo, nuageBati, F, G, cone, cyl, baton } from './modeles.js?v=6';
+import { Bati, MAT, modeleChose, modelePhare, decor, halo, nuageBati, F, G, cone, cyl, baton } from './modeles.js?v=7';
 
 const reduit = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 export const ECH_ARCH = .45; // la taille des îles dans l’archipel : la même pour toutes, pour que leurs tailles se comparent
@@ -231,7 +231,7 @@ function soleil(scene, climat, portee, ombre = true) { // ombre : non pour l’a
 function ileStatique(d, part = .5, R = 2, fond = null) { // une île entière en un seul maillage (et un pour ce qui éclaire), pour l’archipel et les aperçus
   const B = biomeDe(d.ile.biome), eau = eauDe(d.climat, B), b = new Bati(d.ile.seed % 997 + 1), lum = new Bati(3);
   const dessous = sol3d(b, d.m, B, fond || fondUni(teintes(d.climat, B)), R, occlusionDe(d)); decor3d(b, d.m, B, part);
-  for (const a of d.assets) { const [x, y, z] = posTuile(d.m, a.tile, a.espece === 'barque'); modeleChose(a, B, a.v ?? hash(`${a.key}:${d.ile.seed}`), { bati: b, lum, dx: x, dy: y, dz: z, s: ECH, eauHex: eau }); } // v : la variante reçue avec la forme
+  for (const a of d.assets) { const [x, y, z] = posTuile(d.m, a.tile, a.espece === 'barque'); modeleChose(a, B, a.v ?? hash(`${a.key}:${d.ile.seed}`), { bati: b, lum, dx: x, dy: y, dz: z, s: ECH, eauHex: eau, leger: true }); } // v : la variante reçue avec la forme ; leger : vue de loin
   const grp = new THREE.Group(), m = b.maillage(); grp.add(m, dessous);
   if (!lum.vide()) grp.add(lum.maillage(MAT.lum, false));
   if (d.phareTile) { const p = modelePhare(), [x, y, z] = posTuile(d.m, d.phareTile); p.objet.position.set(x, y, z); p.objet.scale.setScalar(ECH); grp.add(p.objet); }

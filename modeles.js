@@ -4,6 +4,7 @@
 
 import * as THREE from './vendor/three.min.js?v=1';
 import { BIOMES } from './biomes.js?v=1';
+import { nuance } from './outils.js?v=1';
 
 const B0 = BIOMES.prairie;
 const choix = (liste, v) => liste[Math.floor(Math.max(0, Math.min(.9999, v)) * liste.length) % liste.length];
@@ -108,22 +109,46 @@ function baton(k, a, b, r0, r1, col, n = 5, bati = k.b) { // un cylindre d’un 
 const touffe = (k, x, z, B) => { const c = B.enneige ? '#ffffff' : B.sol.herbe[2]; for (const [dx, dz, rz, rx] of [[0, 0, .25, 0], [.02, .015, -.2, .2], [-.02, .01, 0, -.25]]) F(k, cone(4), c, { x: x + dx, y: .045, z: z + dz, sx: .012, sy: .09, sz: .012, rz, rx, ao: .4 }); };
 
 /* ───────── Les arbres ───────── */
+// Chaque arbre sort du sol par un pied évasé et des racines, porte sa couronne sur des branches, et garde le détail de
+// son espèce : des palmes à folioles, des rameaux, des fleurs. De loin (k.leger), il garde sa silhouette et laisse le fin.
 
-function tronc(k, h, r, col = '#8a5a3c') { F(k, cyl(r * .72, r, 6), col, { y: h / 2, sy: h, ao: .35 }); }
+function tronc(k, h, r, col = '#8a5a3c') {
+  F(k, cyl(r * .7, r, 7), col, { y: h / 2, sy: h, ao: .35 }); // le fût
+  F(k, cyl(r * 1.02, r * 1.55, 7), nuance(col, -.1), { y: r * .5, sy: r, ao: .5, varie: .04 }); // le pied, évasé
+  if (!k.leger) racines(k, r, col);
+}
+function racines(k, r, col, n = 3) { // des racines qui partent du pied et plongent dans le sol
+  const g = k.v * 5;
+  for (let i = 0; i < n; i++) { const an = i * 2.09 + g, cx = Math.cos(an), sz = Math.sin(an); baton(k, [cx * r * .6, r * .45, sz * r * .6], [cx * r * 2.3, -.04, sz * r * 2.3], r * .4, r * .12, nuance(col, -.06), 5); }
+}
+function branche(k, a, b, r0 = .035, col = '#7a4f33') { baton(k, a, b, r0, r0 * .4, col, 5); } // une branche, du tronc vers une masse de la couronne
 function boule(k, x, y, z, r, col, g = 1, sy = .92) { F(k, G.ico1, col, { x, y, z, s: r, sy: r * sy, bosse: .13, graine: g, ao: .45 }); }
 function creux(k, y) { F(k, G.sph, '#3a2a1f', { y, z: .075, sx: .05, sy: .08, sz: .025, ao: 0 }); } // jamais dit : un creux dans le tronc
+function fleurs(k, pal, n, g) { const r = rngL(g * 100 + 3); for (let i = 0; i < n; i++) { const an = r() * 6.28, h = .5 + r() * .5, rr = .24 + r() * .14; F(k, G.ico0, pal[i % pal.length], { x: Math.cos(an) * rr, y: h, z: Math.sin(an) * rr, s: .034 + r() * .012, ao: 0 }); } }
+function palme(k, top, an, t, i) { // une palme : une nervure qui retombe, et ses folioles en épi, de plus en plus courtes vers le bout
+  const dx = Math.cos(an), dz = Math.sin(an), pt = u => [top[0] + dx * u * .62, top[1] + .12 * Math.sin(u * 3.14) - u * u * .3, top[2] + dz * u * .62];
+  for (let s = 0; s < 4; s++) baton(k, pt(s / 4), pt((s + 1) / 4), .028 - s * .005, .022 - s * .005, t[(i + s) % 3], 4);
+  if (k.leger) { const p = pt(.5); F(k, G.tetra, t[i % 3], { x: p[0], y: p[1], z: p[2], sx: .34, sy: .03, sz: .16, ry: -an, ao: 0 }); return; }
+  for (let s = 0; s < 4; s++) for (const cote of [-1, 1]) {
+    const p = pt((s + .5) / 4), l = .17 - s * .03;
+    F(k, G.tetra, t[(i + s + (cote > 0 ? 1 : 0)) % 3], { x: p[0] - dz * cote * l * .5, y: p[1] - .02, z: p[2] + dx * cote * l * .5, sx: l, sy: .012, sz: .05, ry: -an + cote * .35, rx: cote * .3, ao: 0 });
+  }
+}
 function unArbre(k, a, v) {
   const B = k.B, e = a.espece;
   if (e === 'pin') {
     const forme = choix(B.pin.formes, v), t = B.pin.tons[0];
-    tronc(k, .32, .065);
-    if (forme === 'cypres') { F(k, G.ico1, t[1], { y: .82, sx: .2, sy: .64, sz: .2, bosse: .06, graine: v * 9, ao: .45 }); if (B.enneige) F(k, G.ico1, '#ffffff', { y: 1.26, sx: .1, sy: .14, sz: .1 }); }
-    else {
-      const n = forme === 'elance' ? 5 : 3;
-      for (let l = 0; l < n; l++) {
-        const r = forme === 'elance' ? .3 - l * .05 : .44 - l * .11, h = forme === 'elance' ? .34 : .48, y = .26 + l * (forme === 'elance' ? .19 : .27);
-        F(k, cone(7), t[l % 2 ? 1 : 0], { y: y + h / 2, sx: r, sy: h, sz: r, ry: l * .45 + v * 3, ao: .5 });
-        if (B.enneige) F(k, cone(7), '#ffffff', { y: y + h * .78, sx: r * .5, sy: h * .45, sz: r * .5, ry: l * .45 + v * 3, ao: 0 });
+    tronc(k, .34, .07, '#6f4a30');
+    if (forme === 'cypres') {
+      F(k, G.ico1, t[1], { y: .82, sx: .21, sy: .66, sz: .21, bosse: .07, graine: v * 9, ao: .45 });
+      F(k, G.ico1, t[0], { x: .02, y: 1.0, z: .03, sx: .14, sy: .38, sz: .14, bosse: .08, graine: v * 9 + 2, ao: .3 }); // une pointe plus claire
+      if (B.enneige) F(k, G.ico1, '#ffffff', { y: 1.3, sx: .1, sy: .14, sz: .1 });
+    } else {
+      const n = forme === 'elance' ? 6 : 4;
+      for (let l = 0; l < n; l++) { // des étages qui se recouvrent, aux bords ragués, deux tons qui alternent
+        const r = forme === 'elance' ? .3 - l * .04 : .46 - l * .095, h = forme === 'elance' ? .32 : .42, y = .22 + l * (forme === 'elance' ? .17 : .22);
+        F(k, cone(8), t[l % 2 ? 1 : 0], { y: y + h / 2, sx: r, sy: h, sz: r, ry: l * .5 + v * 3, bosse: .07, graine: v * 13 + l, ao: .55 });
+        if (B.enneige) F(k, cone(8), '#ffffff', { y: y + h * .8, sx: r * .55, sy: h * .4, sz: r * .55, ry: l * .5 + v * 3, ao: 0 });
       }
     }
     if (a.etats.ferme) creux(k, .14);
@@ -131,37 +156,52 @@ function unArbre(k, a, v) {
   }
   if (e === 'nu') {
     const autre = v > .5, c = '#7d6a5e';
-    baton(k, [0, 0, 0], [0, .95, 0], .075, .035, c, 6);
+    F(k, cyl(.075, .11, 6), nuance(c, -.1), { y: .05, sy: .1, ao: .5 }); if (!k.leger) racines(k, .07, c);
+    baton(k, [0, .04, 0], [0, .95, 0], .075, .035, c, 6);
     const br = autre ? [[[0, .42, 0], [.3, .74, .08]], [[0, .58, 0], [-.28, .88, -.06]], [[0, .8, 0], [.1, 1.12, -.12]], [[.2, .63, .05], [.33, .82, .2]]] : [[[0, .45, 0], [-.34, .8, .05]], [[0, .6, 0], [.3, .92, -.08]], [[0, .9, 0], [-.1, 1.18, .08]], [[0, .9, 0], [.14, 1.16, -.1]], [[-.18, .64, .02], [-.28, .86, -.15]]];
-    for (const [p0, p1] of br) { baton(k, p0, p1, .03, .012, c, 5); if (B.enneige) baton(k, [p0[0], p0[1] + .025, p0[2]], [p1[0], p1[1] + .02, p1[2]], .018, .008, '#ffffff', 4); }
-    if (B.feuillesNues) for (const [x, y, z, col] of [[-.33, .8, .05, '#f08a2c'], [.3, .9, -.06, '#e5603a'], [.12, 1.12, -.1, '#f2b93e']]) F(k, G.tetra, col, { x, y, z, s: .045, rx: x * 5, ao: 0 });
+    for (const [p0, p1] of br) {
+      baton(k, p0, p1, .03, .012, c, 5);
+      if (B.enneige) baton(k, [p0[0], p0[1] + .025, p0[2]], [p1[0], p1[1] + .02, p1[2]], .018, .008, '#ffffff', 4);
+      if (k.leger) continue;
+      for (const [ax, ay, az] of [[.08, .12, -.05], [-.06, .1, .07]]) baton(k, p1, [p1[0] + ax + (p1[0] - p0[0]) * .3, p1[1] + ay, p1[2] + az + (p1[2] - p0[2]) * .3], .011, .004, c, 4); // les rameaux
+    }
+    if (B.feuillesNues) for (const [x, y, z, col] of [[-.33, .8, .05, '#f08a2c'], [.3, .9, -.06, '#e5603a'], [.12, 1.12, -.1, '#f2b93e'], [.36, 1.02, .1, '#f08a2c']]) F(k, G.tetra, col, { x, y, z, s: .045, rx: x * 5, ao: 0 });
     if (a.etats.ferme) creux(k, .3);
     return;
   }
   const cfg = e === 'fleuri' ? B.fleuri : B.feuillu, forme = choix(cfg.formes, v), t = choix(cfg.tons, (v * 7.31) % 1), g = v * 11;
   if (forme === 'palmier') {
     const lean = (v < .5 ? -1 : 1) * .24, ang = v * 6.28, ca = Math.cos(ang), sa = Math.sin(ang), pt = u => [lean * u * u * ca, 1.15 * u, lean * u * u * sa];
+    F(k, cyl(.07, .1, 7), '#8f6842', { y: .04, sy: .08, ao: .5 }); // le pied
     for (let s = 0; s < 6; s++) baton(k, pt(s / 6), pt((s + 1) / 6), .065 - s * .006, .06 - s * .006, s % 2 ? '#b48a5c' : '#9c7249', 6);
     const top = pt(1);
-    for (let f = 0; f < 7; f++) {
-      const an = (f / 7) * 6.28 + v * 2, dx = Math.cos(an), dz = Math.sin(an), m1 = [top[0] + dx * .3, top[1] + .06, top[2] + dz * .3], m2 = [top[0] + dx * .56, top[1] - .16, top[2] + dz * .56];
-      baton(k, top, m1, .05, .04, t[f % 3], 4); baton(k, m1, m2, .04, .008, t[(f + 1) % 3], 4);
-    }
+    for (let f = 0; f < 7; f++) palme(k, top, (f / 7) * 6.28 + v * 2, t, f);
     for (let c = 0; c < 3; c++) F(k, G.sph, '#7a5233', { x: top[0] + Math.cos(c * 2.1) * .06, y: top[1] - .07, z: top[2] + Math.sin(c * 2.1) * .06, s: .045, ao: 0 });
     return;
   }
   if (forme === 'bouleau') {
-    F(k, cyl(.035, .05, 6), '#efece4', { y: .5, sy: 1, ao: .15 });
+    F(k, cyl(.035, .05, 6), '#efece4', { y: .5, sy: 1, ao: .15 }); F(k, cyl(.05, .075, 6), '#ddd8cc', { y: .04, sy: .08, ao: .4 }); if (!k.leger) racines(k, .045, '#d8d3c7');
     for (let s = 0; s < 5; s++) F(k, G.box, '#3a3530', { y: .12 + s * .17, z: .042, sx: .05, sy: .014, sz: .01, ry: s, ao: 0 });
-    baton(k, [0, .55, 0], [-.2, .76, .04], .02, .012, '#e8e3d9'); baton(k, [0, .7, 0], [.18, .9, -.03], .02, .012, '#e8e3d9');
-    for (const [x, y, z, r] of [[-.05, .72, .06, .15], [.2, .78, -.04, .14], [-.2, .84, -.02, .17], [.14, .96, .05, .17], [0, 1.1, 0, .2]]) boule(k, x, y, z, r, t[(x * 10 & 3) % 3], g + x);
+    const grappes = [[-.05, .72, .06, .15], [.2, .78, -.04, .14], [-.2, .84, -.02, .17], [.14, .96, .05, .17], [0, 1.1, 0, .2], [-.1, 1.0, -.12, .12]];
+    for (const [x, y, z] of grappes) if (Math.hypot(x, z) > .08) branche(k, [0, y - .14, 0], [x * .8, y - .03, z * .8], .018, '#e8e3d9');
+    for (const [x, y, z, r] of grappes) boule(k, x, y, z, r, t[(x * 10 & 3) % 3], g + x);
     return;
   }
-  if (forme === 'peuplier') { tronc(k, .32, .06); F(k, G.ico1, t[1], { y: .92, sx: .25, sy: .64, sz: .25, bosse: .09, graine: g, ao: .45 }); F(k, G.ico1, t[0], { x: -.06, y: 1.1, z: .05, sx: .15, sy: .36, sz: .15, bosse: .1, graine: g + 1, ao: .3 }); }
-  else if (forme === 'etage') { tronc(k, .8, .07); [[.52, .46, 0], [.76, .37, 1], [.97, .25, 2]].forEach(([y, r, i]) => { F(k, G.ico1, t[i], { y, sx: r, sy: r * .36, sz: r, bosse: .12, graine: g + i, ao: .55 }); if (B.enneige) F(k, G.ico1, '#ffffff', { y: y + r * .16, sx: r * .7, sy: r * .16, sz: r * .7, bosse: .1, graine: g + i + 5, ao: 0 }); }); }
-  else if (forme === 'hibiscus') { tronc(k, .32, .06); for (const [x, y, z, r, i] of [[-.18, .5, .06, .24, 0], [.19, .52, -.05, .23, 1], [0, .74, 0, .3, 2], [.02, .45, -.16, .2, 0]]) boule(k, x, y, z, r, t[i], g + i); }
-  else { tronc(k, .46, .08); for (const [x, y, z, r, i] of [[0, .8, 0, .36, 1], [-.21, .62, .1, .26, 0], [.21, .66, -.08, .27, 2], [.03, .99, .04, .25, 0], [-.05, .7, -.2, .22, 1]]) boule(k, x, y, z, r, t[i], g + i); if (B.enneige) F(k, G.ico1, '#ffffff', { y: 1.1, sx: .22, sy: .1, sz: .22, bosse: .1, graine: g + 7, ao: 0 }); }
-  if (e === 'fleuri' || forme === 'hibiscus') { const r = rngL(g * 100 + 3), pal = forme === 'hibiscus' ? ['#ff4d6d', '#ff4d6d', '#ffd166'] : ['#ffffff', '#fff4f7']; for (let i = 0; i < 12; i++) { const an = r() * 6.28, h = .5 + r() * .5, rr = .24 + r() * .14; F(k, G.ico0, pal[i % pal.length], { x: Math.cos(an) * rr, y: h, z: Math.sin(an) * rr, s: .035, ao: 0 }); } }
+  if (forme === 'peuplier') { tronc(k, .34, .06); F(k, G.ico1, t[1], { y: .92, sx: .25, sy: .64, sz: .25, bosse: .09, graine: g, ao: .45 }); F(k, G.ico1, t[0], { x: -.06, y: 1.1, z: .05, sx: .15, sy: .36, sz: .15, bosse: .1, graine: g + 1, ao: .3 }); F(k, G.ico1, t[2], { x: .07, y: .7, z: -.04, sx: .14, sy: .3, sz: .14, bosse: .1, graine: g + 2, ao: .4 }); }
+  else if (forme === 'etage') {
+    tronc(k, .8, .07);
+    [[.52, .46, 0], [.76, .37, 1], [.97, .25, 2]].forEach(([y, r, i]) => { F(k, G.ico1, t[i], { y, sx: r, sy: r * .36, sz: r, bosse: .12, graine: g + i, ao: .55 }); if (B.enneige) F(k, G.ico1, '#ffffff', { y: y + r * .16, sx: r * .7, sy: r * .16, sz: r * .7, bosse: .1, graine: g + i + 5, ao: 0 }); });
+    F(k, G.ico1, t[0], { y: 1.1, sx: .12, sy: .1, sz: .12, bosse: .12, graine: g + 9, ao: .3 }); // la pointe
+  }
+  else if (forme === 'hibiscus') { tronc(k, .32, .06); for (const [x, y, z, r, i] of [[-.18, .5, .06, .24, 0], [.19, .52, -.05, .23, 1], [0, .74, 0, .3, 2], [.02, .45, -.16, .2, 0]]) { if (Math.hypot(x, z) > .1) branche(k, [0, .3, 0], [x * .7, y - r * .4, z * .7], .028); boule(k, x, y, z, r, t[i], g + i); } }
+  else { // rond : une couronne en masses, portées par des branches qui sortent du tronc
+    tronc(k, .5, .085);
+    const masses = [[0, .82, 0, .37, 1], [-.22, .62, .1, .27, 0], [.22, .66, -.09, .28, 2], [.03, 1.0, .05, .26, 0], [-.06, .7, -.21, .23, 1], [.12, .58, .2, .2, 2]];
+    for (const [x, y, z, r] of masses) if (Math.hypot(x, z) > .1) branche(k, [0, .44, 0], [x * .75, y - r * .35, z * .75]);
+    for (const [x, y, z, r, i] of masses) boule(k, x, y, z, r, t[i], g + i);
+    if (B.enneige) F(k, G.ico1, '#ffffff', { y: 1.12, sx: .24, sy: .1, sz: .24, bosse: .1, graine: g + 7, ao: 0 });
+  }
+  if (e === 'fleuri' || forme === 'hibiscus') fleurs(k, forme === 'hibiscus' ? ['#ff4d6d', '#ff4d6d', '#ffd166'] : ['#ffffff', '#fff4f7', '#ffe1ea'], k.leger ? 8 : 18, g);
   if (a.etats.ferme) creux(k, .22);
 }
 function arbre(a, k) {
@@ -433,7 +473,7 @@ const FAMILLES = { arbre, pierre, caillou: pierre, maison, culture, meteo };
 // Construit une chose. o : { bati, lum (pour tout fusionner, sans animation), dx, dy, dz, s, bas, eauHex, propose }
 export function modeleChose(a, B = B0, v = .5, o = {}) {
   const statique = !!o.bati, grp = statique ? null : new THREE.Group(), anims = statique ? null : [];
-  const k = { B, v, o, b: o.bati || new Bati(Math.floor(v * 1e6) + 7), lum: o.lum || new Bati(3), grp, anims, dx: o.dx || 0, dy: o.dy || 0, dz: o.dz || 0, s: o.s ?? 1 };
+  const k = { B, v, o, b: o.bati || new Bati(Math.floor(v * 1e6) + 7), lum: o.lum || new Bati(3), grp, anims, dx: o.dx || 0, dy: o.dy || 0, dz: o.dz || 0, s: o.s ?? 1, leger: !!o.leger }; // leger : vue de loin, sans le fin
   if (a.etats?.double && a.famille !== 'meteo') FAMILLES[a.famille](a, { ...k, dx: k.dx + .3 * k.s, dz: k.dz - .22 * k.s, s: k.s * .68, v: (v + .5) % 1 });
   FAMILLES[a.famille](a, k);
   etatsCommuns(a, k);
