@@ -58,7 +58,7 @@ const stockee = (p, cle = 'ile') => p.evaluate(k => JSON.parse(localStorage.getI
     // 3. un nouveau dépôt : là-bas aussi, elle grandit
     await p.click('[data-onglet="deposer"]'); await p.waitForTimeout(300);
     await cocherPuisPoser(p, 'J’ai fait quelque chose que je regrette');
-    await attendre(p, () => appels(a, 'archipel_poser').length === 2); await p.waitForTimeout(300);
+    await attendre(p, async () => appels(a, 'archipel_poser').length === 2 && !(await stockee(p)).archipel?.enRetard); // la page a traité la réponse
     const grandi = appels(a, 'archipel_poser')[1]?.c, apres = a.etat.iles[0]?.forme;
     verifier(grandi?.p_ile === garde.id && grandi.p_jeton === garde.jeton && a.etat.iles.length === 1 && apres.choses.length > f.choses.length && !(await stockee(p)).archipel.enRetard, `un nouveau dépôt : sa forme grandit aussi là-bas (${f.choses.length} puis ${apres?.choses.length} choses)`);
 
@@ -99,7 +99,8 @@ const stockee = (p, cle = 'ile') => p.evaluate(k => JSON.parse(localStorage.getI
     await attendre(p, () => p.evaluate(() => window.archipel.arch.panne)); await p.waitForTimeout(300);
     const panne = await p.evaluate(() => ({ cap: document.querySelector('#arch-caption').textContent, ligne: document.querySelector('#arch-line').textContent }));
     verifier(/ne répond pas/.test(panne.cap) && /Tes îles sont bien là/.test(panne.cap) && /ne répond pas/.test(panne.ligne), 'le serveur ne répond pas : l’archipel le dit, calmement');
-    await p.click('#mettre-ile'); await p.waitForSelector('.sheet'); await p.click('.sheet .gesture:has-text("Y mettre ton île")'); await p.waitForTimeout(1200);
+    await p.click('#mettre-ile'); await p.waitForSelector('.sheet'); await p.click('.sheet .gesture:has-text("Y mettre ton île")');
+    await attendre(p, () => p.evaluate(() => /ne répond pas/.test(document.querySelector('.sheet [role="status"]')?.textContent || '')));
     const echec = await p.evaluate(() => ({ feuille: !!document.querySelector('.sheet'), etat: document.querySelector('.sheet [role="status"]')?.textContent || '', actif: !document.querySelector('.sheet .gesture')?.disabled }));
     verifier(echec.feuille && /ne répond pas/.test(echec.etat) && echec.actif, `et « Y mettre ton île » attend : « ${echec.etat} »`);
     a.etat.panne = false; const avant = a.etat.iles.length;
@@ -135,7 +136,7 @@ const stockee = (p, cle = 'ile') => p.evaluate(k => JSON.parse(localStorage.getI
     await cocherPuisPoser(p, 'On m’a fait du mal');
     await p.click('.actions .quiet:has-text("changer d’île")'); await p.waitForSelector('.sheet');
     await p.click('.sheet label.check'); await p.click('.sheet .gesture:has-text("Commencer une nouvelle île")');
-    await attendre(p, () => a.etat.iles.length === 1); await p.waitForTimeout(500);
+    await attendre(p, () => p.evaluate(() => !!window.archipel.iles.at(-1)?.archipel?.id)); // la page a reçu sa place
     const partie = await p.evaluate(() => window.archipel.iles.at(-1).archipel);
     verifier(a.etat.iles.length === 1 && partie?.id === a.etat.iles[0].ile && formeValide(a.etat.iles[0].forme), 'cochée, l’île quittée part dans l’archipel, avec sa forme seulement');
 
@@ -148,7 +149,7 @@ const stockee = (p, cle = 'ile') => p.evaluate(k => JSON.parse(localStorage.getI
     const attente = (await stockee(p, 'iles')).at(-1).archipel;
     verifier(attente?.attente === true && !attente.id && a.etat.iles.length === 1, 'sans réseau, l’île quittée attend sur le téléphone');
     a.etat.panne = false;
-    await p.reload(); await attendre(p, () => a.etat.iles.length === 2, 8000); await p.waitForTimeout(500);
+    await p.reload(); await attendre(p, async () => !!(await stockee(p, 'iles')).at(-1)?.archipel?.id, 10000);
     const envoyee = (await stockee(p, 'iles')).at(-1).archipel;
     verifier(a.etat.iles.length === 2 && envoyee?.id === a.etat.iles[1].ile && !envoyee.attente, 'à la prochaine ouverture, elle part d’elle-même');
     const bruit = e.splice(n0);
@@ -160,7 +161,7 @@ const stockee = (p, cle = 'ile') => p.evaluate(k => JSON.parse(localStorage.getI
     const id = '00000099-0000-4000-8000-000000000000';
     await p.goto(BASE);
     await p.evaluate(i => { localStorage.clear(); localStorage.setItem('archipel:intro', '1'); localStorage.setItem('archipel:ile', i); }, JSON.stringify(ile(1, [depot(1, ['s4']), depot(2, ['s11'])], { envoyee: true, archipel: { id, jeton: 'ab'.repeat(32), x: 1, z: 2, enRetard: true } })));
-    await p.reload(); await attendre(p, () => appels(a, 'archipel_poser').length > 0); await p.waitForTimeout(600);
+    await p.reload(); await attendre(p, async () => appels(a, 'archipel_poser').length > 0 && !(await stockee(p)).archipel, 10000); // la page a lu le refus
     const oubliee = await stockee(p);
     verifier(appels(a, 'archipel_poser')[0]?.c.p_ile === id && !oubliee.archipel && !oubliee.envoyee && oubliee.depots.length === 2, 'retirée ailleurs : à la mise à jour, le serveur ne la connaît plus, et le téléphone l’oublie aussi, sans rien perdre');
     await p.click('[data-onglet="ile"]'); await p.waitForTimeout(600);
