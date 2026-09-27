@@ -1,13 +1,13 @@
 // L’intro : quand elle paraît, comment on la passe, la revoit, et ce qu’elle garde de la page.
 const { chromium } = require('playwright');
 const path = require('path'), fs = require('fs');
-const { BASE, OUT: CAPTURES, GL, verifier, bilan, surveiller } = require('./commun');
+const { BASE, OUT: CAPTURES, GL, verifier, bilan, surveiller, contexte } = require('./commun');
 const OUT = path.join(CAPTURES, 'intro'); fs.mkdirSync(OUT, { recursive: true });
 const dansLaVue = (p, sel) => p.evaluate(s => { const r = document.querySelector(s)?.getBoundingClientRect(); return !!r && r.top >= 0 && r.bottom <= innerHeight && r.height > 0; }, sel);
 (async () => {
   const b = await chromium.launch({ args: GL });
   const errors = [], external = [];
-  const ctx = await b.newContext({ viewport: { width: 375, height: 548 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
+  const ctx = await contexte(b, { viewport: { width: 375, height: 548 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
   const p = await ctx.newPage(); surveiller(p, errors, external);
 
   // 1. la première fois : l’intro, avant tout
@@ -20,7 +20,7 @@ const dansLaVue = (p, sel) => p.evaluate(s => { const r = document.querySelector
   verifier(await p.evaluate(() => document.activeElement?.matches('h1.sr') && document.activeElement.textContent.length > 0), 'le focus est posé sur un titre, pour les lecteurs d’écran');
   const taille = await p.evaluate(() => { const c = document.querySelector('.intro-vue canvas'); return [c.clientWidth, c.clientHeight]; });
   verifier(taille[1] >= 220, `la vue 3D garde de la place sur un petit écran : ${taille.join('×')}`);
-  const place = await p.evaluate(() => { const I = window.archipel.vue.intro; return window.archipel.arch.items.reduce((m, it) => Math.min(m, Math.hypot(it.x - I.x1, it.z - I.z1) - it.d.m.rayon * .45 - I.rayon), Infinity); });
+  const place = await p.evaluate(() => { const I = window.archipel.vue.intro; return window.archipel.vue.items.reduce((m, it) => Math.min(m, Math.hypot(it.x - I.x1, it.z - I.z1) - it.d.m.rayon * .45 - I.rayon), Infinity); });
   verifier(place > 0, `l’île de l’intro se pose dans l’eau libre, jamais sur une autre île (écart ${place.toFixed(2)})`);
   await p.waitForTimeout(2500);
   verifier(await p.evaluate(() => window.archipel.vue.intro.t > .3 && /archipel/.test(document.querySelector('.intro-ligne').textContent)), 'le temps avance et la première légende paraît');
@@ -31,7 +31,7 @@ const dansLaVue = (p, sel) => p.evaluate(s => { const r = document.querySelector
   await p.evaluate(() => window.archipel.vue.introAller(16.3)); await p.waitForSelector('.intro-nav .btn', { timeout: 20000 });
   verifier((await p.textContent('.intro-nav .btn')).trim() === 'Commencer' && await p.$('.intro-nav .quiet:has-text("revoir")') !== null, 'à la fin : « Commencer », et « revoir »');
   await p.evaluate(() => { window.archipel.vue.prochaine = 0; }); await p.waitForTimeout(1500);
-  const arrivees = await p.evaluate(() => { const items = window.archipel.arch.items, I = window.archipel.vue.intro, n = items.filter(it => it.born > 0); const tous = [...items, { x: I.x1, z: I.z1, r: I.rayon }]; return { n: n.length, ecart: n.reduce((m, a) => Math.min(m, ...tous.filter(b => b !== a).map(b => Math.hypot(a.x - b.x, a.z - b.z) - a.d.m.rayon * .45 - (b.r ?? b.d.m.rayon * .45))), Infinity) }; });
+  const arrivees = await p.evaluate(() => { const items = window.archipel.vue.items, I = window.archipel.vue.intro, n = items.filter(it => it.born > 0); const tous = [...items, { x: I.x1, z: I.z1, r: I.rayon }]; return { n: n.length, ecart: n.reduce((m, a) => Math.min(m, ...tous.filter(b => b !== a).map(b => Math.hypot(a.x - b.x, a.z - b.z) - a.d.m.rayon * .45 - (b.r ?? b.d.m.rayon * .45))), Infinity) }; });
   verifier(arrivees.n >= 1 && arrivees.ecart > 0, `à la fin, l’archipel reprend vie : ${arrivees.n} île(s) arrivée(s), sans se poser sur une autre (écart ${arrivees.ecart.toFixed(2)})`);
   await p.click('.intro-nav .quiet:has-text("revoir")'); await p.waitForTimeout(600);
   verifier(await p.evaluate(() => window.archipel.vue.intro.t < 2) && await p.$('.intro-nav .quiet:has-text("passer")') !== null, 'revoir la reprend du début, avec « passer »');
@@ -66,7 +66,7 @@ const dansLaVue = (p, sel) => p.evaluate(s => { const r = document.querySelector
   await ctx.close();
 
   // 6. mouvement réduit : tout se lit d’un coup, image fixe
-  const ctx2 = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, reducedMotion: 'reduce' });
+  const ctx2 = await contexte(b, { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, reducedMotion: 'reduce' });
   const p2 = await ctx2.newPage(); surveiller(p2, errors, external);
   await p2.goto(BASE); await p2.evaluate(() => localStorage.clear()); await p2.reload(); await p2.waitForTimeout(2500);
   verifier(await p2.$$eval('.intro-tout p', l => l.length) === 4 && await p2.$('.intro-nav .btn') !== null, 'mouvement réduit : les quatre phrases d’un coup, et « Commencer »');
@@ -77,7 +77,7 @@ const dansLaVue = (p, sel) => p.evaluate(s => { const r = document.querySelector
 
   // 7. sans 3D : les phrases, et « Commencer »
   const b3 = await chromium.launch({ args: ['--disable-gpu', '--disable-webgl', '--disable-3d-apis'] });
-  const p3 = await (await b3.newContext({ viewport: { width: 390, height: 844 } })).newPage(); surveiller(p3, errors, external);
+  const p3 = await (await contexte(b3, { viewport: { width: 390, height: 844 } })).newPage(); surveiller(p3, errors, external);
   await p3.goto(BASE); await p3.evaluate(() => localStorage.clear()); await p3.reload(); await p3.waitForTimeout(1200);
   verifier(await p3.$$eval('.intro-tout p', l => l.length) === 4 && !(await p3.$('.intro-vue')), 'sans 3D : les quatre phrases, sans vue');
   await p3.click('.intro-nav .btn'); await p3.waitForTimeout(400);

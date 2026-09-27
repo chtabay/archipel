@@ -3,7 +3,7 @@
 // La carte et les dépôts viennent de ile.js : l’île est recalculée à partir de ses dépôts.
 
 import * as THREE from './vendor/three.min.js?v=1';
-import { N, CLIMATS, eauDe, sol, carte, deriver, etape } from './ile.js?v=5';
+import { N, CLIMATS, eauDe, sol, carte, deriver, etape } from './ile.js?v=6';
 import { biomeDe, BIOMES } from './biomes.js?v=1';
 import { hash, melange, versHex, nuance } from './outils.js?v=1';
 import { Bati, MAT, modeleChose, modelePhare, decor, halo, nuageBati, F, G, cone, cyl, baton } from './modeles.js?v=5';
@@ -221,7 +221,7 @@ function soleil(scene, climat, portee, ombre = true) { // ombre : non pour l’a
 function ileStatique(d, part = .5, R = 2, fond = null) { // une île entière en un seul maillage (et un pour ce qui éclaire), pour l’archipel et les aperçus
   const B = biomeDe(d.ile.biome), eau = eauDe(d.climat, B), b = new Bati(d.ile.seed % 997 + 1), lum = new Bati(3);
   const dessous = sol3d(b, d.m, B, fond || fondUni(teintes(d.climat, B)), R); decor3d(b, d.m, B, part);
-  for (const a of d.assets) { const [x, y, z] = posTuile(d.m, a.tile, a.espece === 'barque'); modeleChose(a, B, hash(`${a.key}:${d.ile.seed}`), { bati: b, lum, dx: x, dy: y, dz: z, s: ECH, eauHex: eau }); }
+  for (const a of d.assets) { const [x, y, z] = posTuile(d.m, a.tile, a.espece === 'barque'); modeleChose(a, B, a.v ?? hash(`${a.key}:${d.ile.seed}`), { bati: b, lum, dx: x, dy: y, dz: z, s: ECH, eauHex: eau }); } // v : la variante reçue avec la forme
   const grp = new THREE.Group(), m = b.maillage(); grp.add(m, dessous);
   if (!lum.vide()) grp.add(lum.maillage(MAT.lum, false));
   if (d.phareTile) { const p = modelePhare(), [x, y, z] = posTuile(d.m, d.phareTile); p.objet.position.set(x, y, z); p.objet.scale.setScalar(ECH); grp.add(p.objet); }
@@ -338,13 +338,19 @@ export class Vue3D {
     for (let k = 0; k < 3; k++) { const v = voilier(), r = 14 + k * 5, ph = k * 2.2; s.add(v); this.anims.push(T => { const a = T * (.025 + k * .008) + ph; v.position.set(Math.cos(a) * r, Math.sin(T + k) * .03, Math.sin(a) * r * .75); v.rotation.y = -a - Math.PI / 2; }); }
     this.anneau = new THREE.Mesh(new THREE.TorusGeometry(2.6, .06, 4, 48), new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: .9 })); this.anneau.rotation.x = Math.PI / 2; this.anneau.visible = false; s.add(this.anneau);
   }
-  montrerArchipel(items, opts = {}) {
+  montrerArchipel(items, opts = {}) { // opts.centre : le milieu des îles, que la caméra regarde
     this.mode = 'archipel'; this.baseArchipel(items); this.onArrivee = opts.onArrivee; this.nouvelle = opts.nouvelle;
-    const D = this.distArch;
-    this.orbite.limites = { elev: [.35, 1.2], dist: [8, D * 1.4] }; this.orbite.auto = false;
-    Object.assign(this.orbite.but, { azim: 0, elev: .72, dist: this.distArch }); this.orbite.but.cible.set(0, 0, -1);
-    this.orbite.azim = 0; this.orbite.dist = this.distArch * 1.15; this.orbite.cible.set(0, 0, -1);
+    const D = this.distArch, [cx, cz] = this.centreArch = opts.centre || [0, -1];
+    this.orbite.limites = { elev: [.35, 1.2], dist: [8, Math.max(D * 1.4, 40)] }; this.orbite.auto = false;
+    Object.assign(this.orbite.but, { azim: 0, elev: .72, dist: this.distArch }); this.orbite.but.cible.set(cx, 0, cz);
+    this.orbite.azim = 0; this.orbite.dist = this.distArch * 1.15; this.orbite.cible.set(cx, 0, cz);
     this.prochaine = (performance.now() - this.t0) / 1000 + 3;
+  }
+  arriver(it) { this.items.push(it); this.ajouterIle(it, [it.x + (Math.random() - .5) * 8, (this.centreArch?.[1] ?? 0) - 70]); } // une île qui vient d’être posée arrive de l’horizon
+  remplacerIle(avant, apres) { // une île qui a grandi : sa nouvelle forme prend la place de l’ancienne
+    for (const o of [avant?.grp, avant?.lab]) if (o) { this.scene.remove(o); liberer(o); }
+    const i = this.items.indexOf(avant); if (i >= 0) this.items[i] = apres; else this.items.push(apres);
+    this.ajouterIle(apres); if (this.focus === avant) this.viser(apres);
   }
   ajouterIle(it, depuis = null) {
     const grp = ileStatique(it.d || (it.d = deriver(it.ile)), .35, 3, this.fondArch), e = ECH_ARCH;
@@ -360,7 +366,7 @@ export class Vue3D {
   viser(it) { // s’approcher d’une île, ou revenir à l’archipel
     this.focus = it;
     if (it) { const ray = (it.d || (it.d = deriver(it.ile))).m.rayon * ECH_ARCH; this.orbite.but.cible.set(it.x, .3, it.z); this.orbite.but.dist = 5 + ray * 2.6; this.orbite.but.elev = .62; this.anneau.visible = true; this.anneau.position.set(it.x, .03, it.z); this.anneau.scale.setScalar((ray + .35) / 2.6); }
-    else { this.orbite.but.cible.set(0, 0, -1); this.orbite.but.dist = this.distArch; this.orbite.but.elev = .72; this.anneau.visible = false; }
+    else { const [cx, cz] = this.centreArch || [0, -1]; this.orbite.but.cible.set(cx, 0, cz); this.orbite.but.dist = this.distArch; this.orbite.but.elev = .72; this.anneau.visible = false; }
   }
 
   // L’intro : l’archipel, puis un îlot au premier plan. Des mots s’y posent un à un : à chacun la terre monte,

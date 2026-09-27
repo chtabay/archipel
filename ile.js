@@ -196,8 +196,29 @@ export function resume(d) {
   return { comptes, a, v, n: d.assets.length, phare: !!d.phare, climat: d.climat, paysage: d.ile.biome || 'prairie', taille: d.m.taille };
 }
 
-/* ───────── L’archipel ───────── */
-// Les îles des autres sont inventées : des dépôts au hasard, passés par la même grammaire, dans un paysage au hasard.
+/* ───────── La forme : ce que l’archipel partagé reçoit ───────── */
+// Seulement ce que la 3D dessine : le paysage, la graine du relief, la taille, le ciel, et chaque chose avec sa case,
+// sa taille, ses états visibles et ses lanternes. Jamais un mot, une case cochée, un sujet, une date.
+// La variante de chaque chose se tire de ce qui se voit déjà, jamais de sa clé : la clé et la graine ensemble diraient le sujet.
+// Les choses partent rangées par case : l’ordre des dépôts, ni celui des sujets, ne se lit pas.
+
+export function forme(d) {
+  return {
+    paysage: d.ile.biome || 'prairie', graine: d.ile.seed, taille: d.m.taille, climat: d.climat || 'N', phare: d.phareTile || null,
+    choses: d.assets.map(a => ({
+      famille: a.famille, espece: a.espece, stade: a.stade, case: a.tile, textes: Math.min(3, a.textes || 0),
+      v: +hash(`${a.famille}:${a.espece}:${a.tile.join()}:${d.ile.seed}`).toFixed(4),
+      etats: [...Object.keys(a.etats || {}).filter(k => a.etats[k]).sort(), ...(a.espece === 'volets' && a.quad?.[1] !== 'S' ? ['clos'] : [])],
+    })).sort((p, q) => p.case[0] - q.case[0] || p.case[1] - q.case[1] || (p.famille + p.espece).localeCompare(q.famille + q.espece)),
+  };
+}
+export function depuisForme(f, id) { // une île de l’archipel, redessinée depuis sa forme
+  const assets = f.choses.map((c, k) => ({ key: `forme:${k}`, v: c.v, famille: c.famille, espece: c.espece, stade: c.stade, tile: c.case, textes: c.textes, depots: [], quad: c.etats.includes('clos') ? 'ED' : 'ES', etats: Object.fromEntries(c.etats.filter(e => e !== 'clos').map(e => [e, true])) }));
+  return { assets, phare: !!f.phare, climat: f.climat, ile: { id, seed: f.graine, biome: f.paysage, depots: [] }, m: etape(f.graine, f.taille), phareTile: f.phare, dernier: null };
+}
+
+/* ───────── Les îles inventées ───────── */
+// Pour l’intro seulement : des dépôts au hasard, passés par la même grammaire, dans un paysage au hasard.
 
 const SUJETS = ['s0', 's1', 's2', 's3', 's4', 's5', 's6', 's7', 's8', 's9', 's10', 's11', 's12', 's13', 's14'];
 const MOTS = { AD: ['colere', 'peur', 'angoisse', 'rage'], ED: ['honte', 'tristesse', 'vide', 'fatigue', 'culpa', 'solitude'], AS: ['envie', 'espoir'], ES: ['soulagement', 'calme'] };

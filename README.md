@@ -1,6 +1,6 @@
 # L’archipel
 
-Un endroit où l’on peut tout déposer, sans jugement. On coche quelques cases, on écrit si on veut, et une île en 3D pousse avec ce qu’on dépose. Quand on veut, on la pose dans l’archipel, sans son nom, parmi les îles des autres.
+Un endroit où l’on peut tout déposer, sans jugement. On coche quelques cases, on écrit si on veut, et une île en 3D pousse avec ce qu’on dépose. Quand on veut, on la pose dans l’archipel, parmi les îles des autres : seulement sa forme, sans son nom.
 
 **→ https://chtabay.github.io/archipel/**
 
@@ -8,7 +8,7 @@ Un endroit où l’on peut tout déposer, sans jugement. On coche quelques cases
 
 En bas de l’écran, trois onglets restent toujours à portée de pouce : **Déposer**, **Ton île** et **L’archipel**. Chaque écran n’a qu’une action principale.
 
-**La première fois**, une courte intro, d’une quinzaine de secondes, montre l’idée sans aucun exemple. D’abord l’archipel au soir. Puis un îlot au premier plan, au-dessus duquel flottent des mots sans lettres, des pastilles de lumière. Ils tombent un à un : à chacun, la terre monte de l’eau et une chose pousse. Leur lumière reste au-dessus, en lanternes. Enfin l’île rejoint sa place parmi les autres, et « ton île » s’affiche. Quatre phrases l’accompagnent. On peut la passer à tout moment, puis la revoir depuis l’archipel. « Parler à quelqu’un » et « quitter » restent visibles. Sans mouvement ou sans 3D, les quatre phrases se lisent d’un coup.
+**La première fois**, une courte intro, d’une quinzaine de secondes, montre l’idée sans aucun exemple. D’abord l’archipel au soir. Puis un îlot au premier plan, au-dessus duquel flottent des mots sans lettres, des pastilles de lumière. Ils tombent un à un : à chacun, la terre monte de l’eau et une chose pousse. Leur lumière reste au-dessus, en lanternes. Enfin l’île rejoint sa place parmi les autres, et « ton île » s’affiche. Quatre phrases l’accompagnent. Les îles de l’intro sont inventées, pour montrer l’idée ; l’archipel, lui, ne montre que des îles réelles. On peut la passer à tout moment, puis la revoir depuis l’archipel. « Parler à quelqu’un » et « quitter » restent visibles. Sans mouvement ou sans 3D, les quatre phrases se lisent d’un coup.
 
 **Au retour**, une île déjà commencée s’ouvre d’abord sur l’onglet **Ton île**. Si quelque chose était en cours de dépôt, l’action principale le reprend. Sans île commencée, on arrive sur les premières cases.
 
@@ -17,8 +17,8 @@ En bas de l’écran, trois onglets restent toujours à portée de pouce : **Dé
 3. **La page.** Des débuts de phrases tirés des cases. Le texte est lu sur le téléphone : les sujets dont il parle s’ajoutent aux graines, et des lanternes s’allument sur l’îlot pendant qu’on écrit. Si des mots inquiètent, des numéros d’écoute s’affichent.
 4. **Terminer.** Tout ce qui a été déposé pousse sur l’île, texte compris : on ne choisit pas ce que le texte fait pousser. S’il y a un texte, le seul choix porte sur lui : le garder sur le téléphone, pour le relire en touchant ce qu’il a fait pousser, ou le brûler sous ses yeux. Il n’en reste alors que ses lanternes. Un lien discret permet aussi de tout effacer sans rien poser, après confirmation.
 5. **L’île.** Ce qui vient de pousser, avec une phrase. On la fait tourner du doigt, ou avec le bouton posé sur la vue, et on zoome en écartant deux doigts. Toucher une chose dit ce qu’elle est, d’après quelles cases, et depuis quand. L’action principale est « Déposer autre chose ».
-6. **Changer d’île.** Celle-ci reste sur le téléphone et se revoit. Elle peut rejoindre l’archipel sans nom : les autres verraient « une île avec deux arbres nus, une pierre et une maison », rien d’autre.
-7. **L’archipel.** Une mer au soir, avec des voiliers. Les îles des autres y arrivent depuis l’horizon, placées par sensation, dans l’eau libre la plus proche de leur place. Toucher une île fait s’en approcher.
+6. **Changer d’île.** Celle-ci reste sur le téléphone et se revoit. Une case, décochée d’office, la met dans l’archipel : les autres verraient « une île avec deux arbres nus, une pierre et une maison », dans son paysage, rien d’autre.
+7. **L’archipel.** Une mer au soir, avec des voiliers, et les îles réelles : celles que des personnes y ont mises, les soixante plus récentes. Aucune n’est inventée ; tant que personne n’y a mis d’île, l’archipel le dit. Pendant qu’on regarde, les îles qui arrivent viennent de l’horizon, et celles qui grandissent changent sur place. Toucher une île fait s’en approcher. « Y mettre ton île » y pose la sienne, dans l’eau libre la plus proche de sa sensation ; ensuite, chaque dépôt la fait grandir là-bas aussi. On peut l’en retirer depuis son île.
 
 ## La grammaire : quatre axes lus dans les cases
 
@@ -64,21 +64,27 @@ La personne choisit le **paysage** en commençant une île, avec un aperçu en 3
 - **La lumière.** Un soleil aux ombres douces, une lumière du ciel et une brume, réglés pour chaque climat.
 - **Le mouvement.** L’île tourne du doigt, et seule quand on la laisse. Des nuages passent, des oiseaux tournent, le phare balaie, les moulins tournent, les barques tanguent.
 - **L’intro.** Tout ce qu’elle montre se déduit de son temps. Elle se revoit donc depuis le début, et elle s’arrête quand la page est cachée. L’îlot grandit de trois tuiles par mot, depuis sous l’eau.
-- **L’archipel.** Cadré pour un téléphone tenu droit. Toutes les îles y ont la même échelle, pour que leurs tailles se comparent. Il n’a pas d’ombres, pour rester léger.
+- **L’archipel.** La caméra cadre les îles qui y sont : peu d’îles se voient de près, beaucoup de plus loin. Toutes les îles y ont la même échelle, pour que leurs tailles se comparent. Il n’a pas d’ombres, pour rester léger.
 - **Toujours clair.** L’application garde ses couleurs claires, même quand le téléphone est en mode sombre.
 
 Sans WebGL, la page reste utilisable : l’île et l’archipel ne s’affichent pas, et ce qui a poussé reste écrit en mots.
 
-## Ce qui n’existe pas encore
+## L’archipel partagé
 
-- **Les îles des autres sont inventées**, ainsi que leurs arrivées : des dépôts au hasard passés par la même grammaire. Un archipel partagé demande un serveur.
-- **Rien ne part.** Ton île, tes îles d’avant et les textes gardés restent sur ce téléphone, sans chiffrement.
-- Ce qui serait transmis à l’archipel est déjà délimité : des comptes par espèce, une sensation moyenne, le paysage. Jamais un texte, une date ou une case.
+L’archipel vit dans la base du projet Supabase de Pyramides, dans un espace à part : le schéma `archipel`, sans aucun lien avec les tables de Pyramides. On n’y entre que par trois fonctions publiques : `archipel_poser`, qui pose une île ou la fait grandir, `archipel_lire` et `archipel_retirer`. Le reste est fermé. La base est décrite dans `base/archipel.sql`.
+
+- **Seulement la forme.** Ce qui part est ce que la 3D dessine : le paysage, la graine du relief, la taille, le ciel, le phare, et pour chaque chose sa famille, son espèce, sa taille, sa case, ses états visibles et le nombre de ses lanternes. Jamais le texte, les cases cochées, les sujets, les dates, un nom ou un compte. La variante de chaque chose se tire de ce qui se voit, et les choses partent rangées par case : ni le sujet ni l’ordre des dépôts ne se lisent.
+- **Ce que la forme laisse deviner.** Elle montre ce qui a poussé, et la grammaire est publique : un phare dit un danger, une pierre fendue dit « jamais réparé ». C’est pour cela que rien ne part sans un geste, et que la feuille dit ce que les autres verront.
+- **Seulement quand on le choisit.** « Y mettre ton île », ou la case en changeant d’île. Sans ce geste, rien ne part : même une île marquée « envoyée » avant le serveur reste sur le téléphone. Une fois dans l’archipel, chaque dépôt envoie sa nouvelle forme.
+- **Un jeton, pas de compte.** Le téléphone tire un jeton secret pour chaque île. La base n’en garde que l’empreinte : seul ce téléphone peut faire grandir l’île ou la retirer.
+- **La base se protège.** Chaque forme est vérifiée, clé par clé, valeur par valeur. Les places restent dans la mer. Au plus trente nouvelles îles par minute, pour tout l’archipel. Pas de date : un simple rang dit l’ordre des arrivées.
+- **Sans réseau**, l’archipel le dit, et les îles restent sur le téléphone. Une île quittée hors ligne part à la prochaine ouverture.
 
 ## Confidentialité
 
-- Site 100 % statique : pas de serveur, pas de cookie, pas de traceur, aucune requête externe. La police et la bibliothèque 3D sont dans le dépôt.
-- Ce qu’on dépose reste sur le téléphone. Le texte y est lu, pour y trouver des sujets, et n’en sort jamais.
+- Site statique : pas de cookie, pas de traceur. La police et la bibliothèque 3D sont dans le dépôt.
+- La seule requête vers l’extérieur va au serveur de l’archipel : pour le lire quand on le regarde, et pour y mettre, faire grandir ou retirer son île. Sans cookie ni adresse d’origine. Comme tout serveur, il voit passer l’adresse IP de la requête dans ses journaux ; la base, elle, ne la garde pas.
+- Ce qu’on dépose reste sur le téléphone, sans chiffrement. Le texte y est lu, pour y trouver des sujets, et n’en sort jamais.
 
 ## Sécurité et solidité
 
@@ -86,6 +92,7 @@ Sans WebGL, la page reste utilisable : l’île et l’archipel ne s’affichent
 - **Si l’app ne se lance pas**, la page affiche quand même les numéros d’écoute. Si un écran échoue, un écran de secours le remplace, jamais une page vide.
 - **Si la 3D refuse de démarrer**, l’app continue sans elle, et l’île se dit en mots.
 - **Les données du téléphone** sont vérifiées à la lecture : ce qui est abîmé est laissé de côté, l’app s’ouvre quand même.
+- **Si le serveur ne répond pas**, l’archipel le dit calmement, et le même geste marche au retour du réseau. Une île retirée ailleurs est oubliée ici aussi, sans rien perdre de ce qui a été déposé.
 - **Une question de plus qui ne se pose plus**, parce qu’on a décoché ce qui l’ouvrait, ne compte plus pour l’île. Pour proposer de l’aide, on reste prudent : toute case cochée compte.
 
 ## Les fichiers
@@ -94,23 +101,25 @@ Sans WebGL, la page reste utilisable : l’île et l’archipel ne s’affichent
 | --- | --- |
 | `index.html` | La page |
 | `style.css` | Le style |
-| `app.js` | Les écrans, les feuilles, les gestes, le stockage local |
+| `app.js` | Les écrans, les feuilles, les gestes, le stockage local, l’archipel partagé |
+| `serveur.js` | Les appels au serveur de l’archipel : lire, poser, faire grandir, retirer une île |
 | `contenu.js` | Les cases, les sujets et leurs poids, les mots-clés d’alerte, les numéros |
 | `grammaire.js` | Les familles par sujet, les espèces, les états, la composition, les phrases |
 | `lexique.js` | Les mots qui font pousser un sujet ou donnent une sensation, lus sur l’appareil |
 | `biomes.js` | Les paysages : couleurs, essences, maisons, cultures, décor |
-| `ile.js` | La carte, les quartiers, l’île recalculée depuis ses dépôts, les îles inventées |
+| `ile.js` | La carte, les quartiers, l’île recalculée depuis ses dépôts, sa forme partagée, les îles inventées de l’intro |
 | `monde.js` | Le relief, la mer, le ciel, la lumière, la caméra, l’île, l’archipel, l’intro, l’îlot, les aperçus |
 | `modeles.js` | Les choses en 3D, leurs formes, leurs états, le petit décor |
 | `outils.js` | Les nombres stables et le mélange des couleurs |
 | `vendor/` | three.js 0.186, réduit aux pièces utilisées (licence MIT) |
 | `fonts/` | Nunito (licence SIL OFL 1.1) |
 | `404.html` | Page introuvable ; les anciennes adresses des maquettes et de `limbes/` mènent à l’accueil |
-| `tests/` | Les tests, dans Chromium avec une 3D logicielle : le parcours, l’intro, le retour, la stabilité |
+| `base/archipel.sql` | La base de l’archipel partagé, telle qu’elle est dans le projet de Pyramides |
+| `tests/` | Les tests, dans Chromium avec une 3D logicielle : le parcours, l’intro, le retour, la stabilité, l’archipel partagé. Ils parlent à un faux serveur, en mémoire, jamais à la vraie base |
 | `package.json` | Seulement pour les tests ; le site n’a besoin de rien |
 | `.nojekyll` | Sert les fichiers tels quels sur GitHub Pages |
 
-Le stockage local utilise le préfixe `archipel:`. Au premier passage, l’île gardée sous un ancien nom du projet est reprise, sans rien effacer. `archipel:intro` retient que l’intro a été vue ou passée.
+Le stockage local utilise le préfixe `archipel:`. Une île mise dans l’archipel y garde sa place et son jeton. Au premier passage, l’île gardée sous un ancien nom du projet est reprise, sans rien effacer. `archipel:intro` retient que l’intro a été vue ou passée.
 
 Chaque fichier est appelé avec un numéro de version, comme `?v=1`. Après une modification, on augmente le numéro de ce fichier là où il est appelé, pour qu’un téléphone ne mélange pas deux versions en cache.
 
@@ -126,7 +135,7 @@ Lancer les tests, qui servent eux-mêmes le site, en une dizaine de minutes :
 ```sh
 npm install
 npm test            # toutes les suites
-npm test -- stabilite   # une seule : parcours, intro, retour ou stabilite
+npm test -- archipel    # une seule : parcours, intro, retour, stabilite ou archipel
 ```
 
 Les captures d’écran des tests vont dans un dossier temporaire, ou dans celui que désigne `CAPTURES`. Sur GitHub, les tests tournent à chaque proposition de changement.

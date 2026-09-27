@@ -2,14 +2,14 @@
 // écran qui échoue, app qui ne se lance pas, mémoire graphique, choses jamais empilées, retour qui ferme une feuille.
 const { chromium } = require('playwright');
 const path = require('path'), fs = require('fs');
-const { BASE, OUT: CAPTURES, GL, TELEPHONE, verifier, bilan, surveiller, sansIntro } = require('./commun');
+const { BASE, OUT: CAPTURES, GL, verifier, bilan, surveiller, sansIntro, contexte, peupler } = require('./commun');
 const OUT = path.join(CAPTURES, 'stabilite'); fs.mkdirSync(OUT, { recursive: true });
 const ile = (depots, extra = {}) => JSON.stringify({ id: 1, seed: 77, nee: new Date().toISOString(), biome: 'prairie', envoyee: true, quittee: null, depots, ...extra });
 const depot = (id, answers) => ({ id, date: new Date().toISOString(), quad: 'N', texte: false, answers: { situ: [], mots: [], sujets: [], fait: [], subi: [], ...answers } });
 
 (async () => {
   const b = await chromium.launch({ args: GL });
-  const nouvelle = async (init) => { const c = await b.newContext(TELEPHONE); if (init) await c.addInitScript(init); const p = await c.newPage(), e = [], x = []; surveiller(p, e, x); return { c, p, e, x }; };
+  const nouvelle = async (init) => { const c = await contexte(b); if (init) await c.addInitScript(init); const p = await c.newPage(), e = [], x = []; surveiller(p, e, x); return { c, p, e, x }; };
 
   // 1. décocher « je regrette » retire ce que la question de plus faisait pousser
   { const { c, p, e } = await nouvelle();
@@ -80,7 +80,7 @@ const depot = (id, answers) => ({ id, date: new Date().toISOString(), quad: 'N',
     await c.close(); }
 
   // 6. l’app ne se lance pas du tout : il reste les numéros
-  { const c = await b.newContext(TELEPHONE), p = await c.newPage();
+  { const c = await contexte(b), p = await c.newPage();
     await p.route(/app\.js/, r => r.abort());
     await p.goto(BASE); await p.waitForTimeout(8800);
     verifier(await p.evaluate(() => !document.querySelector('#secours').hidden && !!document.querySelector('#secours a[href="tel:3114"]')), 'si l’app ne se lance pas, le secours paraît, avec le 3114');
@@ -90,7 +90,7 @@ const depot = (id, answers) => ({ id, date: new Date().toISOString(), quad: 'N',
   // 7. la mémoire graphique ne grandit pas en passant de l’île à l’archipel
   { const { c, p } = await nouvelle();
     await p.goto(BASE); await p.evaluate(i => { localStorage.clear(); localStorage.setItem('archipel:intro', '1'); localStorage.setItem('archipel:ile', i); }, ile([depot(1, { situ: ['danger'], sujets: ['s4', 's11'] })]));
-    await p.reload(); await p.waitForTimeout(1500);
+    await p.reload(); await p.waitForTimeout(1500); await peupler(p, c.archipel, 12); // des îles à dessiner, et à libérer
     const tex = [];
     for (let i = 0; i < 3; i++) { await p.click('[data-onglet="archipel"]'); await p.waitForTimeout(1500); await p.click('[data-onglet="ile"]'); await p.waitForTimeout(1200); tex.push(await p.evaluate(() => window.archipel.vue.rendu.info.memory.textures)); }
     verifier(tex[2] <= tex[0], `la mémoire graphique reste stable d’une visite à l’autre (${tex.join(', ')} textures)`);
@@ -100,7 +100,7 @@ const depot = (id, answers) => ({ id, date: new Date().toISOString(), quad: 'N',
   { const { c, p } = await nouvelle();
     await p.goto(BASE);
     const empilees = await p.evaluate(async () => {
-      const { deriver } = await import('./ile.js?v=5'), tous = Array.from({ length: 15 }, (_, i) => `s${i}`);
+      const { deriver } = await import('./ile.js?v=6'), tous = Array.from({ length: 15 }, (_, i) => `s${i}`);
       let pire = 0;
       for (let s = 1; s <= 40; s++) { const d = deriver({ id: 1, seed: 1000 + s * 7, biome: 'prairie', depots: [{ id: 1, quad: 'N', answers: { situ: ['regret', 'mal'], mots: [], sujets: tous, fait: [], subi: [] } }] }), vus = new Set(); let n = 0; for (const a of d.assets) { if (a.famille === 'meteo' && a.espece !== 'etang') continue; const k = a.tile.join(); if (vus.has(k)) n++; vus.add(k); } pire = Math.max(pire, n); }
       return pire;

@@ -1,10 +1,11 @@
 // L’archipel : les cases, les graines, l’île qui pousse, et l’archipel où la poser, en 3D.
-// Tout reste sur cet appareil ; rien ne part. Pour l’instant, les îles des autres sont inventées.
+// Ce qu’on dépose reste sur cet appareil. Seule la forme d’une île part dans l’archipel, et seulement quand on l’y met.
 
-import { SUBJECTS, QUESTIONS, KEYS, BASE, LEX, HUMANS, MOCK } from './contenu.js?v=2';
+import { SUBJECTS, QUESTIONS, KEYS, BASE, LEX, HUMANS } from './contenu.js?v=2';
 import { graines, quadDe, nomDe, phrasesDe, casesDe, sujetLabel, listeDe, listeGraines, FAMILLES, ESPECES, NOMS } from './grammaire.js?v=3';
-import { nouvelleIle, deriver, resume, archipelInvente, ileInventee, BIOMES, BIOME_IDS, biomeDe } from './ile.js?v=5';
-import { Vue3D, Ilot3D, apercu, disponible, ECH_ARCH, ILE_INTRO } from './monde.js?v=7';
+import { nouvelleIle, deriver, resume, forme, depuisForme, archipelInvente, ileInventee, BIOMES, BIOME_IDS, biomeDe } from './ile.js?v=6';
+import { Vue3D, Ilot3D, apercu, disponible, ECH_ARCH, ILE_INTRO } from './monde.js?v=8';
+import { lireArchipel, poserIle, retirerIle, nouveauJeton } from './serveur.js?v=1';
 import { lire } from './lexique.js?v=2';
 
 const $ = s => document.querySelector(s);
@@ -72,7 +73,9 @@ function saine(x) { // une île relue sur ce téléphone : sa forme est vérifi�
     if (!Array.isArray(r.duTexte)) delete r.duTexte;
     return r;
   });
-  return { ...x, id: x.id ?? Date.now(), seed: Number.isFinite(x.seed) ? x.seed : 1, biome: BIOMES[x.biome] ? x.biome : 'prairie', depots };
+  const a = x.archipel && typeof x.archipel === 'object' ? x.archipel : null; // sa place dans l’archipel partagé, ou une place qui l’attend
+  const archipel = a && ((typeof a.id === 'string' && /^[0-9a-f]{64}$/.test(a.jeton) && Number.isFinite(a.x) && Number.isFinite(a.z)) || (!a.id && a.attente)) ? a : undefined;
+  return { ...x, id: x.id ?? Date.now(), seed: Number.isFinite(x.seed) ? x.seed : 1, biome: BIOMES[x.biome] ? x.biome : 'prairie', depots, archipel, envoyee: !!archipel?.id }; // « envoyée » d’avant le serveur : elle n’avait rien quitté
 }
 let ile = saine(store.get('ile', null)) || nouvelleIle(); // celle qui pousse
 let iles = [].concat(store.get('iles', [])).map(saine).filter(Boolean); // celles d’avant, gardées ici
@@ -133,18 +136,19 @@ function renderIle() {
     else nav.append(quiet('choisir le paysage', paysageSheet));
     if (iles.length) nav.append(quiet('tes îles d’avant', ilesSheet));
   } else nav.append(bouton('Revenir à ton île', () => { regard = null; go('ile'); }));
+  if ((regard || ile).archipel?.id) nav.append(quiet('la retirer de l’archipel', () => retirerSheet(regard || ile)));
   const pousses = el('ul', {}, ...(d.assets.length ? d.assets.map(a => el('li', { textContent: ligneDe(a, d) })) : [el('li', { textContent: 'rien encore' })]));
   const what = titre && mine ? titre : null;
   app.replaceChildren(
     el('p', { className: 'step', textContent: mine ? (what ? 'Ton île' : 'Ton île, aujourd’hui') : `Une île d’avant · ${mois(regard.nee)}` }),
     el('h1', { textContent: what ? what.h1 : mine ? 'Ton île' : 'Elle ne pousse plus' }),
-    el('p', { className: 'hint', textContent: what ? what.line : mine ? 'Elle pousse avec ce que tu déposes. Rien ne quitte ce téléphone.' : 'Elle reste ici, telle que tu l’as laissée.' }),
+    el('p', { className: 'hint', textContent: what ? what.line : mine ? (ile.envoyee ? 'Elle pousse avec ce que tu déposes. Sa forme est dans l’archipel ; le reste ne quitte pas ce téléphone.' : 'Elle pousse avec ce que tu déposes. Rien ne quitte ce téléphone.') : 'Elle reste ici, telle que tu l’as laissée.' }),
     wrap, caption, excerpt, line,
     nav,
     el('details', {}, el('summary', { textContent: 'Ce qui a poussé' }), pousses),
     el('details', {}, el('summary', { textContent: 'Comment ça pousse' }), legende()),
     el('details', {}, el('summary', { textContent: 'Ce qui serait compté' }), el('ul', {}, ...(trace.length ? trace : ['rien']).map(t => el('li', { textContent: t })))),
-    el('p', { className: 'tiny', textContent: 'Pour l’instant, ton île reste sur ce téléphone, sans chiffrement, et l’archipel des autres est inventé.' }),
+    el('p', { className: 'tiny', textContent: 'Ton île reste sur ce téléphone, sans chiffrement. Si tu la mets dans l’archipel, seule sa forme part, telle qu’on la voit : ni tes mots, ni tes dates, ni ton nom.' }),
   );
   titre = null;
   scene.d = d;
@@ -198,12 +202,14 @@ function legende() {
 }
 
 /* ───────── L’archipel ───────── */
+// Les îles réelles, lues sur le serveur de l’archipel : seulement leur forme. Les tiennes se dessinent depuis ce téléphone.
 
-const arch = { autres: [], items: [], arrivals: 0 };
+const arch = { reelles: [], items: [], arrivals: 0, rang: 0, total: 0, lu: false, panne: false };
 const miennes = () => [...iles.filter(x => x.envoyee), ...(ile.envoyee ? [ile] : [])];
-const LARG = 18, PROF = 36; // l’archipel est plus profond que large : on le regarde en portrait, d’un peu haut
+const LARG = 18, PROF = 36; // la place d’une île suit sa sensation : supportable à droite, agité au loin
 if (vue) vue.dimsArch = [LARG, PROF];
-const posArch = (a, v) => [(v - .5) * LARG, (.5 - a) * PROF]; // supportable à droite, agité au loin
+const posArch = (a, v) => [(v - .5) * LARG, (.5 - a) * PROF];
+const sauver = x => (x === ile ? saveIle() : saveIles());
 
 function ecarter(items, fixes = []) { // les îles ne se chevauchent pas : on les écarte un peu, autour de leur place
   const tous = [...fixes, ...items], fixe = new Set(fixes), R = it => (it.d || (it.d = deriver(it.ile))).m.rayon * ECH_ARCH + .15; // chaque île, selon sa taille
@@ -223,9 +229,9 @@ function ecarter(items, fixes = []) { // les îles ne se chevauchent pas : on le
   }
 }
 function placeLibre(it, fixes, [px, pz]) { // une île qui arrive : l’eau libre la plus proche de sa place, pour ne jamais se poser sur une autre
-  const R = x => (x.d || (x.d = deriver(x.ile))).m.rayon * ECH_ARCH + .15, r = R(it);
+  const R = x => (x.d || (x.d = deriver(x.ile))).m.rayon * ECH_ARCH + .15, r = R(it), k = Math.max(1, Math.sqrt((fixes.length + 1) / 28)); // l’archipel s’étend avec ses îles
   let libre = null, pres = Infinity, secours = null, jeuMax = -Infinity;
-  for (let x = -LARG * .6; x <= LARG * .6; x += .5) for (let z = -PROF * .62; z <= PROF * .62; z += .5) {
+  for (let x = -LARG * .6 * k; x <= LARG * .6 * k; x += .5) for (let z = -PROF * .62 * k; z <= PROF * .62 * k; z += .5) {
     const jeu = fixes.reduce((m, f) => Math.min(m, Math.hypot(f.x - x, f.z - z) - R(f) - r - .5), Infinity), loin = Math.hypot(x - px, z - pz);
     if (jeu >= 0 && loin < pres) { pres = loin; libre = [x, z]; }
     if (jeu > jeuMax) { jeuMax = jeu; secours = [x, z]; } // l’archipel est plein : la place la moins serrée
@@ -233,46 +239,68 @@ function placeLibre(it, fixes, [px, pz]) { // une île qui arrive : l’eau libr
   [it.x, it.z] = libre || secours || [px, pz];
 }
 
-function placerArchipel() {
-  const items = arch.autres.map(o => ({ ...o, d: o.d || (o.d = deriver(o.ile)), mine: false }));
-  for (const m of miennes()) { const d = deriver(m), r = resume(d); items.push({ ile: m, d, a: r.a, v: r.v, mine: true, label: m === ile ? 'la tienne' : `la tienne, ${mois(m.nee).split(' ')[0]}` }); }
-  for (const it of items) [it.x, it.z] = posArch(it.a, it.v);
-  ecarter(items);
-  arch.items = items;
+const reelle = r => ({ id: r.ile, x: r.x, z: r.z, d: depuisForme(r.forme, r.ile), mine: false }); // une île reçue : sa forme, à sa place
+const lisible = r => { try { return reelle(r); } catch (e) { console.warn(e); return null; } }; // une île illisible est laissée de côté, pas l’archipel
+async function chargerArchipel() { // les îles les plus récentes
+  try {
+    const rangs = await lireArchipel(0, 60);
+    arch.reelles = rangs.map(lisible).filter(Boolean); arch.total = rangs[0]?.total ?? 0; arch.rang = Math.max(0, ...rangs.map(r => r.ordre)); arch.lu = true; arch.panne = false;
+  } catch (e) { console.warn(e); arch.panne = true; }
+}
+function placerArchipel() { // les îles des autres, et les tiennes, dessinées depuis ce téléphone
+  const tiennes = miennes().filter(m => m.archipel?.id), ids = new Set(tiennes.map(m => m.archipel.id));
+  arch.items = [...arch.reelles.filter(r => !ids.has(r.id)), ...tiennes.map(m => ({ id: m.archipel.id, ile: m, d: deriver(m), x: m.archipel.x, z: m.archipel.z, mine: true, label: m === ile ? 'la tienne' : `la tienne, ${mois(m.nee).split(' ')[0]}` }))];
+}
+function cadrer() { // la caméra suit les îles : peu d’îles se voient de près, beaucoup de plus loin
+  const it = arch.items, R = i => i.d.m.rayon * ECH_ARCH;
+  if (!it.length) return { dims: [8, 10], centre: [0, 0] };
+  const x0 = Math.min(...it.map(i => i.x - R(i))), x1 = Math.max(...it.map(i => i.x + R(i))), z0 = Math.min(...it.map(i => i.z - R(i))), z1 = Math.max(...it.map(i => i.z + R(i)));
+  return { dims: [Math.max(6, (x1 - x0 + 2) / 1.2), Math.max(8, (z1 - z0) / 1.24)], centre: [(x0 + x1) / 2, (z0 + z1) / 2 + (z1 - z0) * .07] }; // la vue ajoute sa marge ; le centre avance un peu, car le bord proche paraît plus grand
 }
 
-function nouvelleAutre(fixes = arch.items) { // une île de quelqu’un d’autre (inventée) arrive depuis l’horizon
-  const r = Math.random(), q = r < .27 ? 'AD' : r < .68 ? 'ED' : r < .82 ? 'AS' : 'ES';
-  const a = (q[0] === 'A' ? .5 : 0) + Math.random() * .5, v = (q[1] === 'S' ? .5 : 0) + Math.random() * .5;
-  const it = { ile: ileInventee(5000 + Math.floor(Math.random() * 1e6), q), a, v, mine: false, born: now() };
-  placeLibre(it, fixes, posArch(a, v));
-  arch.arrivals++;
+let sondage = null; // la lecture régulière de l’archipel, tant qu’on le regarde
+async function sonder() { // les îles arrivées ou grandies depuis la dernière lecture
+  if (ecran !== 'archipel' || !arch.lu) return;
+  let rangs; try { rangs = await lireArchipel(arch.rang, 60); } catch { return; }
+  if (ecran !== 'archipel') return;
+  const tiennes = new Set(miennes().map(m => m.archipel?.id).filter(Boolean));
+  for (const r of rangs.sort((a, b) => a.ordre - b.ordre)) {
+    arch.rang = Math.max(arch.rang, r.ordre); arch.total = r.total ?? arch.total;
+    if (tiennes.has(r.ile)) continue; // les tiennes sont déjà là
+    const lue = lisible(r); if (!lue) continue;
+    const avant = arch.items.find(i => i.id === r.ile), nouvelle = { ...lue, born: avant ? avant.born : now() }; // grandie, elle garde son âge
+    arch.reelles = [...arch.reelles.filter(x => x.id !== r.ile), nouvelle];
+    if (avant) { if (vue) vue.remplacerIle(avant, nouvelle); else arch.items[arch.items.indexOf(avant)] = nouvelle; } // elle a grandi
+    else { arch.arrivals++; if (vue) vue.arriver(nouvelle); else arch.items.push(nouvelle); } // elle arrive
+  }
   updateArchLine();
-  return it;
 }
 
 function updateArchLine() {
   const line = $('#arch-line');
   if (!line) return;
   const n = miennes().length;
-  line.textContent = `Ce mois-ci${NB}: ${(MOCK.total + n).toLocaleString('fr-FR')} îles · arrivées depuis que tu regardes${NB}: ${arch.arrivals} · les tiennes${NB}: ${n}`;
+  line.textContent = arch.panne ? 'L’archipel ne répond pas pour l’instant.' : arch.lu ? `${arch.total} île${arch.total > 1 ? 's' : ''} dans l’archipel · arrivées depuis que tu regardes${NB}: ${arch.arrivals} · les tiennes${NB}: ${n}` : '';
 }
 
 const INVITE_ARCH = 'Touche une île pour t’en approcher. Fais tourner l’archipel du doigt.';
 function legendeArch(it) {
-  const d = it.d || deriver(it.ile), rs = resume(d);
+  const rs = resume(it.d || deriver(it.ile));
   return it.mine ? `La tienne${it.ile === ile ? ', celle d’aujourd’hui' : `, celle de ${mois(it.ile.nee)}`}${NB}: ${listeDe(rs.comptes)}.` : `Une île avec ${listeDe(rs.comptes)}${rs.phare ? ', et un phare' : ''}. ${it.born ? 'Arrivée à l’instant.' : 'Là depuis un moment.'}`;
 }
+const inviteArch = () => (arch.panne ? 'L’archipel ne répond pas pour l’instant. Tes îles sont bien là, sur ce téléphone.' : !arch.lu ? 'L’archipel se charge…' : arch.items.length ? INVITE_ARCH : 'L’archipel attend sa première île.');
 function montrerArchipel(caption) {
-  vue.montrerArchipel(arch.items, { nouvelle: nouvelleAutre });
+  if (!vue) return;
+  const { dims, centre } = cadrer();
+  vue.dimsArch = dims; vue.montrerArchipel(arch.items, { centre });
   vue.onTouche = it => {
-    if (!it) { caption.textContent = INVITE_ARCH; return; }
-    caption.replaceChildren(`${legendeArch(it)} `, quiet('revenir à l’archipel', () => { vue.viser(null); caption.textContent = INVITE_ARCH; }));
+    if (!it) { caption.textContent = inviteArch(); return; }
+    caption.replaceChildren(`${legendeArch(it)} `, quiet('revenir à l’archipel', () => { vue.viser(null); caption.textContent = inviteArch(); }));
   };
 }
 function renderArchipel() {
   const wrap = el('div', { className: 'ilewrap mer' });
-  const caption = el('p', { className: 'ile-caption', id: 'arch-caption', textContent: INVITE_ARCH });
+  const caption = el('p', { className: 'ile-caption', id: 'arch-caption', textContent: inviteArch() });
   const nav = el('nav', { className: 'actions' });
   if (!ile.envoyee && ile.depots.length) { const b = bouton('Y mettre ton île', envoyerSheet); b.id = 'mettre-ile'; nav.append(b); }
   if (vue) nav.append(quiet('revoir l’intro', () => { revue = true; go('intro'); }));
@@ -282,16 +310,50 @@ function renderArchipel() {
     el('p', { className: 'hint', textContent: 'Les îles des autres arrivent au fil de l’eau, placées par sensation. Personne ne lit rien : ce sont des formes.' }),
     wrap, caption, el('p', { className: 'ile-line', id: 'arch-line' }),
     nav,
-    el('p', { className: 'tiny', textContent: 'Pour l’instant, les îles des autres sont inventées. Les tiennes restent sur ce téléphone.' }),
+    el('p', { className: 'tiny', textContent: 'Chaque île est la forme de ce que quelqu’un a déposé. Ni mots, ni dates, ni noms.' }),
   );
-  if (!arch.autres.length) arch.autres = archipelInvente(26);
-  placerArchipel();
   arch.arrivals = 0;
-  if (!vue) { wrap.classList.add('sans'); caption.hidden = true; wrap.append(el('p', { className: 'sans3d', textContent: 'Cet appareil n’affiche pas la 3D : l’archipel ne peut pas se montrer ici. Ton île y est quand même, si tu l’y as mise.' })); updateArchLine(); return; }
-  vue.attacher(wrap);
-  vue.canvas.setAttribute('aria-label', 'L’archipel en 3D : les îles des autres, et les tiennes');
-  montrerArchipel(caption);
-  updateArchLine();
+  if (!vue) { wrap.classList.add('sans'); wrap.append(el('p', { className: 'sans3d', textContent: 'Cet appareil n’affiche pas la 3D : l’archipel ne peut pas se montrer ici. Ton île y est quand même, si tu l’y as mise.' })); }
+  else { vue.attacher(wrap); vue.canvas.setAttribute('aria-label', 'L’archipel en 3D : les îles des autres, et les tiennes'); }
+  placerArchipel(); montrerArchipel(caption); updateArchLine(); // les tiennes d’abord, tout de suite
+  chargerArchipel().then(() => { // puis celles des autres
+    if (ecran !== 'archipel') return;
+    placerArchipel(); montrerArchipel(caption); updateArchLine(); caption.textContent = inviteArch();
+    clearInterval(sondage); if (!arch.panne) sondage = setInterval(sonder, 20000);
+  });
+}
+
+// Mettre une île dans l’archipel : sa forme seulement, à une place libre près de sa sensation, avec un jeton secret gardé ici.
+async function envoyer(x) {
+  try {
+    if (!arch.lu || arch.panne) await chargerArchipel(); // après une panne, on relit avant de réessayer
+    if (arch.panne) return false;
+    const d = deriver(x), rs = resume(d), it = { d }, jeton = x.archipel?.jeton || nouveauJeton();
+    const autres = [...arch.reelles, ...miennes().filter(m => m !== x && m.archipel?.id).map(m => ({ d: deriver(m), x: m.archipel.x, z: m.archipel.z }))];
+    placeLibre(it, autres, posArch(rs.a, rs.v));
+    const r = await poserIle(jeton, forme(d), { x: it.x, z: it.z });
+    x.archipel = { id: r.ile, jeton, x: it.x, z: it.z }; x.envoyee = true; sauver(x);
+    arch.total++;
+    return true;
+  } catch (e) { console.warn(e); return false; }
+}
+// Ce qui attend d’être envoyé : une île à mettre dans l’archipel, ou une île qui y a grandi. Sans réseau, on réessaiera.
+// Une seule à la fois : demandée pendant qu’elle tourne, elle repasse à la fin, sans jamais poser deux fois la même île.
+let synchro = null, encore = false;
+function synchroniser() {
+  if (synchro) { encore = true; return synchro; }
+  synchro = (async () => { do { encore = false; await envoyerTout(); } while (encore); })().catch(e => console.warn(e)).finally(() => { synchro = null; });
+  return synchro;
+}
+async function envoyerTout() {
+  for (const x of [ile, ...iles]) {
+    const a = x.archipel;
+    if (!a) continue;
+    if (!a.id) { if (!(await envoyer(x))) return; continue; }
+    if (!a.enRetard) continue;
+    try { await poserIle(a.jeton, forme(deriver(x)), { ile: a.id }); delete a.enRetard; sauver(x); }
+    catch (e) { if (/inconnue/.test(e.message)) { delete x.archipel; x.envoyee = false; sauver(x); } else return; } // retirée de l’archipel : elle n’y est plus
+  }
 }
 
 /* ───────── L’intro, au premier passage ───────── */
@@ -304,7 +366,7 @@ const LEGENDES = [
   'Elle porte ce que tu as dit, sans jamais montrer tes mots.',
   'Quand tu le veux, elle rejoint l’archipel. Sans ton nom.',
 ];
-let revue = false, suivi = null; // revue : l’intro revue depuis l’archipel ; suivi : la taille de sa vue, suivie tant qu’elle est là
+let revue = false, suivi = null, decorIntro = null; // revue : l’intro revue depuis l’archipel ; suivi : la taille de sa vue ; decorIntro : ses îles inventées
 function finIntro(comment) {
   store.set('intro', 1); note(`intro : ${comment}`);
   if (revue && comment === 'passée') { revue = false; history.back(); return; } // revue puis passée : on revient où l’on était
@@ -334,12 +396,20 @@ function renderIntro() {
   if (!vue) return;
   vue.attacher(wrap);
   vue.canvas.setAttribute('aria-label', 'Une île pousse quand on parle, garde la lumière de ce qui a été dit, puis rejoint l’archipel');
-  if (!arch.autres.length) arch.autres = archipelInvente(26);
-  placerArchipel();
+  if (!decorIntro) { decorIntro = archipelInvente(26).map(o => ({ ...o, d: deriver(o.ile), mine: false })); for (const it of decorIntro) [it.x, it.z] = posArch(it.a, it.v); ecarter(decorIntro); } // l’intro montre l’idée avec des îles inventées ; l’archipel, lui, n’a que des îles réelles
   const demo = { ile: ILE_INTRO, mine: false };
-  placeLibre(demo, arch.items, [1.5, PROF * .3]); // sa place : au premier plan de l’archipel, dans l’eau libre
-  vue.montrerIntro(arch.items, demo, { onEtape: i => suite?.etape(i), onFin: () => suite?.fin(), nouvelle: () => nouvelleAutre([...arch.items, demo]) });
+  placeLibre(demo, decorIntro, [1.5, PROF * .3]); // sa place : au premier plan, dans l’eau libre
+  vue.dimsArch = [LARG, PROF];
+  vue.montrerIntro([...decorIntro], demo, { onEtape: i => suite?.etape(i), onFin: () => suite?.fin(), nouvelle: () => nouvelleAutre([...vue.items, demo]) }); // une copie : les îles arrivées ne restent pas dans le décor
   if (typeof ResizeObserver === 'function') { suivi = new ResizeObserver(() => vue.redim()); suivi.observe(wrap); }
+}
+
+function nouvelleAutre(fixes) { // une île inventée arrive dans le décor de l’intro
+  const r = Math.random(), q = r < .27 ? 'AD' : r < .68 ? 'ED' : r < .82 ? 'AS' : 'ES';
+  const a = (q[0] === 'A' ? .5 : 0) + Math.random() * .5, v = (q[1] === 'S' ? .5 : 0) + Math.random() * .5;
+  const it = { ile: ileInventee(5000 + Math.floor(Math.random() * 1e6), q), a, v, mine: false, born: now() };
+  placeLibre(it, fixes, posArch(a, v));
+  return it;
 }
 
 /* ───────── Secours ───────── */
@@ -372,7 +442,7 @@ function updateOnglets() {
 
 function render(screen) {
   ecran = screen;
-  suivi?.disconnect(); suivi = null;
+  suivi?.disconnect(); suivi = null; clearInterval(sondage); sondage = null;
   document.body.classList.toggle('short', state.short && screen === 'page');
   document.body.classList.toggle('en-intro', screen === 'intro');
   companion.hidden = ['ile', 'archipel', 'intro'].includes(screen);
@@ -654,18 +724,18 @@ function paysageSheet() { // tant que l’île est vide, on peut changer son pay
 
 function changerSheet() {
   const rs = resume(courant);
-  const [row, send] = checkRow('L’ajouter à l’archipel, sans ton nom', !ile.envoyee);
+  const [row, send] = checkRow('La mettre dans l’archipel : seulement sa forme, sans ton nom', false);
   const body = el('div', {},
     el('h2', { textContent: 'Changer d’île' }),
     el('p', { className: 'intro', textContent: `Celle-ci restera sur ce téléphone, telle qu’elle est${NB}: ${listeDe(rs.comptes)}. Une île vide t’attend.` }));
   if (ile.envoyee) body.append(el('p', { className: 'intro', textContent: 'Elle est déjà dans l’archipel, et y restera.' }));
-  else body.append(row, el('p', { className: 'tiny', textContent: `Les autres verraient une île avec ${listeDe(rs.comptes)}${rs.phare ? ', et un phare' : ''}. Rien d’autre${NB}: ni texte, ni date, ni case.` }));
+  else body.append(row, el('p', { className: 'tiny', textContent: `Les autres verraient une île avec ${listeDe(rs.comptes)}${rs.phare ? ', et un phare' : ''}, dans son paysage. Rien d’autre${NB}: ni mots, ni dates, ni nom.` }));
   let paysage = BIOME_IDS[(BIOME_IDS.indexOf(ile.biome || 'prairie') + 1) % BIOME_IDS.length];
   body.append(el('h3', { textContent: 'Le paysage de la prochaine' }), choixPaysage(paysage, id => { paysage = id; }));
   const b = el('button', { type: 'button', className: 'gesture', textContent: 'Commencer une nouvelle île' });
   b.addEventListener('click', () => {
     closeSheet();
-    if (!ile.envoyee && send.checked) { ile.envoyee = true; note(`île : ajoutée à l’archipel (${listeDe(rs.comptes)})`); }
+    if (!ile.envoyee && send.checked) { ile.archipel = { attente: true }; note(`île : mise dans l’archipel (${listeDe(rs.comptes)})`); } // elle partira dès que possible
     ile.quittee = new Date().toISOString();
     iles = [...iles, ile]; saveIles();
     ile = nouvelleIle(paysage); saveIle();
@@ -674,30 +744,48 @@ function changerSheet() {
     note('geste : changer d’île');
     titre = { h1: 'Une île vide', line: 'Elle poussera avec ce que tu déposeras. Celle d’avant reste ici.' };
     go('ile');
+    synchroniser();
   });
   body.append(b, footRow(quiet('pas maintenant', closeSheet)));
   openSheet(body);
 }
 
 function envoyerSheet() {
-  const rs = resume(courant);
+  const rs = resume(courant), etat = el('p', { className: 'tiny' });
+  etat.setAttribute('role', 'status');
   const b = el('button', { type: 'button', className: 'gesture', textContent: 'Y mettre ton île' });
-  b.addEventListener('click', () => {
-    closeSheet();
-    ile.envoyee = true; saveIle();
-    note(`île : ajoutée à l’archipel (${listeDe(rs.comptes)})`);
-    placerArchipel();
-    const moi = arch.items.find(it => it.ile === ile), cap0 = $('#arch-caption');
-    if (vue && cap0) { montrerArchipel(cap0); if (moi) { vue.viser(moi); vue.vague(moi.x, moi.z, (performance.now() - vue.t0) / 1000); } }
-    updateArchLine();
-    const cap = $('#arch-caption'); if (cap) cap.textContent = 'Elle est là, parmi les autres. Elle y grandira avec toi.';
-    $('#mettre-ile')?.remove();
+  b.addEventListener('click', async () => {
+    b.disabled = true; etat.textContent = 'Elle part…';
+    if (!(await envoyer(ile))) { b.disabled = false; etat.textContent = 'L’archipel ne répond pas pour l’instant. Ton île reste ici ; réessaie un peu plus tard.'; return; }
+    closeSheet(); note(`île : mise dans l’archipel (${listeDe(rs.comptes)})`);
+    const cap = $('#arch-caption');
+    if (ecran !== 'archipel' || !cap) return;
+    placerArchipel(); montrerArchipel(cap); updateArchLine(); $('#mettre-ile')?.remove();
+    const moi = arch.items.find(it => it.ile === ile);
+    if (vue && moi) { vue.viser(moi); vue.vague(moi.x, moi.z, (performance.now() - vue.t0) / 1000); }
+    cap.textContent = 'Elle est là, parmi les autres. Elle y grandira avec toi.';
   });
   openSheet(el('div', {},
     el('h2', { textContent: 'Y mettre ton île' }),
-    el('p', { className: 'intro', textContent: `Elle partira sans ton nom, et sans rien qui permette de te reconnaître. Les autres verraient une île avec ${listeDe(rs.comptes)}${rs.phare ? ', et un phare' : ''}. Rien d’autre${NB}: ni texte, ni date, ni case.` }),
-    el('p', { className: 'intro', textContent: 'Elle continuera de pousser ici, et là-bas avec elle.' }),
-    b, footRow(quiet('pas maintenant', closeSheet))));
+    el('p', { className: 'intro', textContent: `Seule sa forme part, telle que les autres la verront${NB}: ${listeDe(rs.comptes)}${rs.phare ? ', et un phare' : ''}, dans son paysage. Ni tes mots, ni tes dates, ni ton nom.` }),
+    el('p', { className: 'intro', textContent: 'Elle continuera de pousser ici, et là-bas avec elle. Tu pourras l’en retirer quand tu veux.' }),
+    b, etat, footRow(quiet('pas maintenant', closeSheet))));
+}
+
+function retirerSheet(x) { // la retirer de l’archipel : elle disparaît pour les autres, et reste ici
+  const etat = el('p', { className: 'tiny' }), b = el('button', { type: 'button', className: 'gesture', textContent: 'La retirer de l’archipel' });
+  etat.setAttribute('role', 'status');
+  b.addEventListener('click', async () => {
+    b.disabled = true; etat.textContent = 'Un instant…';
+    try { await retirerIle(x.archipel.id, x.archipel.jeton); } catch (e) { console.warn(e); b.disabled = false; etat.textContent = 'L’archipel ne répond pas pour l’instant. Réessaie un peu plus tard.'; return; }
+    arch.reelles = arch.reelles.filter(r => r.id !== x.archipel.id); arch.total = Math.max(0, arch.total - 1);
+    delete x.archipel; x.envoyee = false; sauver(x); note('île : retirée de l’archipel');
+    closeSheet(); render(ecran);
+  });
+  openSheet(el('div', {},
+    el('h2', { textContent: 'La retirer de l’archipel ?' }),
+    el('p', { className: 'intro', textContent: 'Elle disparaîtra pour les autres. Elle reste ici, sur ce téléphone, et tu pourras l’y remettre.' }),
+    b, etat, footRow(quiet('pas maintenant', closeSheet))));
 }
 
 function ilesSheet() {
@@ -723,7 +811,7 @@ function poser(garderTexte, brule = false) {
   if (ok.length) { depot.duTexte = ok; note(`texte : lu ici, fait pousser ${ok.map(sujetLabel).join(', ')}`); }
   if (!state.answers.mots.size && lu.quad !== 'N') { depot.quadTexte = lu.quad; depot.quad = lu.quad; note('texte : donne la sensation, aucun mot coché'); }
   if (texte && garderTexte) depot.contenu = texte;
-  ile.depots.push(depot); saveIle();
+  ile.depots.push(depot); if (ile.archipel?.id) ile.archipel.enRetard = true; saveIle(); // dans l’archipel, sa forme grandira aussi
   const d = deriver(ile);
   courant = d;
   const { nouvelles, grandies } = d.dernier;
@@ -739,6 +827,7 @@ function poser(garderTexte, brule = false) {
   clearDraft();
   regard = null;
   go('ile');
+  if (ile.archipel) synchroniser();
 }
 
 function bruler() { // le texte brûle sous tes yeux ; ce qu’il a fait pousser reste
@@ -776,4 +865,5 @@ const depart = premiere ? 'intro' : ile.depots.length || iles.length ? 'ile' : '
 history.replaceState({ screen: depart, n: history.state?.n || 0 }, '', ''); // après un rechargement, les écrans d’avant sont toujours là
 render(depart);
 requestAnimationFrame(frame);
-window.archipel = { state, get ile() { return ile; }, get iles() { return iles; }, get courant() { return courant; }, get preview() { return preview; }, arch, vie, vue, ilot }; // pour les tests
+if ([ile, ...iles].some(x => x.archipel && (!x.archipel.id || x.archipel.enRetard))) setTimeout(synchroniser, 1500); // sans rien en attente, aucune requête
+window.archipel = { state, get ile() { return ile; }, get iles() { return iles; }, get courant() { return courant; }, get preview() { return preview; }, arch, vie, vue, ilot, sonder, synchroniser, placeLibre, posArch }; // pour les tests

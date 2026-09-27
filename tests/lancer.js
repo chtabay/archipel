@@ -3,7 +3,7 @@
 const http = require('http'), fs = require('fs'), path = require('path'), { spawn } = require('child_process');
 const RACINE = path.join(__dirname, '..'), PORT = +(process.env.PORT || 0); // 0 : un port libre, au hasard
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.woff2': 'font/woff2', '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png' };
-const SUITES = ['parcours', 'intro', 'retour', 'stabilite'];
+const SUITES = ['parcours', 'intro', 'retour', 'stabilite', 'archipel'];
 
 const serveur = http.createServer((req, res) => { // comme GitHub Pages : les fichiers tels quels, et 404.html sinon
   let p = decodeURIComponent(new URL(req.url, 'http://x').pathname);
