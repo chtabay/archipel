@@ -135,6 +135,7 @@ function renderIle() {
     if (ile.depots.length) nav.append(quiet('changer d’île', changerSheet));
     else nav.append(quiet('choisir le paysage', paysageSheet));
     if (iles.length) nav.append(quiet('tes îles d’avant', ilesSheet));
+    const inst = quiet('installer l’app', installerSheet); inst.id = 'installer'; inst.hidden = !installable(); nav.append(inst); // paraît quand le navigateur le permet
   } else nav.append(bouton('Revenir à ton île', () => { regard = null; go('ile'); }));
   if ((regard || ile).archipel?.id) nav.append(quiet('la retirer de l’archipel', () => retirerSheet(regard || ile)));
   const pousses = el('ul', {}, ...(d.assets.length ? d.assets.map(a => el('li', { textContent: ligneDe(a, d) })) : [el('li', { textContent: 'rien encore' })]));
@@ -800,6 +801,36 @@ function ilesSheet() {
   openSheet(body);
 }
 
+/* ───────── L’installer ───────── */
+// Sur Android et sur ordinateur, le navigateur propose d’installer l’app : on garde sa proposition pour quand on la
+// demande, sans bandeau qui surgisse au milieu d’un dépôt. Sur iPhone, rien ne se propose : on dit comment faire.
+
+let invitation = null; // la proposition du navigateur, gardée
+const installee = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+const surIPhone = () => /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const installable = () => !installee() && (!!invitation || surIPhone());
+const lienInstaller = () => { const b = $('#installer'); if (b) b.hidden = !installable(); };
+addEventListener('beforeinstallprompt', e => { e.preventDefault(); invitation = e; lienInstaller(); });
+addEventListener('appinstalled', () => { invitation = null; lienInstaller(); note('app : installée'); });
+
+function installerSheet() {
+  const body = el('div', {}, el('h2', { textContent: 'L’installer comme une app' }),
+    el('p', { className: 'intro', textContent: 'L’archipel s’ouvrira depuis ton écran d’accueil, en plein écran, même sans réseau. Seul l’archipel partagé a besoin du réseau.' }));
+  if (invitation) {
+    const b = el('button', { type: 'button', className: 'gesture', textContent: 'L’installer' });
+    b.addEventListener('click', async () => {
+      const i = invitation; invitation = null; closeSheet(); note('geste : installer l’app');
+      try { await i.prompt(); const { outcome } = await i.userChoice; if (outcome !== 'accepted') note('app : pas installée'); } catch (e) { console.warn(e); }
+      lienInstaller();
+    });
+    body.append(el('p', { className: 'tiny', textContent: 'Tu y retrouveras ton île. Son icône, « L’archipel », sera visible sur ton écran d’accueil.' }), b);
+  } else body.append(
+    el('p', { className: 'intro', textContent: 'Dans Safari, touche le bouton Partager, puis « Sur l’écran d’accueil ».' }),
+    el('p', { className: 'tiny', textContent: 'Sur iPhone, l’app installée a sa propre mémoire : elle commence avec une île vide, et celle d’ici reste dans Safari. Son icône, « L’archipel », sera visible sur ton écran d’accueil.' }));
+  body.append(footRow(quiet('pas maintenant', closeSheet)));
+  openSheet(body);
+}
+
 /* ───────── Gestes ───────── */
 
 function poser(garderTexte, brule = false) {
@@ -866,4 +897,10 @@ history.replaceState({ screen: depart, n: history.state?.n || 0 }, '', ''); // a
 render(depart);
 requestAnimationFrame(frame);
 if ([ile, ...iles].some(x => x.archipel && (!x.archipel.id || x.archipel.enRetard))) setTimeout(synchroniser, 1500); // sans rien en attente, aucune requête
+function garderHorsLigne() { // le service worker garde les fichiers que la page a chargés : installée, l’app s’ouvre sans réseau
+  navigator.serviceWorker.register('sw.js').then(() => navigator.serviceWorker.ready)
+    .then(r => r.active?.postMessage({ type: 'garder', urls: performance.getEntriesByType('resource').map(e => e.name) }))
+    .catch(() => {}); // sans service worker, l’app marche pareil, en ligne
+}
+if ('serviceWorker' in navigator) { if (document.readyState === 'complete') garderHorsLigne(); else addEventListener('load', garderHorsLigne); }
 window.archipel = { state, get ile() { return ile; }, get iles() { return iles; }, get courant() { return courant; }, get preview() { return preview; }, arch, vie, vue, ilot, sonder, synchroniser, placeLibre, posArch }; // pour les tests

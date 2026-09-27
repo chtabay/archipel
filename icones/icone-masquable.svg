@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- L’archipel : l’icône « maskable », pour Android et l’écran d’accueil de l’iPhone. La mer va jusqu’aux bords,
+       l’île reste au centre, dans le cercle que le téléphone ne rogne jamais. -->
+  <rect width="64" height="64" fill="#48b8d6"/>
+  <g transform="translate(32 32) scale(1.15) translate(-32 -36.5)">
+    <path d="M14 38l18-9 18 9-18 9z" fill="#8fc74b"/>
+    <path d="M32 47l18-9v4l-18 9z" fill="#7f5c3d"/>
+    <path d="M14 38l18 9v4l-18-9z" fill="#a07752"/>
+    <path d="M30 22l5 9h-10z" fill="#357a4d"/>
+    <rect x="33" y="31" width="3" height="5" fill="#7a5033"/>
+  </g>
+</svg>
