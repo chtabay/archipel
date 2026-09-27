@@ -30,9 +30,14 @@ Le site s’installe sur l’écran d’accueil, et s’ouvre alors en plein éc
 
 ## La musique
 
-Une petite musique de feu de camp, coupée par défaut. Le bouton « musique », en bas de page, l’allume ; le choix reste sur le téléphone. Rallumée au retour, elle attend un premier geste : le navigateur n’ouvre le son qu’à ce moment-là. Elle se tait quand la page est cachée, et quand on quitte.
+Deux petites musiques, coupées par défaut. Un bouton de son, en bas à gauche de la vue de l’île et de celle de l’archipel, les allume ; le choix reste sur le téléphone. Chaque vue a sa pièce : sur l’île, un feu de camp ; dans l’archipel, la mer au soir. On passe de l’une à l’autre en fondu, et ailleurs, sur les questions ou la page, c’est le silence. Rallumée au retour, la musique attend un premier geste : le navigateur n’ouvre le son qu’à ce moment-là. Elle se tait quand la page est cachée, et quand on quitte.
 
-Elle est jouée par le navigateur lui-même, sans fichier son : `musique.js` calcule les cordes d’une guitare, une anche d’harmonica et le feu qui crépite, puis les assemble avec la Web Audio API. Ré majeur, des accords ouverts, des arpèges en 6/8 dont une note manque parfois, un air par-dessus un tour sur deux, et un tour sur trois sans lui. Elle est planifiée au fur et à mesure, quelques secondes devant, et ne se répète jamais tout à fait. Rien de ce qu’on dépose n’y entre, pour l’instant.
+Elles sont jouées par le navigateur lui-même, sans fichier son, avec la Web Audio API, dans `musique.js`.
+
+- **Le feu de camp.** Les cordes d’une guitare, calculées, une anche d’harmonica, le feu qui crépite. Ré majeur, des accords ouverts, des arpèges en 6/8 dont une note manque parfois, un air par-dessus un tour sur deux, et un tour sur trois sans lui.
+- **La mer au soir.** Une boîte à musique sur huit temps lents, avec des silences, une nappe sur la basse, un air certains tours, une cloche au loin de temps en temps, et les vagues tout du long. Mi mineur.
+
+Chaque pièce est planifiée au fur et à mesure, quelques secondes devant, et ne se répète jamais tout à fait. Rien de ce qu’on dépose n’y entre, pour l’instant.
 
 ## La grammaire : quatre axes lus dans les cases
 
@@ -117,7 +122,7 @@ L’archipel vit dans la base du projet Supabase de Pyramides, dans un espace à
 | `style.css` | Le style |
 | `app.js` | Les écrans, les feuilles, les gestes, le stockage local, l’archipel partagé |
 | `serveur.js` | Les appels au serveur de l’archipel : lire, poser, faire grandir, retirer une île |
-| `musique.js` | La musique de feu de camp, calculée et jouée par le navigateur |
+| `musique.js` | Les deux musiques, le feu de camp et la mer, calculées et jouées par le navigateur |
 | `sw.js` | Le service worker : les fichiers du site, gardés pour s’ouvrir sans réseau |
 | `manifest.webmanifest` | Le manifeste de l’app installable : nom, couleurs, icônes |
 | `icones/` | Les icônes de l’app, leurs sources SVG et `fabriquer.js`, qui les dessine avec le Chromium des tests |
