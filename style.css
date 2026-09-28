@@ -439,6 +439,14 @@ main { padding-top: .6rem; }
 .ile-caption .quiet { margin-left: .2rem; padding: 0; color: var(--accent-ink); font-weight: 700; text-decoration: underline; text-underline-offset: .2em; }
 .excerpt { margin: .3rem .2rem 0; padding: .6rem .8rem; border-left: 3px solid var(--line-hi); color: var(--muted); font-style: italic; }
 .ile-line { margin: .3rem .2rem 0; color: var(--muted); font-size: .95rem; }
+.proposer { margin: 1.1rem 0 0; padding: .95rem 1rem .85rem; border: 1.5px solid var(--line); border-radius: 1rem; background: var(--card); } /* après un dépôt : rejoindre l’archipel */
+.proposer p { margin: 0; color: var(--muted); }
+.proposer b { color: var(--ink); font-weight: 800; }
+.proposer .proposer-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem 1.1rem; margin-top: .8rem; }
+.proposer .tiny { margin-top: .5rem; }
+.proposer .tiny:empty { display: none; }
+.proposer .quiet.voir { padding: 0; color: var(--accent-ink); font-weight: 700; text-decoration: underline; text-underline-offset: .2em; }
+.btn.second { padding: .68rem 1.15rem; border: 1.5px solid var(--accent); background: var(--card); color: var(--accent-ink); }
 .paysages { display: grid; grid-template-columns: repeat(auto-fill, minmax(8.4rem, 1fr)); gap: .5rem; margin: .4rem 0 .8rem; }
 .paysage { display: grid; gap: .2rem; padding: .4rem .4rem .55rem; border: 1.5px solid var(--line); border-radius: .9rem; background: var(--card); color: var(--ink); font: inherit; text-align: center; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .paysage canvas { display: block; width: 100%; aspect-ratio: 1 / .9; border-radius: .6rem; background: #3fb0cc; }

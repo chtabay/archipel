@@ -121,6 +121,7 @@ function drawCompanion() { if (!ilot) return; ilot.maj(preview, biomeDe(ile.biom
 
 const scene = { d: null };
 let titre = null; // ce qui vient de pousser, pour le titre de l’écran
+const DIT_ICI = 'Elle pousse avec ce que tu déposes. Rien ne quitte ce téléphone.', DIT_ARCHIPEL = 'Elle pousse avec ce que tu déposes. Sa forme est dans l’archipel ; le reste ne quitte pas ce téléphone.';
 
 function renderIle() {
   const d = regard ? deriver(regard) : courant, mine = !regard;
@@ -133,6 +134,7 @@ function renderIle() {
   if (mine) {
     const brouillon = anyChecked() || state.text.trim();
     nav.append(bouton(brouillon ? 'Reprendre ce que tu déposais' : 'Déposer autre chose', () => go('q:situ')));
+    if (ile.depots.length && !ile.archipel && ile.proposer !== true) nav.append(lienMettre()); // la proposition est passée : l’archipel reste à portée, discrètement
     if (ile.depots.length) nav.append(quiet('changer d’île', changerSheet));
     else nav.append(quiet('choisir le paysage', paysageSheet));
     if (iles.length) nav.append(quiet('tes îles d’avant', ilesSheet));
@@ -141,11 +143,13 @@ function renderIle() {
   if ((regard || ile).archipel?.id) nav.append(quiet('la retirer de l’archipel', () => retirerSheet(regard || ile)));
   const pousses = el('ul', {}, ...(d.assets.length ? d.assets.map(a => el('li', { textContent: ligneDe(a, d) })) : [el('li', { textContent: 'rien encore' })]));
   const what = titre && mine ? titre : null;
+  const carte = mine && ile.proposer === true && !ile.archipel ? propositionArchipel() : null; // après un dépôt, rejoindre l’archipel est proposé
   app.replaceChildren(
     el('p', { className: 'step', textContent: mine ? (what ? 'Ton île' : 'Ton île, aujourd’hui') : `Une île d’avant · ${mois(regard.nee)}` }),
     el('h1', { textContent: what ? what.h1 : mine ? 'Ton île' : 'Elle ne pousse plus' }),
-    el('p', { className: 'hint', textContent: what ? what.line : mine ? (ile.envoyee ? 'Elle pousse avec ce que tu déposes. Sa forme est dans l’archipel ; le reste ne quitte pas ce téléphone.' : 'Elle pousse avec ce que tu déposes. Rien ne quitte ce téléphone.') : 'Elle reste ici, telle que tu l’as laissée.' }),
+    el('p', { className: 'hint', id: 'ile-hint', textContent: what ? what.line : mine ? (ile.envoyee ? DIT_ARCHIPEL : DIT_ICI) : 'Elle reste ici, telle que tu l’as laissée.' }),
     wrap, caption, excerpt, line,
+    ...(carte ? [carte] : []),
     nav,
     el('details', {}, el('summary', { textContent: 'Ce qui a poussé' }), pousses),
     el('details', {}, el('summary', { textContent: 'Comment ça pousse' }), legende()),
@@ -182,6 +186,42 @@ function ligneDe(a, d) {
   const quand = first?.date ? (deps.length > 1 ? `Depuis le ${jour(first.date)}, redit ${deps.length - 1 === 1 ? 'une fois' : `${deps.length - 1} fois`}.` : `Le ${jour(first.date)}.`) : '';
   const texte = deps.some(x => x.duTexte?.includes(a.sujet)) ? 'Ton texte l’a fait pousser. ' : a.etats?.lueur ? 'Ton texte l’éclaire. ' : ''; // ce que le texte a fait, sans jamais ses mots
   return `${quoi}. ${cases.length ? `${cap(cases.join(', '))}. ` : ''}${texte}${quand}`.trim();
+}
+
+// Après un dépôt, l’île propose de rejoindre l’archipel, sous la vue : ce que les autres verraient, et un seul geste pour l’y
+// mettre. Rien ne part sans ce geste. « Pas maintenant » est gardé pour cette île : la proposition ne revient pas, un lien
+// discret reste à côté des actions.
+function propositionArchipel() {
+  const rs = resume(courant), carte = el('section', { className: 'proposer' }), etat = el('p', { className: 'tiny' });
+  carte.setAttribute('aria-label', 'Rejoindre l’archipel'); etat.setAttribute('role', 'status');
+  const dit = el('p', {}, el('b', { textContent: 'Ton île peut rejoindre l’archipel.' }), ` Les autres y verraient une île avec ${listeDe(rs.comptes)}${rs.phare ? ', et un phare' : ''}, dans son paysage, sans tes mots ni ton nom. Tu pourras l’en retirer.`);
+  dit.setAttribute('aria-live', 'polite');
+  const oui = el('button', { type: 'button', className: 'btn second', textContent: 'La mettre dans l’archipel' });
+  const non = quiet('pas maintenant', () => {
+    ile.proposer = false; saveIle(); note('île : pas dans l’archipel, pas maintenant');
+    const nav = $('#app .actions'), m = lienMettre(); carte.remove();
+    if (nav) { nav.firstElementChild ? nav.firstElementChild.after(m) : nav.append(m); nav.querySelector('.btn')?.focus(); }
+  });
+  const gestes = el('p', { className: 'proposer-actions' }, oui, non);
+  oui.addEventListener('click', async () => {
+    oui.disabled = non.disabled = true; etat.textContent = 'Elle part…';
+    if (!(await envoyer(ile))) { oui.disabled = non.disabled = false; etat.textContent = 'L’archipel ne répond pas pour l’instant. Ton île reste ici ; réessaie un peu plus tard.'; return; }
+    note(`île : mise dans l’archipel (${listeDe(rs.comptes)})`);
+    etat.textContent = '';
+    dit.replaceChildren(el('b', { textContent: 'Elle est dans l’archipel.' }), ' Elle y grandira avec toi.');
+    const voir = quiet('la voir dans l’archipel', () => { voirLaTienne = true; ONGLETS.archipel(); }); voir.classList.add('voir');
+    gestes.replaceChildren(voir); voir.focus();
+    majIleArchipel();
+  });
+  carte.append(dit, gestes, etat);
+  return carte;
+}
+function lienMettre() { const m = quiet('la mettre dans l’archipel', envoyerSheet); m.id = 'mettre-ici'; return m; }
+function majIleArchipel() { // l’île vient d’entrer dans l’archipel : la vue de l’île le dit, sans se redessiner
+  if (ecran !== 'ile' || regard) return;
+  const hint = $('#ile-hint'); if (hint?.textContent === DIT_ICI) hint.textContent = DIT_ARCHIPEL;
+  $('#mettre-ici')?.remove();
+  const nav = $('#app .actions'); if (nav && ile.archipel?.id) nav.append(quiet('la retirer de l’archipel', () => retirerSheet(ile)));
 }
 
 function updateIleLine() {
@@ -287,6 +327,12 @@ function updateArchLine() {
 }
 
 const INVITE_ARCH = 'Touche une île pour t’en approcher. Fais tourner l’archipel du doigt.';
+let voirLaTienne = false; // venue de l’île juste après l’y avoir mise : l’archipel s’approche d’elle
+function viserLaTienne(cap) { // elle vient d’y être mise : on s’en approche, et un anneau s’ouvre sur l’eau
+  const moi = arch.items.find(it => it.ile === ile);
+  if (vue && moi) { vue.viser(moi); vue.vague(moi.x, moi.z, (performance.now() - vue.t0) / 1000); }
+  if (moi) cap.textContent = 'Elle est là, parmi les autres. Elle y grandira avec toi.';
+}
 function legendeArch(it) {
   const rs = resume(it.d || deriver(it.ile));
   return it.mine ? `La tienne${it.ile === ile ? ', celle d’aujourd’hui' : `, celle de ${mois(it.ile.nee)}`}${NB}: ${listeDe(rs.comptes)}.` : `Une île avec ${listeDe(rs.comptes)}${rs.phare ? ', et un phare' : ''}. ${it.born ? 'Arrivée à l’instant.' : 'Là depuis un moment.'}`;
@@ -322,6 +368,7 @@ function renderArchipel() {
   chargerArchipel().then(() => { // puis celles des autres
     if (ecran !== 'archipel') return;
     placerArchipel(); montrerArchipel(caption); updateArchLine(); caption.textContent = inviteArch();
+    if (voirLaTienne) { voirLaTienne = false; viserLaTienne(caption); }
     clearInterval(sondage); if (!arch.panne) sondage = setInterval(sonder, 20000);
   });
 }
@@ -335,7 +382,7 @@ async function envoyer(x) {
     const autres = [...arch.reelles, ...miennes().filter(m => m !== x && m.archipel?.id).map(m => ({ d: deriver(m), x: m.archipel.x, z: m.archipel.z }))];
     placeLibre(it, autres, posArch(rs.a, rs.v));
     const r = await poserIle(jeton, forme(d), { x: it.x, z: it.z });
-    x.archipel = { id: r.ile, jeton, x: it.x, z: it.z }; x.envoyee = true; sauver(x);
+    x.archipel = { id: r.ile, jeton, x: it.x, z: it.z }; x.envoyee = true; delete x.proposer; sauver(x);
     arch.total++;
     return true;
   } catch (e) { console.warn(e); return false; }
@@ -766,12 +813,11 @@ function envoyerSheet() {
     b.disabled = true; etat.textContent = 'Elle part…';
     if (!(await envoyer(ile))) { b.disabled = false; etat.textContent = 'L’archipel ne répond pas pour l’instant. Ton île reste ici ; réessaie un peu plus tard.'; return; }
     closeSheet(); note(`île : mise dans l’archipel (${listeDe(rs.comptes)})`);
+    if (ecran === 'ile') { majIleArchipel(); return; }
     const cap = $('#arch-caption');
     if (ecran !== 'archipel' || !cap) return;
     placerArchipel(); montrerArchipel(cap); updateArchLine(); $('#mettre-ile')?.remove();
-    const moi = arch.items.find(it => it.ile === ile);
-    if (vue && moi) { vue.viser(moi); vue.vague(moi.x, moi.z, (performance.now() - vue.t0) / 1000); }
-    cap.textContent = 'Elle est là, parmi les autres. Elle y grandira avec toi.';
+    viserLaTienne(cap);
   });
   openSheet(el('div', {},
     el('h2', { textContent: 'Y mettre ton île' }),
@@ -787,7 +833,7 @@ function retirerSheet(x) { // la retirer de l’archipel : elle disparaît pour 
     b.disabled = true; etat.textContent = 'Un instant…';
     try { await retirerIle(x.archipel.id, x.archipel.jeton); } catch (e) { console.warn(e); b.disabled = false; etat.textContent = 'L’archipel ne répond pas pour l’instant. Réessaie un peu plus tard.'; return; }
     arch.reelles = arch.reelles.filter(r => r.id !== x.archipel.id); arch.total = Math.max(0, arch.total - 1);
-    delete x.archipel; x.envoyee = false; sauver(x); note('île : retirée de l’archipel');
+    delete x.archipel; x.envoyee = false; x.proposer = false; sauver(x); note('île : retirée de l’archipel'); // retirée : elle ne se propose plus d’elle-même
     closeSheet(); render(ecran);
   });
   openSheet(el('div', {},
@@ -851,7 +897,9 @@ function poser(garderTexte, brule = false) {
   if (ok.length) { depot.duTexte = ok; note(`texte : lu ici, fait pousser ${ok.map(sujetLabel).join(', ')}`); }
   if (!state.answers.mots.size && lu.quad !== 'N') { depot.quadTexte = lu.quad; depot.quad = lu.quad; note('texte : donne la sensation, aucun mot coché'); }
   if (texte && garderTexte) depot.contenu = texte;
-  ile.depots.push(depot); if (ile.archipel?.id) ile.archipel.enRetard = true; saveIle(); // dans l’archipel, sa forme grandira aussi
+  ile.depots.push(depot); if (ile.archipel?.id) ile.archipel.enRetard = true; // dans l’archipel, sa forme grandira aussi
+  else if (!ile.archipel && ile.proposer !== false) ile.proposer = true; // sinon, la vue de l’île proposera de l’y mettre
+  saveIle();
   const d = deriver(ile);
   courant = d;
   const { nouvelles, grandies } = d.dernier;
