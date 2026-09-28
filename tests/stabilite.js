@@ -1,6 +1,6 @@
 // L’archipel : la stabilité. Réponses qui ne comptent plus, quitter vite, données abîmées, 3D qui refuse de démarrer,
 // écran qui échoue, app qui ne se lance pas, mémoire graphique, choses jamais empilées, retour qui ferme une feuille,
-// les oiseaux du ciel.
+// les oiseaux du ciel, ce que tu as fait qui ne change pas tout en pierres.
 const { chromium } = require('playwright');
 const path = require('path'), fs = require('fs');
 const { BASE, OUT: CAPTURES, GL, verifier, bilan, surveiller, sansIntro, contexte, peupler } = require('./commun');
@@ -101,7 +101,7 @@ const depot = (id, answers) => ({ id, date: new Date().toISOString(), quad: 'N',
   { const { c, p } = await nouvelle();
     await p.goto(BASE);
     const empilees = await p.evaluate(async () => {
-      const { deriver } = await import('./ile.js?v=11'), tous = Array.from({ length: 15 }, (_, i) => `s${i}`);
+      const { deriver } = await import('./ile.js?v=12'), tous = Array.from({ length: 15 }, (_, i) => `s${i}`);
       let pire = 0;
       for (let s = 1; s <= 40; s++) { const d = deriver({ id: 1, seed: 1000 + s * 7, biome: 'prairie', depots: [{ id: 1, quad: 'N', answers: { situ: ['regret', 'mal'], mots: [], sujets: tous, fait: [], subi: [] } }] }), vus = new Set(); let n = 0; for (const a of d.assets) { if (a.famille === 'meteo' && a.espece !== 'etang') continue; const k = a.tile.join(); if (vus.has(k)) n++; vus.add(k); } pire = Math.max(pire, n); }
       return pire;
@@ -131,6 +131,17 @@ const depot = (id, answers) => ({ id, date: new Date().toISOString(), quad: 'N',
     verifier(automne.oie === 5 && automne.mouette === 1, `l’automne : un vol de cinq oies et une mouette (${JSON.stringify(automne)})`);
     verifier(!Object.keys(lourd).length, `sous un ciel lourd, aucun oiseau (${JSON.stringify(lourd)})`);
     verifier(!e.length, `aucune erreur${e.length ? ' : ' + e.join(' | ') : ''}`);
+    await c.close(); }
+
+  // 11. ce que tu as fait ne change pas tout en pierres : chaque sujet garde sa chose, une petite pierre à son pied, et une pierre pour le regret
+  { const { c, p } = await nouvelle();
+    await p.goto(BASE);
+    const r = await p.evaluate(async () => {
+      const { deriver } = await import('./ile.js?v=12');
+      const d = deriver({ id: 1, seed: 77, biome: 'prairie', depots: [{ id: 1, quad: 'N', answers: { situ: ['regret'], mots: ['culpa'], sujets: ['s4', 's7', 's6'], fait: ['fpense'], subi: [] } }] });
+      return d.assets.filter(a => a.famille !== 'meteo').map(a => `${a.famille}${a.etats.commis ? ' commis' : ''}`).sort();
+    });
+    verifier(r.join(',') === 'culture commis,culture commis,maison commis,pierre', `« je regrette », couple, travail et argent : une maison et deux cultures, chacune sa petite pierre, et une pierre pour le regret (${r.join(', ')})`);
     await c.close(); }
 
   await b.close();

@@ -1,5 +1,6 @@
 -- L’archipel : la base de l’archipel partagé, telle qu’elle est dans le projet Supabase de Pyramides
--- (migrations « archipel_iles_partagees », puis « archipel_familles_animaux_buissons » pour les animaux et les buissons).
+-- (migrations « archipel_iles_partagees », puis « archipel_familles_animaux_buissons » pour les animaux et les buissons,
+-- puis « archipel_etat_commis » pour la petite pierre de ce que tu as fait).
 -- Gardée ici pour la lire et pouvoir la recréer ; rien ne l’applique tout seul.
 -- Le site n’y accède que par les trois fonctions publiques, avec la clé publique de serveur.js.
 
@@ -76,9 +77,9 @@ begin
     if not archipel.nombre(c -> 'v', 0, 1) then return false; end if;
     if not archipel.case_valide(c -> 'case') then return false; end if;
     if jsonb_typeof(c -> 'etats') is distinct from 'array' then return false; end if;
-    if jsonb_array_length(c -> 'etats') > 9 then return false; end if;
+    if jsonb_array_length(c -> 'etats') > 10 then return false; end if;
     for e in select value from jsonb_array_elements_text(c -> 'etats') loop
-      if e not in ('ferme', 'lueur', 'boucle', 'double', 'pluie', 'mousse', 'fissure', 'caillou', 'clos') then return false; end if;
+      if e not in ('ferme', 'lueur', 'boucle', 'double', 'pluie', 'mousse', 'fissure', 'caillou', 'commis', 'clos') then return false; end if;
     end loop;
   end loop;
   return true;

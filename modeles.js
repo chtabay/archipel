@@ -444,7 +444,7 @@ function boite(k, o) {
 }
 function fumee(k, x, y, z, { couleur = '#ffffff', n = 3, haut = .5, vitesse = .35, opacite = .55, taille = 1, forme = G.ico0 } = {}) { // des bouffées qui montent, grossissent et s’effacent
   if (!k.anims) return;
-  const s = k.s ?? 1, puffs = Array.from({ length: n }, () => { const p = new THREE.Mesh(forme, new THREE.MeshStandardMaterial({ color: couleur, transparent: true, opacity: opacite, flatShading: true, depthWrite: false })); k.grp.add(p); return p; });
+  const s = k.s ?? 1, puffs = Array.from({ length: n }, () => { const p = new THREE.Mesh(forme, new THREE.MeshStandardMaterial({ color: couleur, transparent: true, opacity: opacite, flatShading: true, depthWrite: false })); p.scale.setScalar(.04 * s * taille); p.position.set(x * s + (k.dx || 0), y * s + (k.dy || 0), z * s + (k.dz || 0)); k.grp.add(p); return p; }); // petites et à leur place avant la première image
   k.anims.push(T => puffs.forEach((p, i) => { const t = (T * vitesse + i / n) % 1; p.position.set(x * s + (k.dx || 0) + t * .12, y * s + (k.dy || 0) + t * haut, z * s + (k.dz || 0)); p.scale.setScalar((.04 + t * .07) * s * taille); p.material.opacity = (1 - t) * opacite; }));
 }
 function lanterne(k, x, z) {
@@ -892,8 +892,13 @@ function etatsCommuns(a, k) {
     const f = k.B.falaise || B0.falaise, st = Math.min(3, a.stade || 0), w = [.3, .38, .46, .5][st];
     F(k, G.ico1, f[0], { y: .02, sx: w, sy: .1, sz: w * .85, bosse: .14, graine: 11, ao: .25 }); F(k, G.ico1, (k.B.sol.herbe || B0.sol.herbe)[1], { y: .065, sx: w * .7, sy: .045, sz: w * .6, bosse: .12, graine: 12, ao: .1 });
   }
+  if (a.etats?.commis) { // ce que tu as fait : une petite pierre posée au pied de la chose ; dans la barque, au fond
+    const [x, z] = PIERRE_AU_PIED[a.espece] || PIERRE_AU_PIED[a.famille] || [.3, .24], barque = a.espece === 'barque', t = barque ? .055 : .075;
+    F(k, G.dode, '#8e897f', { x, y: barque ? .058 : t * .42, z, sx: t, sy: t * .7, sz: t * .85, ry: .7, bosse: .16, graine: 5, ao: .3 });
+  }
   if (a.etats?.lueur) lanternes(a, k); // un texte : des lanternes, jamais ses mots
 }
+const PIERRE_AU_PIED = { maison: [.34, .28], culture: [.36, .26], animal: [.22, .2], buisson: [.28, .22], champ: [-.47, .44], barque: [0, 0] }; // où se pose la petite pierre, selon la chose
 const FAMILLES = { arbre, pierre, caillou: pierre, maison, culture, meteo, animal, buisson };
 
 // Construit une chose. o : { bati, lum (pour tout fusionner, sans animation), dx, dy, dz, s, bas, eauHex, propose }

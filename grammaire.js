@@ -29,14 +29,16 @@ export const SUJET_FAMILLE = {
   s8: 'pierre', s9: 'animal', s10: 'animal', s11: 'arbre', s12: 'maison', s13: 'animal', s14: 'buisson',
 };
 
-// La place vis-à-vis du fait déplace la famille : reçu → arbre ; commis (la question de plus répondue) → pierre.
+// La place vis-à-vis du fait déplace la famille : reçu → arbre. Ce que tu as fait ne la change pas : chaque sujet garde sa chose,
+// et porte une petite pierre à son pied (l’état « commis », plus bas) ; la pierre du regret se pose à côté, une par dépôt.
 export function familleDe(id, a) {
   const base = SUJET_FAMILLE[id] || 'culture';
   if (base === 'pierre' || id === 's11') return base;
   if (a.subi.size > 0 || a.situ.has('mal')) return 'arbre';
-  if (a.fait.size > 0) return 'pierre';
   return base;
 }
+// Les familles qui portent la petite pierre de ce que tu as fait : ni les arbres, qui disent ce qu’on t’a fait, ni les pierres elles-mêmes.
+export const PORTENT_LA_PIERRE = ['maison', 'culture', 'animal', 'buisson'];
 
 /* ───────── 2. Les espèces : famille × sensation ───────── */
 // AD agité-douloureux, ED éteint-douloureux, AS agité-supportable, ES éteint-supportable, N sans mot.
@@ -90,7 +92,8 @@ export function graines(a, texte, lu = null) {
   let quad = qs[0]?.[0] || 'N', quadDuTexte = false;
   if (quad === 'N' && lu?.quad && lu.quad !== 'N') { quad = lu.quad; quadDuTexte = true; }
   const out = [], graine = (key, famille, espece, st = stade, sujet = null) => out.push({ key, sujet, famille, espece, quad, stade: st, etats: { ...etats } });
-  for (const it of QUESTIONS.sujets.items) if (a.sujets.has(it.id)) { const f = familleDe(it.id, a); graine(it.id, f, ESPECES[f][quad], stade, it.id); }
+  const commis = a.situ.has('regret') || a.fait.size > 0; // ce que tu as fait : chaque chose garde sa famille, une petite pierre à son pied
+  for (const it of QUESTIONS.sujets.items) if (a.sujets.has(it.id)) { const f = familleDe(it.id, a); graine(it.id, f, ESPECES[f][quad], stade, it.id); if (commis && PORTENT_LA_PIERRE.includes(f)) out[out.length - 1].etats.commis = true; }
   // la situation laisse toujours sa trace : si aucun sujet ne la porte déjà, elle fait pousser sa propre chose.
   // « On m’a fait du mal » et « je regrette », cochées ensemble, font un arbre et une pierre : l’une n’efface pas l’autre.
   const porte = f => out.some(g => g.famille === f);
