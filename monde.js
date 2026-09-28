@@ -3,11 +3,11 @@
 // La carte et les dépôts viennent de ile.js : l’île est recalculée à partir de ses dépôts.
 
 import * as THREE from './vendor/three.min.js?v=1';
-import { N, CLIMATS, eauDe, sol, carte, deriver, etape } from './ile.js?v=8';
+import { N, CLIMATS, eauDe, solVu, carte, deriver, etape } from './ile.js?v=9';
 import { biomeDe, BIOMES } from './biomes.js?v=2';
 import { hash, melange, versHex, nuance } from './outils.js?v=1';
 import { Bati, MAT, modeleChose, modelePhare, decor, halo, nuageBati, F, G, cone, cyl, baton } from './modeles.js?v=12';
-import { vie } from './vie.js?v=4';
+import { vie } from './vie.js?v=5';
 
 const reduit = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 export const ECH_ARCH = .45; // la taille des îles dans l’archipel : la même pour toutes, pour que leurs tailles se comparent
@@ -59,20 +59,34 @@ function bruit(x, z, s = 0) { // un bruit de valeur, doux
   const i = Math.floor(x), j = Math.floor(z), fx = x - i, fz = z - j, ux = fx * fx * (3 - 2 * fx), uz = fz * fz * (3 - 2 * fz);
   return lerp(lerp(h(i, j), h(i + 1, j), ux), lerp(h(i, j + 1), h(i + 1, j + 1), ux), uz);
 }
+// Le rivage : par endroits une falaise, où la terre reste haute jusqu’au bord puis tombe droit dans l’eau ; ailleurs une plage, qui
+// descend doucement jusqu’à l’eau avant le haut-fond. Les falaises viennent plutôt du côté de la colline ; le village, le phare et les
+// barques, au sud-est, gardent surtout leurs plages.
 export function relief(m) { // la hauteur du sol en (x, z), en tuiles de 0 à N
   if (m._relief) return m._relief;
   const terre = (i, j) => (i >= 0 && j >= 0 && i < N && j < N && m.land[i * N + j] ? 1 : 0);
   const coin = (i, j) => (i >= 0 && j >= 0 && i <= N && j <= N ? m.vh[i * (N + 1) + j] : 0);
+  const loin = (i, j) => (i >= 0 && j >= 0 && i < N && j < N && m.dist ? m.dist[i * N + j] : 0); // la distance au rivage, en tuiles
   const bil = (f, x, y) => { const i = Math.floor(x), j = Math.floor(y), fx = x - i, fy = y - j; return f(i, j) * (1 - fx) * (1 - fy) + f(i + 1, j) * fx * (1 - fy) + f(i, j + 1) * (1 - fx) * fy + f(i + 1, j + 1) * fx * fy; };
   const s = m.seed % 997;
+  m._falaise = (x, z) => lisse(.54, .66, bruit(x * .33, z * .33, s + 31) + .16 - .32 * lisse(N * .35, N * .75, (x + z) / 2)); // 0, une plage ; 1, une falaise
   m._relief = (x, z) => {
-    const L = bil(terre, x - .5, z - .5) + (bruit(x * 1.3, z * 1.3, s) - .5) * .32, t = lisse(.22, .78, L);
-    const S = Math.max(bil(coin, x, z) * YS, .14) + (bruit(x * 2.6, z * 2.6, s + 5) - .5) * .08;
-    return lerp(-.9, S, t); // au large, le sol rejoint le fond marin, à la même hauteur
+    const f = m._falaise(x, z), L = bil(terre, x - .5, z - .5) + (bruit(x * 1.3, z * 1.3, s) - .5) * .32 + (bruit(x * 3.3, z * 3.3, s + 41) - .5) * .2 * f; // une falaise : un bord plus découpé, qui efface les marches des tuiles
+    let S = Math.max(bil(coin, x, z) * YS, .14) + (bruit(x * 2.6, z * 2.6, s + 5) - .5) * .08;
+    if (f > 0) { const haut = .44 + (bruit(x * 1.9, z * 1.9, s + 23) - .5) * .14, pres = m.dist ? lisse(2.3, 1, bil(loin, x - .5, z - .5)) : 1; S += Math.max(0, haut - S) * pres * f; } // le haut de la falaise, près du bord
+    const plage = L > .5 ? lerp(NIV * .5, S, lisse(.5, .95, L)) : lerp(-.9, NIV * .5, lisse(.06, .5, L)); // douce au-dessus de l’eau, puis le haut-fond
+    const abrupt = lerp(-.9, S, lisse(.46, .55, L)); // droite dans l’eau
+    return lerp(plage, abrupt, f); // au large, le sol rejoint le fond marin, à la même hauteur
   };
   return m._relief;
 }
 const _c = new THREE.Color();
+const RAIDE = .6, STRATE = .085, SABLE = [.035, .075, .2, .27]; // une paroi en dessous de cette pente ; l’épaisseur d’une strate ; les hauteurs où finissent l’écume, le sable mouillé, le sable sec, puis la lisière d’herbe
+function paroi(B, y, x, z, s) { // une paroi : des strates, de terre au bord de l’eau, de roche plus haut ; chacune varie le long de la côte
+  const f = B.falaise || BIOMES.prairie.falaise, roc = B.sol.roche, k = Math.floor(y / STRATE);
+  const tons = y < .7 ? [f[0], f[1], melange(f[0], f[1], .45), nuance(f[0], .08)] : [roc[1], roc[2], roc[0], roc[1]];
+  return nuance(tons[((k % 4) + 4) % 4], (bruit(x * 2.2 + k * 3.1, z * 2.2, s + 13) - .5) * .14);
+}
 function couleurSol(B, fond, y, ny, x, z, r, s) {
   const doux = t => melange(t[0], t[1], bruit(x * .9, z * .9, s + 2)); // deux tons, par grandes plages
   if (y < NIV) { // au ras de l’eau et dessous : l’écume, le haut-fond clair, puis le fond marin, sans rupture (sans éclairage, comme le fond)
@@ -80,11 +94,14 @@ function couleurSol(B, fond, y, ny, x, z, r, s) {
     const bord = melange(clair, melange(B.sol.sable[0], '#ffffff', .4), lisse(-.03, NIV, y));
     return melange(nuance(bord, fond.jour || 0), fond(x - N / 2, z - N / 2), lisse(-.2, -.86, y));
   }
-  if (y < .05) return melange(B.sol.sable[0], '#ffffff', .35); // l’écume, au bord
-  if (y < .24) return doux(B.sol.sable);
-  if (ny < .7) return melange(doux(B.sol.roche), B.sol.roche[2], .3);
+  if (ny < RAIDE) return paroi(B, y, x, z, s); // une falaise, une paroi : en strates
+  if (y < SABLE[0]) return melange(B.sol.sable[0], '#ffffff', .42); // l’écume, sur le sable
+  if (y < SABLE[1]) return melange(B.sol.sable[2], '#6f8f96', .16); // le sable mouillé
+  if (y < SABLE[2]) return melange(doux(B.sol.sable), B.sol.sable[2], bruit(x * 3.1, z * 3.1, s + 6) * .4); // le sable sec
+  if (y < SABLE[3] && ny >= .72) return melange(doux(B.sol.sable), doux(B.sol.herbe), .3 + bruit(x * 1.1, z * 1.1, s + 4) * .45); // la lisière, où l’herbe gagne sur le sable
+  if (ny < .72) return melange(doux(B.sol.roche), B.sol.roche[2], .3); // une pente rocheuse
   if (y > 2.05 * YS) return doux(B.sol.neige);
-  if (y > 1.3 * YS) return doux(B.sol.roche);
+  if (y > 1.3 * YS) { const c = doux(B.sol.roche); return bruit(x * 1.5, z * 1.5, s + 21) < .24 ? melange(c, B.enneige ? '#ffffff' : '#a8b37a', .32) : c; } // la roche, du lichen par plaques
   const h = doux(B.sol.herbe);
   return bruit(x * .6, z * .6, s + 9) < B.taches[1] * 1.15 ? melange(h, B.taches[0], .4) : h;
 }
@@ -95,7 +112,17 @@ function occlusionDe(d) { // au pied de chaque chose, le sol s’assombrit un pe
   if (!pieds.length) return null;
   return (x, z) => { let k = 1; for (const [px, pz, r] of pieds) { const t = Math.hypot(x - px, z - pz) / r; if (t < 1.5) { const s = Math.min(1, (1.5 - t) / 1.3); k *= 1 - .36 * s * s * (3 - 2 * s); } } return k; };
 }
-function sol3d(bati, m, B, fond, R, occ = null) { // les triangles du sol, colorés un par un ; fond(x, z) : la couleur du fond marin à cet endroit ; occ(x, z) : l’ombre de contact
+function tranche(poly, y0, dessus) { // le polygone, gardé au-dessus (ou au-dessous) du plan y = y0
+  const out = [];
+  for (let i = 0; i < poly.length; i++) {
+    const p = poly[i], q = poly[(i + 1) % poly.length], dp = dessus ? p[1] >= y0 : p[1] <= y0, dq = dessus ? q[1] >= y0 : q[1] <= y0;
+    if (dp) out.push(p);
+    if (dp !== dq) { const t = (y0 - p[1]) / (q[1] - p[1]); out.push([p[0] + (q[0] - p[0]) * t, y0, p[2] + (q[2] - p[2]) * t]); }
+  }
+  return out;
+}
+function sol3d(bati, m, B, fond, R, occ = null, fin = false) { // les triangles du sol, colorés un par un ; fond(x, z) : la couleur du fond marin à cet endroit ; occ(x, z) : l’ombre de contact
+  // fin : l’île vue de près, où les bandes du sable et les strates des falaises sont découpées net ; de loin, chaque triangle garde une couleur
   // renvoie un second maillage : la pente sous l’eau, éclairée sans facettes, qui se fond dans le fond marin
   const h = relief(m), n = Math.round((N + 2 * MARGE) * R), pas = 1 / R, x0 = -MARGE, H = [], s = m.seed % 991, dessous = new Bati(2);
   for (let i = 0; i <= n; i++) for (let j = 0; j <= n; j++) H.push(h(x0 + i * pas, x0 + j * pas));
@@ -110,8 +137,22 @@ function sol3d(bati, m, B, fond, R, occ = null) { // les triangles du sol, color
       for (const v of [a, c, b]) { _c.set(couleurSol(B, fond, Math.min(v[1], NIV - .001), 1, v[0] + N / 2, v[2] + N / 2, r, s)); colsD.push(_c.r, _c.g, _c.b); }
       return;
     }
-    _c.set(couleurSol(B, fond, Math.max(yc, NIV), Math.abs(ny / l), xc, zc, r, s)); const k = (1 + (r - .5) * .035) * (occ && yc >= NIV ? occ(xc, zc) : 1);
-    pos.push(...a, ...c, ...b); for (let v = 0; v < 3; v++) cols.push(_c.r * k, _c.g * k, _c.b * k);
+    const pente = Math.abs(ny / l), peindre = (p, q, t) => { // chaque morceau prend la couleur de son milieu
+      const ym = (p[1] + q[1] + t[1]) / 3, xm = (p[0] + q[0] + t[0]) / 3 + N / 2, zm = (p[2] + q[2] + t[2]) / 3 + N / 2;
+      _c.set(couleurSol(B, fond, Math.max(ym, NIV), pente, xm, zm, r, s)); const k = (1 + (r - .5) * .035) * (occ && ym >= NIV ? occ(xm, zm) : 1);
+      pos.push(...p, ...t, ...q); for (let v = 0; v < 3; v++) cols.push(_c.r * k, _c.g * k, _c.b * k);
+    };
+    if (!fin) return peindre(a, b, c);
+    const bas = Math.min(a[1], b[1], c[1]), haut = Math.max(a[1], b[1], c[1]), plans = SABLE.filter(y => y > bas && y < haut);
+    if (pente < RAIDE) for (let y = (Math.floor(bas / STRATE) + 1) * STRATE; y < haut; y += STRATE) plans.push(y); // une paroi : coupée en strates
+    if (!plans.length) return peindre(a, b, c);
+    const bornes = [-Infinity, ...plans.sort((p, q) => p - q), Infinity];
+    for (let k = 0; k + 1 < bornes.length; k++) { // une bande horizontale après l’autre
+      let poly = [a, b, c];
+      if (bornes[k] > -Infinity) poly = tranche(poly, bornes[k], true);
+      if (bornes[k + 1] < Infinity) poly = tranche(poly, bornes[k + 1], false);
+      for (let i = 1; i + 1 < poly.length; i++) peindre(poly[0], poly[i], poly[i + 1]);
+    }
   };
   const tri = (a, b, c, r) => { // un triangle qui traverse la ligne d’eau est coupé en deux : la terre au-dessus, le haut-fond en dessous
     const T3 = [a, b, c], haut = T3.map(p => p[1] >= NIV), nh = haut.filter(Boolean).length;
@@ -136,9 +177,33 @@ function decor3d(bati, m, B, part = 1, occ = null) {
     if (r2 > B.densite * part) continue;
     const x = i + dx, z = j + dy, y = h(x, z);
     if (y < .06) continue;
-    let kind = tirer(B.decor[sol(m, i, j)] || [], r1);
+    let kind = tirer(B.decor[solVu(m, i, j, y)] || [], r1);
     if (kind && occ && GROS.has(kind) && occ.has(i * N + j)) kind = 'touffe';
     if (kind) decor(bati, kind, B, x - N / 2, y, z - N / 2, r2);
+  }
+  if (part >= .8) rivage(bati, m, B, part, occ); // de loin, les éboulis et la laisse de mer ne se verraient pas
+}
+function rivage(bati, m, B, part, occ) { // au pied des falaises, des éboulis à demi dans l’eau ; sur les plages, la laisse de mer
+  const h = relief(m), s = m.seed % 983, k = { b: bati, s: 1 }, tons = [...(B.falaise || BIOMES.prairie.falaise), B.sol.roche[1]];
+  for (const [i, j] of m.rive) {
+    if (occ?.has(i * N + j)) continue; // une barque est là
+    for (const [a, b] of [[i - 1, j], [i + 1, j], [i, j - 1], [i, j + 1]]) {
+      if (a < 0 || b < 0 || a >= N || b >= N || !m.land[a * N + b]) continue;
+      const r = hash(`${s}:r:${i}:${j}:${a}:${b}`), at = u => [i + .5 + (a - i) * u, j + .5 + (b - j) * u], ux = b - j, uz = -(a - i); // (ux, uz) : le long de la côte
+      if (m._falaise(...at(.5)) > .55) { // une falaise : ses éboulis, là où elle entre dans l’eau
+        let u = .9; while (u > .25 && h(...at(u)) > -.03) u -= .05;
+        const [px, pz] = at(u + .03);
+        for (let q = 0; q < 1 + Math.floor(r * 3.4); q++) {
+          const g = hash(`${s}:e:${i}:${j}:${a}:${b}:${q}`), d = (g - .5) * .8, t = .07 + g * .11;
+          F({ ...k, dx: px + ux * d - N / 2, dz: pz + uz * d - N / 2 }, G.dode, nuance(tons[q % 3], -.08), { y: t * .15 - .015, s: t, sy: t * .7, ry: g * 6, bosse: .18, graine: g * 50, ao: .35 });
+        }
+      } else if (part >= .9 && !B.enneige && r < .55) { // une plage : des algues et du bois flotté, à la limite de la marée
+        let u = .5; while (u < .95 && h(...at(u)) < .045) u += .03;
+        const [px, pz] = at(u), kk = { ...k, dx: px - N / 2, dz: pz - N / 2, dy: h(px, pz) };
+        for (let q = 0; q < 3; q++) { const g = hash(`${s}:l:${i}:${j}:${a}:${b}:${q}`), d = (g - .5) * .7; F({ ...kk, dx: kk.dx + ux * d, dz: kk.dz + uz * d }, G.ico0, g > .5 ? '#56633a' : '#6b5a3c', { y: .004, sx: .045, sy: .008, sz: .025, ry: g * 6, ao: 0 }); }
+        if (r < .18) F(kk, cyl(.011, .013, 5), '#b8a58a', { y: .01, sy: .2, rz: Math.PI / 2, ry: r * 20, ao: 0 }); // du bois flotté
+      }
+    }
   }
 }
 const posTuile = (m, [i, j], barque) => { const y = barque ? 0 : relief(m)(i + .5, j + .5); return [i + .5 - N / 2, y, j + .5 - N / 2]; };
@@ -243,7 +308,7 @@ function ileStatique(d, part = .5, R = 2, fond = null) { // une île entière en
 }
 function ileRiche(d, fond) { // l’île qu’on approche dans l’archipel : construite comme dans sa vue, décor entier, choses animées
   const B = biomeDe(d.ile.biome), eau = eauDe(d.climat, B), b = new Bati(d.ile.seed % 997 + 1), anims = [];
-  const dessous = sol3d(b, d.m, B, fond, 3, occlusionDe(d)); decor3d(b, d.m, B, 1, occupees(d));
+  const dessous = sol3d(b, d.m, B, fond, 3, occlusionDe(d), true); decor3d(b, d.m, B, 1, occupees(d));
   const grp = new THREE.Group(); grp.add(b.maillage(), dessous);
   const v = vie(d, B, relief(d.m)); grp.add(v.grp); anims.push(...v.anims); // la vie qui ne dit rien
   for (const a of d.assets) {
@@ -328,7 +393,7 @@ export class Vue3D {
     s.background = fondCiel(d.climat); s.fog = new THREE.Fog(T.brume, D * (d.climat === 'ED' ? 1.1 : 1.5), D * (d.climat === 'ED' ? 3.6 : 4.8));
     soleil(s, d.climat, 9);
     s.add(fondMarin(T)); this.eau = mer(T); s.add(this.eau);
-    const b = new Bati(d.ile.seed % 997 + 1), dessous = sol3d(b, d.m, B, fondIle(T), 3, occlusionDe(d)); decor3d(b, d.m, B, 1, occupees(d));
+    const b = new Bati(d.ile.seed % 997 + 1), dessous = sol3d(b, d.m, B, fondIle(T), 3, occlusionDe(d), true); decor3d(b, d.m, B, 1, occupees(d));
     const terrain = b.maillage(); terrain.castShadow = true; s.add(terrain, dessous);
     const v = vie(d, B, relief(d.m)); s.add(v.grp); this.anims.push(...v.anims); // la vie qui ne dit rien
     for (const a of d.assets) {

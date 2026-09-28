@@ -148,7 +148,7 @@ const semer = ({ prefixe, ile }) => { localStorage.clear(); localStorage.setItem
 
   // 5 bis. l’île grandit avec les dépôts
   const croit = await p.evaluate(async deps => {
-    const { deriver } = await import('./ile.js?v=8');
+    const { deriver } = await import('./ile.js?v=9');
     const base = { id: 1, seed: 4242, nee: '', biome: 'prairie', envoyee: false };
     return [0, 1, 3, 5].map(k => deriver({ ...base, depots: deps.slice(0, k).map((d, i) => ({ id: i + 1, ...d })) }).m.taille);
   }, RICHE);

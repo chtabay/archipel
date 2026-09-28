@@ -79,7 +79,7 @@ async function contexte(navigateur, options = TELEPHONE) { const c = await navig
 // des îles des autres, pour le faux archipel : inventées dans la page par la même grammaire, réduites à leur forme,
 // et placées comme l’app place la sienne : l’eau libre la plus proche de leur sensation, autour de celles déjà là
 const formesInventees = (page, n, depart = 0, deja = []) => page.evaluate(async ([n, depart, deja]) => {
-  const { archipelInvente, deriver, depuisForme, forme } = await import('./ile.js?v=8'), A = window.archipel;
+  const { archipelInvente, deriver, depuisForme, forme } = await import('./ile.js?v=9'), A = window.archipel;
   const fixes = deja.map((i, k) => ({ d: depuisForme(i.forme, `deja-${k}`), x: i.x, z: i.z }));
   return archipelInvente(depart + n).slice(depart).map(o => { const it = { d: deriver(o.ile) }; A.placeLibre(it, fixes, A.posArch(o.a, o.v)); fixes.push(it); return { forme: forme(it.d), x: it.x, z: it.z }; });
 }, [n, depart, deja.map(({ forme, x, z }) => ({ forme, x, z }))]);
