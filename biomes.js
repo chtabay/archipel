@@ -1,7 +1,7 @@
 // L’archipel : les paysages. Choisis par la personne quand elle commence une île.
 // Un paysage ne dit rien : il change les couleurs du sol, les essences, les maisons, les cultures, le petit décor,
 // et la vie qui se promène (vie.js) : des bêtes par paysage, [espèce, nombre, couleurs pour les papillons].
-// escarpe : la part de falaises sur le rivage, en plus ou en moins (monde.js).
+// escarpe : la part de falaises sur le rivage, en plus ou en moins (monde.js). oiseaux : ceux du ciel, [espèce, nombre].
 // Ce qui dit quelque chose reste la famille, l’espèce, la taille et l’état (grammaire.js).
 
 export const BIOMES = {
@@ -17,6 +17,7 @@ export const BIOMES = {
     champs: ['ble', 'potager', 'ble'],
     decor: { herbe: [['touffe', 5], ['paquerette', 3], ['bouton', 2], ['trefle', 2], ['dalle', 1], ['buisson', 2], ['buissonfleuri', 1]], sable: [['galet', 3], ['touffe', 1], ['rocher', 1]], roche: [['eclat', 2], ['mousse', 2], ['rocher', 2]], neige: [['eclat', 1]] },
     vie: [['mouton', 3], ['poule', 2], ['papillon', 3, ['#ffd166', '#ffffff', '#ff9ecf', '#b08cff']]],
+    oiseaux: [['mouette', 3]],
     densite: .62, mousse: true,
   },
   automne: {
@@ -31,6 +32,7 @@ export const BIOMES = {
     champs: ['citrouilles', 'ble'],
     decor: { herbe: [['feuilles', 6], ['champignon', 3], ['touffe', 2], ['souche', 1], ['buche', 1], ['buisson', 2]], sable: [['galet', 2], ['feuilles', 1], ['rocher', 1]], roche: [['mousse', 2], ['champignon', 1], ['eclat', 1], ['rocher', 2]], neige: [['eclat', 1]] },
     vie: [['renard', 1], ['poule', 2], ['papillon', 1, ['#f2b93e', '#fff1c1']]],
+    oiseaux: [['oie', 5], ['mouette', 1]],
     densite: .7, mousse: true, feuillesNues: true,
   },
   tropique: {
@@ -45,6 +47,7 @@ export const BIOMES = {
     champs: ['riz', 'ananas'],
     decor: { herbe: [['fougere', 4], ['fleurrouge', 2], ['touffe', 2], ['buisson', 2], ['buissonfleuri', 1]], sable: [['coquillage', 3], ['galet', 1], ['etoile', 1], ['rocher', 1]], roche: [['eclat', 1], ['fougere', 1], ['rocher', 2]], neige: [['eclat', 1]] },
     vie: [['crabe', 3], ['papillon', 3, ['#ff4d6d', '#ffd166', '#5fd3ff']], ['poule', 1]],
+    oiseaux: [['fregate', 3]],
     densite: .55, mousse: false,
   },
   neige: {
@@ -59,6 +62,7 @@ export const BIOMES = {
     champs: ['neige'],
     decor: { herbe: [['tasneige', 4], ['baies', 2], ['eclat', 1], ['sapineau', 1], ['buisson', 1], ['rocher', 1]], sable: [['tasneige', 2], ['galet', 1]], roche: [['eclat', 2], ['tasneige', 1], ['rocher', 2]], neige: [['tasneige', 1]] },
     vie: [['rougegorge', 2], ['lievre', 1]],
+    oiseaux: [['goeland', 2]],
     densite: .5, mousse: false, enneige: true,
   },
   lande: {
@@ -73,6 +77,7 @@ export const BIOMES = {
     champs: ['lavande', 'ble'],
     decor: { herbe: [['bruyere', 5], ['fougere', 2], ['touffe', 2], ['eclat', 1], ['buisson', 2], ['buissonfleuri', 1]], sable: [['galet', 2], ['rocher', 1]], roche: [['mousse', 2], ['eclat', 2], ['rocher', 3]], neige: [['eclat', 1]] },
     vie: [['lievre', 2], ['mouton', 2], ['papillon', 2, ['#d7b8ff', '#ffffff']], ['poule', 1]],
+    oiseaux: [['fou', 2], ['mouette', 1]],
     densite: .6, mousse: true,
   },
 };

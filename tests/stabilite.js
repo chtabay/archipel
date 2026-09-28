@@ -1,5 +1,6 @@
 // L’archipel : la stabilité. Réponses qui ne comptent plus, quitter vite, données abîmées, 3D qui refuse de démarrer,
-// écran qui échoue, app qui ne se lance pas, mémoire graphique, choses jamais empilées, retour qui ferme une feuille.
+// écran qui échoue, app qui ne se lance pas, mémoire graphique, choses jamais empilées, retour qui ferme une feuille,
+// les oiseaux du ciel.
 const { chromium } = require('playwright');
 const path = require('path'), fs = require('fs');
 const { BASE, OUT: CAPTURES, GL, verifier, bilan, surveiller, sansIntro, contexte, peupler } = require('./commun');
@@ -100,7 +101,7 @@ const depot = (id, answers) => ({ id, date: new Date().toISOString(), quad: 'N',
   { const { c, p } = await nouvelle();
     await p.goto(BASE);
     const empilees = await p.evaluate(async () => {
-      const { deriver } = await import('./ile.js?v=10'), tous = Array.from({ length: 15 }, (_, i) => `s${i}`);
+      const { deriver } = await import('./ile.js?v=11'), tous = Array.from({ length: 15 }, (_, i) => `s${i}`);
       let pire = 0;
       for (let s = 1; s <= 40; s++) { const d = deriver({ id: 1, seed: 1000 + s * 7, biome: 'prairie', depots: [{ id: 1, quad: 'N', answers: { situ: ['regret', 'mal'], mots: [], sujets: tous, fait: [], subi: [] } }] }), vus = new Set(); let n = 0; for (const a of d.assets) { if (a.famille === 'meteo' && a.espece !== 'etang') continue; const k = a.tile.join(); if (vus.has(k)) n++; vus.add(k); } pire = Math.max(pire, n); }
       return pire;
@@ -115,6 +116,21 @@ const depot = (id, answers) => ({ id, date: new Date().toISOString(), quad: 'N',
     await p.click('#humans'); await p.waitForSelector('.sheet');
     await p.goBack(); await p.waitForTimeout(500);
     verifier(!(await p.$('.sheet')), 'le bouton retour ferme la feuille ouverte');
+    await c.close(); }
+
+  // 10. le ciel : les oiseaux du paysage sous un ciel clair, aucun sous un ciel lourd
+  { const { c, p, e } = await nouvelle();
+    await p.goto(BASE);
+    const ciel = async (biome, mots) => {
+      await p.evaluate(i => { localStorage.clear(); localStorage.setItem('archipel:intro', '1'); localStorage.setItem('archipel:ile', i); }, ile([depot(1, { mots, sujets: ['s4'] })], { biome }));
+      await p.reload(); await p.waitForTimeout(1500);
+      return p.evaluate(() => { const n = {}; window.archipel.vue.scene.traverse(o => { if (o.userData?.oiseau) n[o.userData.oiseau] = (n[o.userData.oiseau] || 0) + 1; }); return n; });
+    };
+    const lande = await ciel('lande', ['calme']), automne = await ciel('automne', []), lourd = await ciel('prairie', ['colere']);
+    verifier(lande.fou === 2 && lande.mouette === 1, `la lande : deux fous de Bassan et une mouette (${JSON.stringify(lande)})`);
+    verifier(automne.oie === 5 && automne.mouette === 1, `l’automne : un vol de cinq oies et une mouette (${JSON.stringify(automne)})`);
+    verifier(!Object.keys(lourd).length, `sous un ciel lourd, aucun oiseau (${JSON.stringify(lourd)})`);
+    verifier(!e.length, `aucune erreur${e.length ? ' : ' + e.join(' | ') : ''}`);
     await c.close(); }
 
   await b.close();
