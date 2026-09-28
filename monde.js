@@ -3,11 +3,11 @@
 // La carte et les dépôts viennent de ile.js : l’île est recalculée à partir de ses dépôts.
 
 import * as THREE from './vendor/three.min.js?v=1';
-import { N, CLIMATS, eauDe, solVu, carte, deriver, etape } from './ile.js?v=12';
-import { biomeDe, BIOMES } from './biomes.js?v=4';
+import { N, CLIMATS, eauDe, solVu, carte, deriver, etape } from './ile.js?v=13';
+import { biomeDe, BIOMES } from './biomes.js?v=5';
 import { hash, melange, versHex, nuance } from './outils.js?v=1';
-import { Bati, MAT, modeleChose, modelePhare, decor, halo, nuageBati, F, G, cone, cyl, baton } from './modeles.js?v=16';
-import { vie, ciel } from './vie.js?v=9';
+import { Bati, MAT, modeleChose, modelePhare, decor, halo, nuageBati, F, G, cone, cyl, baton } from './modeles.js?v=17';
+import { vie, ciel } from './vie.js?v=10';
 
 const reduit = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 export const ECH_ARCH = .45; // la taille des îles dans l’archipel : la même pour toutes, pour que leurs tailles se comparent
@@ -60,9 +60,9 @@ function bruit(x, z, s = 0) { // un bruit de valeur, doux
   return lerp(lerp(h(i, j), h(i + 1, j), ux), lerp(h(i, j + 1), h(i + 1, j + 1), ux), uz);
 }
 // Le rivage : par endroits une falaise, où la terre reste haute jusqu’au bord puis tombe droit dans l’eau ; ailleurs une plage, qui
-// descend doucement jusqu’à l’eau avant le haut-fond. Les falaises viennent plutôt du côté de la colline ; le village, le phare et les
-// barques, au sud-est, gardent surtout leurs plages. Le paysage en règle la part (B.escarpe) : les tropiques ont surtout des plages,
-// la lande surtout des falaises.
+// descend doucement jusqu’à l’eau avant le haut-fond. Les falaises ne viennent que d’un côté de l’île, face au vent, du côté de la
+// colline ; l’autre côté, celui du village, du phare et des barques, garde toujours ses plages. Le paysage règle la part des falaises
+// et la largeur de leur côté (B.escarpe) : les tropiques ont surtout des plages, la lande plus de falaises, jamais sur tout le pourtour.
 export function relief(m, B) { // la hauteur du sol en (x, z), en tuiles de 0 à N, dans ce paysage ; h.falaise(x, z) : 0, une plage ; 1, une falaise
   const e = B?.escarpe || 0, garde = m._reliefs || (m._reliefs = new Map()); // une carte sert à tous les paysages : un relief par part de falaises
   if (garde.has(e)) return garde.get(e);
@@ -70,7 +70,12 @@ export function relief(m, B) { // la hauteur du sol en (x, z), en tuiles de 0 à
   const coin = (i, j) => (i >= 0 && j >= 0 && i <= N && j <= N ? m.vh[i * (N + 1) + j] : 0);
   const loin = (i, j) => (i >= 0 && j >= 0 && i < N && j < N && m.dist ? m.dist[i * N + j] : 0); // la distance au rivage, en tuiles
   const bil = (f, x, y) => { const i = Math.floor(x), j = Math.floor(y), fx = x - i, fy = y - j; return f(i, j) * (1 - fx) * (1 - fy) + f(i + 1, j) * fx * (1 - fy) + f(i, j + 1) * (1 - fx) * fy + f(i + 1, j + 1) * fx * fy; };
-  const s = m.seed % 997, falaise = (x, z) => lisse(.54, .66, bruit(x * .33, z * .33, s + 31) + .16 + e - .32 * lisse(N * .35, N * .75, (x + z) / 2));
+  let cx = 0, cz = 0, n = 0; // le centre de l’île, telle qu’elle est
+  for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) if (m.land[i * N + j]) { cx += i + .5; cz += j + .5; n++; }
+  if (n) { cx /= n; cz /= n; } else cx = cz = N / 2;
+  const s = m.seed % 997, vent = -Math.PI * .75 + (hash(`${m.seed}:vent`) - .5) * 1.05, ux = Math.cos(vent), uz = Math.sin(vent), c0 = .3 - 1.5 * e; // le vent vient du côté de la colline, à trente degrés près
+  const face = (x, z) => { const dx = x - cx, dz = z - cz; return lisse(c0 - .25, c0 + .25, (dx * ux + dz * uz) / Math.max(1, Math.hypot(dx, dz))); }; // 1 face au vent, 0 à l’abri
+  const falaise = (x, z) => lisse(.54, .66, bruit(x * .33, z * .33, s + 31) + .16 + e - 1.2 * (1 - face(x, z))); // à l’abri, jamais de falaise
   const h = (x, z) => {
     const f = falaise(x, z), L = bil(terre, x - .5, z - .5) + (bruit(x * 1.3, z * 1.3, s) - .5) * .32 + (bruit(x * 3.3, z * 3.3, s + 41) - .5) * .2 * f; // une falaise : un bord plus découpé, qui efface les marches des tuiles
     let S = Math.max(bil(coin, x, z) * YS, .14) + (bruit(x * 2.6, z * 2.6, s + 5) - .5) * .08;

@@ -6,8 +6,8 @@
 // Et le ciel : des oiseaux du paysage, qui tournent, planent, plongent ou passent en V (plus bas).
 
 import * as THREE from './vendor/three.min.js?v=1';
-import { N, solVu } from './ile.js?v=12';
-import { BETES, bete, activite, oiseau, poseAiles } from './modeles.js?v=16';
+import { N, solVu } from './ile.js?v=13';
+import { BETES, bete, activite, oiseau, poseAiles } from './modeles.js?v=17';
 import { rng, hash } from './outils.js?v=1';
 
 const immobile = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;

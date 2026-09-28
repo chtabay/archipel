@@ -1,7 +1,7 @@
 // L’archipel : les paysages. Choisis par la personne quand elle commence une île.
 // Un paysage ne dit rien : il change les couleurs du sol, les essences, les maisons, les cultures, le petit décor,
 // et la vie qui se promène (vie.js) : des bêtes par paysage, [espèce, nombre, couleurs pour les papillons].
-// escarpe : la part de falaises sur le rivage, en plus ou en moins (monde.js). oiseaux : ceux du ciel, [espèce, nombre].
+// escarpe : la part de falaises sur le rivage, et la largeur du côté où elles viennent, en plus ou en moins (monde.js). oiseaux : ceux du ciel, [espèce, nombre].
 // Ce qui dit quelque chose reste la famille, l’espèce, la taille et l’état (grammaire.js).
 
 export const BIOMES = {
@@ -68,7 +68,7 @@ export const BIOMES = {
   lande: {
     nom: 'la lande', dit: 'de la bruyère, des bouleaux, des toits d’ardoise',
     sol: { herbe: ['#a3be70', '#8aa65c', '#71894a'], sable: ['#ebdfc4', '#ddcfb0', '#cbbc9a'], roche: ['#aaa9a1', '#8f8e87', '#75746e'], neige: ['#ffffff', '#f1f4f7', '#dde3e8'] },
-    taches: ['#a57dc4', .26], falaise: ['#8c7058', '#6c5644'], escarpe: .18, // surtout des falaises
+    taches: ['#a57dc4', .26], falaise: ['#8c7058', '#6c5644'], escarpe: .18, // plus de falaises, sur un côté plus large
     eau: '#5f9fb6', lagon: '205,236,240',
     feuillu: { formes: ['bouleau', 'bouleau', 'rond'], tons: [['#b7d98a', '#94bd66', '#739c4c']] },
     fleuri: { formes: ['rond'], tons: [['#eadcf7', '#cdb3ea', '#a88bcf']] },
