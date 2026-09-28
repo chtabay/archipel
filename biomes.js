@@ -1,6 +1,7 @@
 // L’archipel : les paysages. Choisis par la personne quand elle commence une île.
 // Un paysage ne dit rien : il change les couleurs du sol, les essences, les maisons, les cultures, le petit décor,
 // et la vie qui se promène (vie.js) : des bêtes par paysage, [espèce, nombre, couleurs pour les papillons].
+// escarpe : la part de falaises sur le rivage, en plus ou en moins (monde.js).
 // Ce qui dit quelque chose reste la famille, l’espèce, la taille et l’état (grammaire.js).
 
 export const BIOMES = {
@@ -35,7 +36,7 @@ export const BIOMES = {
   tropique: {
     nom: 'l’île tropicale', dit: 'des palmiers, du sable blanc, un lagon',
     sol: { herbe: ['#86dc5a', '#68c448', '#50a83c'], sable: ['#fff3d6', '#f7e6ba', '#ecd49c'], roche: ['#cdbb9f', '#b3a085', '#98866c'], neige: ['#ffffff', '#f1f4f7', '#dde3e8'] },
-    taches: ['#a6ec78', .12], falaise: ['#c09268', '#9c7250'],
+    taches: ['#a6ec78', .12], falaise: ['#c09268', '#9c7250'], escarpe: -.2, // surtout des plages
     eau: '#2fd0d4', lagon: '170,255,238',
     feuillu: { formes: ['palmier', 'palmier', 'rond'], tons: [['#8ee06a', '#5cc04a', '#3f9a3a']] },
     fleuri: { formes: ['hibiscus'], tons: [['#8ee06a', '#5cc04a', '#3f9a3a']] },
@@ -63,7 +64,7 @@ export const BIOMES = {
   lande: {
     nom: 'la lande', dit: 'de la bruyère, des bouleaux, des toits d’ardoise',
     sol: { herbe: ['#a3be70', '#8aa65c', '#71894a'], sable: ['#ebdfc4', '#ddcfb0', '#cbbc9a'], roche: ['#aaa9a1', '#8f8e87', '#75746e'], neige: ['#ffffff', '#f1f4f7', '#dde3e8'] },
-    taches: ['#a57dc4', .26], falaise: ['#8c7058', '#6c5644'],
+    taches: ['#a57dc4', .26], falaise: ['#8c7058', '#6c5644'], escarpe: .18, // surtout des falaises
     eau: '#5f9fb6', lagon: '205,236,240',
     feuillu: { formes: ['bouleau', 'bouleau', 'rond'], tons: [['#b7d98a', '#94bd66', '#739c4c']] },
     fleuri: { formes: ['rond'], tons: [['#eadcf7', '#cdb3ea', '#a88bcf']] },

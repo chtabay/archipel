@@ -5,8 +5,8 @@
 // laisse en place. Les bêtes elles-mêmes sont dessinées dans modeles.js : la famille des animaux les partage.
 
 import * as THREE from './vendor/three.min.js?v=1';
-import { N, solVu } from './ile.js?v=9';
-import { BETES, bete, activite } from './modeles.js?v=12';
+import { N, solVu } from './ile.js?v=10';
+import { BETES, bete, activite } from './modeles.js?v=13';
 import { rng } from './outils.js?v=1';
 
 const immobile = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
