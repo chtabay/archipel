@@ -1,9 +1,10 @@
 // L’archipel : les choses de l’île, en 3D. Des volumes à facettes, colorés par sommet, fusionnés en peu de maillages.
-// Chaque famille, espèce, taille et état de la grammaire a sa forme, et chaque paysage ses variantes.
+// Chaque famille, espèce, taille et état de la grammaire a sa forme, et chaque paysage ses variantes. Les bêtes et les
+// oiseaux servent aussi à la vie qui ne dit rien (vie.js).
 // Unité : une tuile = 1. Chaque chose est construite à son pied, en (0, 0, 0).
 
 import * as THREE from './vendor/three.min.js?v=1';
-import { BIOMES } from './biomes.js?v=3';
+import { BIOMES } from './biomes.js?v=4';
 import { nuance } from './outils.js?v=1';
 
 const B0 = BIOMES.prairie;
@@ -732,6 +733,71 @@ function animal(a, k) { // toi, tel que tu es : une bête sur le pré ; redit, u
   places.forEach(([dx, dz, s, ry], i) => poserBete(e, { ...k, dx: (k.dx || 0) + dx * s0, dz: (k.dz || 0) + dz * s0, s: s0 * s * TAILLE_BETE, ry: ry + k.v * 2 + dos }, g + i * 7, B));
   if (st >= 3) abri(k, B, -.04, -.44);
   touffe(k, .3 * s0 + (k.dx || 0), .28 * s0 + (k.dz || 0), B);
+}
+
+/* ───────── Les oiseaux ───────── */
+// Chaque oiseau regarde vers +z, les ailes le long de x, son centre en 0. Le corps est un seul maillage ; chaque aile a deux
+// parties, le bras depuis l’épaule et la main depuis le poignet : elles battent en vague, et en vol plané elles tiennent la
+// pose de l’espèce, le « M » des mouettes, le « W » des frégates. Les oiseaux ne servent qu’au ciel (vie.js).
+
+const MAT_AILE = new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: .8, metalness: 0, side: THREE.DoubleSide }); // une aile est plate : elle se voit des deux côtés
+MAT_AILE._partage = true;
+// env : l’envergure, en tuiles ; corde : la largeur de l’aile à l’épaule, en part de l’envergure ; fleche : la main rejetée en arrière ;
+// avance : le poignet porté en avant ; noir : où commence le bout de l’aile, en part de la main ; bat : les battements par seconde ;
+// plane : la part du temps passée à planer ; pose : [bras, main] en vol plané ; vitesse : en tuiles par seconde ; haut : plus haut que les autres
+export const OISEAUX = {
+  mouette: { env: .66, corde: .19, fleche: .3, avance: .05, noir: .62, corps: '#f6f6f3', dos: '#c3cad2', aile: '#c6cdd5', bout: '#2b2b30', bec: '#efb93a', queue: 'eventail', bat: 5, plane: .55, pose: [.16, -.26], vitesse: 1.1 },
+  goeland: { env: .8, corde: .2, fleche: .28, avance: .04, noir: .68, corps: '#f4f4f0', dos: '#5b626b', aile: '#616871', bout: '#1f1f23', bec: '#eec23e', queue: 'eventail', bat: 4, plane: .6, pose: [.12, -.2], vitesse: 1 },
+  fou: { env: .82, corde: .16, fleche: .26, avance: .02, noir: .48, corps: '#f8f7f2', dos: '#f4f3ee', aile: '#f2f1eb', bout: '#25242a', tete: '#f0d99a', bec: '#a3b3bf', queue: 'pointe', bat: 4.4, plane: .5, pose: [.06, -.1], vitesse: 1.2, plonge: true },
+  fregate: { env: 1.02, corde: .13, fleche: .6, avance: .12, noir: .55, corps: '#27252c', dos: '#2c2a31', aile: '#2f2d34', bout: '#1c1b20', poitrine: '#f2efe9', bec: '#a39d96', queue: 'fourche', bat: 2.2, plane: .9, pose: [.1, -.34], vitesse: .85, haut: 1 },
+  oie: { env: .86, corde: .21, fleche: .12, avance: 0, noir: .5, corps: '#8f857a', dos: '#766c61', aile: '#7d7368', bout: '#4b443d', tete: '#2b2826', joue: '#f2eee6', bec: '#2b2826', cou: true, queue: 'courte', bat: 3.2, plane: 0, pose: [.05, -.05], vitesse: 1.3, haut: 1.1 },
+};
+function corpsOiseau(k, o) { // le corps en fuseau et son dos, la tête, les yeux, le bec, la queue ; tout se règle sur l’envergure
+  const u = o.env, tz = u * (o.cou ? .39 : .235), ty = u * (o.cou ? .02 : .028), qz = -u * .21;
+  F(k, G.ico1, o.corps, { sx: u * .066, sy: u * .062, sz: u * .22, ao: .4 });
+  F(k, G.ico1, o.dos, { y: u * .024, z: -u * .01, sx: u * .054, sy: u * .034, sz: u * .18, ao: 0 });
+  if (o.poitrine) F(k, G.ico1, o.poitrine, { y: -u * .02, z: u * .06, sx: u * .06, sy: u * .045, sz: u * .1, ao: 0 });
+  if (o.cou) baton(k, [0, u * .02, u * .15], [0, ty, tz - u * .03], u * .034, u * .026, o.tete, 5); // le long cou des oies
+  F(k, G.ico1, o.tete || o.corps, { y: ty, z: tz, sx: u * (o.cou ? .034 : .044), sy: u * (o.cou ? .036 : .044), sz: u * (o.cou ? .066 : .058), ao: .15 });
+  if (o.joue) F(k, G.ico0, o.joue, { y: ty - u * .01, z: tz - u * .005, sx: u * .05, sy: u * .028, sz: u * .036, ao: 0 }); // la mentonnière blanche
+  for (const c of [-1, 1]) F(k, G.sph, '#1d1b1c', { x: c * u * (o.cou ? .028 : .035), y: ty + u * .012, z: tz + u * .018, s: u * .009, ao: 0 });
+  F(k, cone(5), o.bec, { y: ty - u * .004, z: tz + u * .068, sx: u * .013, sy: u * .058, sz: u * .013, rx: Math.PI / 2, ao: 0 });
+  if (o.queue === 'eventail') F(k, G.ico0, o.corps, { y: u * .01, z: qz - u * .04, sx: u * .07, sy: u * .012, sz: u * .07, ao: 0 });
+  else if (o.queue === 'pointe') F(k, cone(4), o.corps, { y: u * .005, z: qz - u * .05, sx: u * .04, sy: u * .12, sz: u * .014, rx: -Math.PI / 2, ao: 0 });
+  else if (o.queue === 'fourche') for (const c of [-1, 1]) F(k, G.box, o.dos, { x: c * u * .018, y: u * .005, z: qz - u * .08, sx: u * .016, sy: u * .008, sz: u * .17, ry: -c * .12, ao: 0 }); // la queue fourchue, à peine ouverte
+  else F(k, cone(5), o.dos, { y: u * .01, z: qz - u * .02, sx: u * .04, sy: u * .08, sz: u * .014, rx: -Math.PI / 2, ao: 0 }); // courte, en coin
+}
+function plans(parts) { // des polygones plats, en y = 0, chacun en éventail et de sa couleur : [[[x, z]…], couleur]…
+  const pos = [], col = [];
+  for (const [pts, couleur] of parts) { _c.set(couleur); for (let i = 1; i + 1 < pts.length; i++) for (const p of [pts[0], pts[i], pts[i + 1]]) { pos.push(p[0], 0, p[1]); col.push(_c.r, _c.g, _c.b); } }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+  g.computeVertexNormals(); g.computeBoundingSphere(); g._partage = true; return g;
+}
+const FORMES_OISEAU = {};
+function formesOiseau(espece) { // les formes d’une espèce : faites une fois, partagées par tous ses oiseaux
+  if (FORMES_OISEAU[espece]) return FORMES_OISEAU[espece];
+  const o = OISEAUX[espece], u = o.env, a = u * .21, b = u * .5 - a, c = u * o.corde, av = u * o.avance, fl = b * o.fleche, n = b * o.noir, k = bati(11);
+  corpsOiseau(k, o); const corps = k.b.geometrie(); corps._partage = true;
+  const bras = plans([[[[0, c * .5], [a, c * .42 + av], [a, -c * .48 + av], [0, -c * .5]], o.aile]]); // de l’épaule au poignet
+  const pn = [n, c * .32 - fl * n / b], qn = [n, -c * .44 - fl * n / b]; // où commence le bout
+  const main = plans([[[[0, c * .42], pn, qn, [0, -c * .48]], o.aile], [[pn, [b, -fl], qn], o.bout]]); // du poignet à la pointe
+  return (FORMES_OISEAU[espece] = { corps, bras, main, a, av, epaule: [u * .045, u * .03, u * .04] });
+}
+export function oiseau(espece) { // un oiseau en groupe animé : le corps, et deux ailes qui battent depuis l’épaule et le poignet
+  const o = OISEAUX[espece], f = formesOiseau(espece), grp = new THREE.Group(), corps = new THREE.Mesh(f.corps, MAT.base);
+  corps.castShadow = true; grp.add(corps); grp.rotation.order = 'YXZ'; // le cap, puis le tangage, puis le roulis
+  const ailes = [1, -1].map(cote => {
+    const epaule = new THREE.Group(), poignet = new THREE.Group(), bras = new THREE.Mesh(f.bras, MAT_AILE), main = new THREE.Mesh(f.main, MAT_AILE);
+    epaule.position.set(cote * f.epaule[0], f.epaule[1], f.epaule[2]); epaule.scale.x = cote; // l’aile gauche est la droite, en miroir
+    poignet.position.set(f.a, 0, f.av); bras.castShadow = main.castShadow = true;
+    poignet.add(main); epaule.add(bras, poignet); grp.add(epaule);
+    return { epaule, poignet, cote };
+  });
+  grp.userData.oiseau = espece;
+  return { ...o, espece, grp, ailes };
+}
+export function poseAiles(b, bras, main, repli = 0) { // bras, main : l’angle de chaque partie, vers le haut ; repli : les ailes ramenées en arrière, pour plonger
+  for (const a of b.ailes) { a.epaule.rotation.set(0, a.cote * repli * 1.15, a.cote * bras); a.poignet.rotation.set(0, repli * .45, main); }
 }
 
 /* ───────── Les buissons ───────── */

@@ -3,11 +3,11 @@
 // La carte et les dépôts viennent de ile.js : l’île est recalculée à partir de ses dépôts.
 
 import * as THREE from './vendor/three.min.js?v=1';
-import { N, CLIMATS, eauDe, solVu, carte, deriver, etape } from './ile.js?v=10';
-import { biomeDe, BIOMES } from './biomes.js?v=3';
+import { N, CLIMATS, eauDe, solVu, carte, deriver, etape } from './ile.js?v=11';
+import { biomeDe, BIOMES } from './biomes.js?v=4';
 import { hash, melange, versHex, nuance } from './outils.js?v=1';
-import { Bati, MAT, modeleChose, modelePhare, decor, halo, nuageBati, F, G, cone, cyl, baton } from './modeles.js?v=13';
-import { vie } from './vie.js?v=6';
+import { Bati, MAT, modeleChose, modelePhare, decor, halo, nuageBati, F, G, cone, cyl, baton } from './modeles.js?v=14';
+import { vie, ciel } from './vie.js?v=7';
 
 const reduit = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 export const ECH_ARCH = .45; // la taille des îles dans l’archipel : la même pour toutes, pour que leurs tailles se comparent
@@ -236,14 +236,6 @@ function nuages(n, sombres, rayon = 12, graine = 1, ombre = true) {
   }
   return { grp, anim: T => liste.forEach(c => { const a = c.an + T * c.v; c.m.position.set(Math.cos(a) * c.r, c.y, Math.sin(a) * c.r); c.m.rotation.y = -a; }) };
 }
-function oiseaux(n, rayon = 7) {
-  const grp = new THREE.Group(), mat = new THREE.MeshBasicMaterial({ color: '#4a3f48', side: THREE.DoubleSide }), liste = [];
-  for (let i = 0; i < n; i++) {
-    const o = new THREE.Group(), aile = () => { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute([0, 0, -.05, 0, 0, .05, .28, 0, 0], 3)); return new THREE.Mesh(g, mat); };
-    const ag = aile(), ad = aile(); ad.scale.x = -1; o.add(ag, ad); grp.add(o); liste.push({ o, ag, ad, ph: i * 2.1, r: rayon + i * 1.3, y: 3.2 + i * .5 });
-  }
-  return { grp, anim: T => liste.forEach(b => { const a = T * .22 + b.ph; b.o.position.set(Math.cos(a) * b.r, b.y + Math.sin(T * .7 + b.ph) * .2, Math.sin(a) * b.r); b.o.rotation.y = -a; const f = Math.sin(T * 8 + b.ph) * .5; b.ag.rotation.z = f; b.ad.rotation.z = -f; }) };
-}
 function scintillements(n, rayon) {
   const grp = new THREE.Group(), liste = [];
   for (let i = 0; i < n; i++) { const s = halo('#ffffff', .35, 0), a = hash(`sc:${i}`) * 6.28, r = rayon * (.45 + hash(`sr:${i}`) * .55); s.position.set(Math.cos(a) * r, .03, Math.sin(a) * r); grp.add(s); liste.push({ s, ph: i * 1.7 }); }
@@ -393,7 +385,7 @@ export class Vue3D {
     const s = this.scene, cl = CLIMATS[d.climat] || CLIMATS.N;
     const T = teintes(d.climat, B), D = this.distIle || 20;
     s.background = fondCiel(d.climat); s.fog = new THREE.Fog(T.brume, D * (d.climat === 'ED' ? 1.1 : 1.5), D * (d.climat === 'ED' ? 3.6 : 4.8));
-    soleil(s, d.climat, 9);
+    const astre = soleil(s, d.climat, 9);
     s.add(fondMarin(T)); this.eau = mer(T); s.add(this.eau);
     const b = new Bati(d.ile.seed % 997 + 1), dessous = sol3d(b, d.m, B, fondIle(T), 3, occlusionDe(d), true), h = relief(d.m, B); decor3d(b, d.m, B, 1, occupees(d));
     const terrain = b.maillage(); terrain.castShadow = true; s.add(terrain, dessous);
@@ -407,7 +399,7 @@ export class Vue3D {
     }
     if (d.phareTile) { const p = modelePhare(), [x, y, z] = posTuile(h, d.phareTile); p.objet.position.set(x, y, z); p.objet.userData.ech = ECH; p.objet.traverse(o => { o.userData.key = 'phare'; }); s.add(p.objet); this.objets.set('phare', p.objet); this.anims.push(...p.anims); }
     const nu = nuages(4, d.climat === 'ED' || d.climat === 'AD', 12, d.ile.seed % 7); s.add(nu.grp); this.anims.push(nu.anim);
-    if (cl.oiseaux) { const oi = oiseaux(3, 6.5); s.add(oi.grp); this.anims.push(oi.anim); }
+    if (cl.oiseaux) { const c = ciel(B.oiseaux, { rayon: 6.5, haut: 3.4, h, soleil: astre.position.clone().normalize(), graine: d.ile.seed }); s.add(c.grp); this.anims.push(...c.anims); } // le ciel du paysage, s’il est clair
     const sc = scintillements(16, 12); s.add(sc.grp); this.anims.push(sc.anim);
     for (let k = 0; k < 3; k++) { const far = ileStatique(deriver({ id: `loin${k}`, seed: d.ile.seed + 101 * (k + 1), biome: d.ile.biome, depots: [] }, { pleine: true }), .3, 2, fondUni(T)), an = 2.2 + k * 1.3; far.position.set(Math.cos(an) * (30 + k * 8), 0, Math.sin(an) * (30 + k * 8)); far.scale.setScalar(.6); s.add(far); } // d’autres îles, au loin
     this.anneau = new THREE.Mesh(new THREE.TorusGeometry(.5, .025, 4, 32), new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: .9 })); this.anneau.rotation.x = Math.PI / 2; this.anneau.visible = false; s.add(this.anneau);
@@ -429,7 +421,7 @@ export class Vue3D {
     s.add(fondMarin(T, 200, { y: -.9 * .45 - .01, clair: false })); this.eau = mer(T, 200); s.add(this.eau); this.fondArch = fondUni(T);
     for (const it of items) { it.riche = null; this.ajouterIle(it); } // de loin, chaque île est légère
     const nu = nuages(6, false, Math.max(L, P) * .8, 3, false); s.add(nu.grp); this.anims.push(nu.anim);
-    const oi = oiseaux(4, 16); s.add(oi.grp); this.anims.push(oi.anim);
+    const c = ciel([['mouette', 4], ['oie', 5]], { rayon: 16, haut: 4.2, graine: 3 }); s.add(c.grp); this.anims.push(...c.anims); // des mouettes, et parfois un vol d’oies
     for (let k = 0; k < 3; k++) { const v = voilier(), r = 14 + k * 5, ph = k * 2.2; s.add(v); this.anims.push(T => { const a = T * (.025 + k * .008) + ph; v.position.set(Math.cos(a) * r, Math.sin(T + k) * .03, Math.sin(a) * r * .75); v.rotation.y = -a - Math.PI / 2; }); }
     this.anneau = new THREE.Mesh(new THREE.TorusGeometry(2.6, .06, 4, 48), new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: .9 })); this.anneau.rotation.x = Math.PI / 2; this.anneau.visible = false; s.add(this.anneau);
   }
