@@ -99,6 +99,35 @@ function pyramide() { // un toit à quatre pans : base en y = 0, largeur et prof
   return g;
 }
 G.pyramide = pyramide();
+// La coque d’une barque, ouverte : longueur 1 (x, de -.5 à l’arrière à .5 à l’avant), largeur 1 (z), creux 1 (y : le bord à 0 au
+// milieu, la quille vers -1). Pointue devant, un tableau plat derrière, le bord qui remonte vers les bouts. Quatre formes, pour
+// quatre couleurs : le bas du bordé, sa virure haute, le dedans, le plat-bord.
+const COQUE_U = [-1, -.72, -.4, 0, .4, .72, 1], COQUE_E = .1;
+const demiLarg = t => (t > 0 ? .5 * Math.pow(1 - t, .6) : .5 * (1 - .4 * t * t)); // t : -1 à l’arrière, 1 à l’avant
+const coqueP = (t, u, e = 0) => { const b = Math.max(0, demiLarg(t) - e * .5), d = Math.max(.05, 1 - .3 * t * t - e); return [t * .5, .35 * t * t + (t > 0 ? .3 * t ** 3 : 0) - d * (1 - u * u), u * b]; }; // e : l’épaisseur, vers l’intérieur
+function coques(n = 10) {
+  const bas = [], haut = [], dedans = [], bord = [], T = i => -1 + 2 * i / n, J = COQUE_U.length - 1;
+  const quad = (l, a, b, c, d) => l.push(a, b, c, a, c, d);
+  for (let i = 0; i < n; i++) for (let j = 0; j < J; j++) {
+    const t0 = T(i), t1 = T(i + 1), u0 = COQUE_U[j], u1 = COQUE_U[j + 1];
+    quad(j === 0 || j === J - 1 ? haut : bas, coqueP(t0, u0), coqueP(t1, u0), coqueP(t1, u1), coqueP(t0, u1)); // le bordé, tourné vers l’extérieur
+    quad(dedans, coqueP(t0, u0, COQUE_E), coqueP(t0, u1, COQUE_E), coqueP(t1, u1, COQUE_E), coqueP(t1, u0, COQUE_E)); // le dedans, tourné vers l’intérieur
+  }
+  for (let i = 0; i < n; i++) for (const c of [-1, 1]) { const o0 = coqueP(T(i), c), o1 = coqueP(T(i + 1), c), i0 = coqueP(T(i), c, COQUE_E), i1 = coqueP(T(i + 1), c, COQUE_E); if (c > 0) quad(bord, o0, o1, i1, i0); else quad(bord, o0, i0, i1, o1); } // le plat-bord, tourné vers le ciel
+  const tableau = (e, sens, l) => { // le tableau arrière : dehors, tourné vers l’arrière ; dedans, vers l’avant
+    const Q = COQUE_U.map(u => coqueP(-1, u, e)); if (e) for (const q of Q) q[0] += .03;
+    const c = Q.reduce((m, q) => m.map((x, k) => x + q[k] / Q.length), [0, 0, 0]);
+    for (let j = 0; j < Q.length; j++) { const a = Q[j], b = Q[(j + 1) % Q.length], nx = (a[1] - c[1]) * (b[2] - c[2]) - (a[2] - c[2]) * (b[1] - c[1]); l.push(...(nx * sens >= 0 ? [c, a, b] : [c, b, a])); }
+  };
+  tableau(0, -1, haut); tableau(COQUE_E, 1, dedans);
+  const geo = l => { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(l.flat(), 3)); return g; };
+  return { coqueBas: geo(bas), coqueHaut: geo(haut), coqueDedans: geo(dedans), coqueBord: geo(bord) };
+}
+Object.assign(G, coques(), {
+  anneau: new THREE.TorusGeometry(1, .06, 3, 20), // un anneau fin : une main courante
+  margelle: new THREE.TorusGeometry(1, .17, 4, 16), // un anneau épais : une margelle, une anse
+  dome: new THREE.SphereGeometry(1, 12, 5, 0, Math.PI * 2, 0, Math.PI / 2), // un dôme
+});
 for (const g of Object.values(G)) g._partage = true; // des formes partagées : on ne les libère jamais
 for (const m of Object.values(MAT)) m._partage = true;
 
@@ -479,34 +508,77 @@ function champ(a, k) {
       else if (sorte === 'friche' && r() < .4) F(k, cyl(.004, .006, 3), '#b3ad88', { x: jx, y: .1, z: jz, sy: .08, rz: .3, ao: 0 });
     }
   }
-  if (st >= 2) { // le moulin, dans un coin du champ
-    const mx = .3, mz = -.3;
-    F(k, cyl(.1, .14, 8), '#f6f1e6', { x: mx, y: .38, z: mz, sy: .64, ao: .2 });
-    F(k, cone(8), B.enneige ? '#ffffff' : BOIS[1], { x: mx, y: .8, z: mz, sx: .13, sy: .2, sz: .13, ao: 0 });
-    F(k, G.box, '#8a5a3c', { x: mx, y: .12, z: mz + .12, sx: .06, sy: .14, sz: .02, ao: 0 });
-    if (k.grp) {
-      const ailes = new Bati(9), kk = { B, b: ailes, s: 1 };
-      for (let i = 0; i < 4; i++) { const an = i * Math.PI / 2; F(kk, G.box, BOIS[2], { x: Math.cos(an) * .2, y: Math.sin(an) * .2, sx: Math.abs(Math.cos(an)) * .4 + .02, sy: Math.abs(Math.sin(an)) * .4 + .02, sz: .015, ao: 0 }); F(kk, G.box, '#f3e7cf', { x: Math.cos(an) * .24 - Math.sin(an) * .04, y: Math.sin(an) * .24 + Math.cos(an) * .04, sx: Math.abs(Math.cos(an)) * .28 + Math.abs(Math.sin(an)) * .07, sy: Math.abs(Math.sin(an)) * .28 + Math.abs(Math.cos(an)) * .07, sz: .006, ao: 0 }); }
-      F(kk, G.sph, BOIS[2], { s: .03, ao: 0 });
-      const m = ailes.maillage(); const s = k.s ?? 1; m.scale.setScalar(s); m.position.set(mx * s + (k.dx || 0), .66 * s + (k.dy || 0), (mz + .15) * s + (k.dz || 0));
-      k.grp.add(m); k.anims?.push(T => { m.rotation.z = T * .7; });
+  if (st >= 2) moulin(k, .3, -.3); // le moulin, dans un coin du champ
+}
+// Le moulin : une tour blanche qui s’effile sur son socle, un cordon, une porte, deux fenêtres ; le bonnet et sa couronne,
+// l’arbre et le moyeu, quatre ailes en treillis tendues de toile. En vue, elles tournent ; de loin, elles restent posées.
+function moulin(k, mx, mz) {
+  const B = k.B, s = k.s ?? 1, toit = choix(B.maisons.toits, k.v)[0], blanc = '#f6f1e6', kk = { ...k, dx: (k.dx || 0) + mx * s, dz: (k.dz || 0) + mz * s }, r = y => .145 - (y - .07) * .073; // le rayon de la tour à la hauteur y
+  F(kk, cyl(.17, .18, 8), PIERRES.pierre[0], { y: .035, sy: .07, bosse: .05, graine: 3, ao: .3 }); // le socle
+  F(kk, cyl(r(.69), r(.07), 8), blanc, { y: .38, sy: .62, ao: .2 }); // la tour
+  F(kk, cyl(r(.44) + .006, r(.41) + .006, 8), '#d9cfbd', { y: .425, sy: .03, ao: 0 }); // le cordon
+  F(kk, G.box, '#e3dccd', { y: .16, z: r(.16) - .004, sx: .085, sy: .16, sz: .02, ao: 0 }); F(kk, G.box, '#8a5a3c', { y: .15, z: r(.15) + .005, sx: .06, sy: .13, sz: .012, ao: 0 }); // la porte
+  for (const [y, an] of [[.3, 1.3], [.56, -.9]]) { const rr = r(y) + .003; F(kk, G.box, '#39424f', { x: Math.sin(an) * rr, y, z: Math.cos(an) * rr, sx: .032, sy: .048, sz: .01, ry: an, ao: 0 }); } // les fenêtres
+  F(kk, cyl(.112, .108, 10), '#8a6a4a', { y: .7, sy: .025, ao: 0 }); // la couronne
+  F(kk, cone(10), B.enneige ? '#ffffff' : toit, { y: .805, sx: .13, sy: .2, sz: .13, ao: .1 }); F(kk, G.sph, '#8a6a4a', { y: .91, s: .018, ao: 0 }); // le bonnet
+  F(kk, cyl(.02, .02, 6), BOIS[2], { y: .72, z: .1, sy: .1, rx: Math.PI / 2, ao: 0 }); // l’arbre
+  const H = [0, .72, .155]; // le moyeu
+  const ailes = (kb, ang, fin) => {
+    for (let i = 0; i < 4; i++) {
+      const an = ang + i * Math.PI / 2, c = Math.cos(an), sn = Math.sin(an), part = (x, y, sx, sy, sz, z, col) => F(kb, G.box, col, { x: x * c - y * sn, y: x * sn + y * c, z, sx, sy, sz, rz: an, ao: 0 });
+      part(.2, 0, .4, .02, .016, 0, BOIS[2]); // la vergue
+      part(.23, .092, .3, .008, .008, -.004, BOIS[1]); // le longeron
+      if (fin) for (let j = 0; j < 5; j++) part(.1 + j * .065, .046, .008, .092, .008, -.004, BOIS[1]); // les barreaux
+      part(.235, .046, .27, .08, .004, .006, '#f3e7cf'); // la toile
     }
-  }
+    F(kb, G.sph, BOIS[2], { s: .032, ao: 0 });
+  };
+  if (k.grp) {
+    const b = new Bati(9); ailes({ b, s: 1 }, 0, true);
+    const m = b.maillage(); m.scale.setScalar(s); m.position.set(kk.dx + H[0] * s, (k.dy || 0) + H[1] * s, kk.dz + H[2] * s);
+    k.grp.add(m); k.anims?.push(T => { m.rotation.z = T * .7; });
+  } else ailes({ ...kk, dy: (k.dy || 0) + H[1] * s, dz: kk.dz + H[2] * s }, .4, !k.leger); // de loin : posées, sans les barreaux
+}
+// Le puits : deux rangs de pierres décalés, la margelle, l’eau sombre et son reflet ; le treuil, la corde enroulée, la manivelle,
+// le seau pendu ; un petit toit. Fermé : un couvercle de planches, le seau posé au pied. Redit : un deuxième seau, puis une auge.
+function puits(a, k) {
+  const B = k.B, st = a.stade, v = k.v, s0 = k.s ?? 1, ferme = a.etats.ferme, kk = { ...k, s: s0 * [.8, .95, 1.1, 1.2][st], ry: v * 6.28 }, tons = ['#b9b3a8', '#a39d92', '#c9c3b8'], R = .17, corde = '#c9a66b';
+  for (const [y, dec] of [[.042, 0], [.118, .5]]) for (let i = 0; i < 11; i++) { const an = (i + dec) / 11 * 6.28; F(kk, G.box, tons[(i + dec * 2) % 3], { x: Math.cos(an) * R, y, z: Math.sin(an) * R, sx: .06, sy: .072, sz: .092, ry: -an, bosse: .05, graine: i + dec * 20 + 1, ao: .2 }); }
+  F(kk, G.margelle, '#d4cec3', { y: .162, s: .175, rx: Math.PI / 2, ao: .1 }); // la margelle
+  if (ferme) { for (let i = 0; i < 4; i++) F(kk, G.box, BOIS[i % 2], { x: -.105 + i * .07, y: .186, sx: .066, sy: .018, sz: .36, ao: 0 }); F(kk, G.box, BOIS[2], { y: .2, sx: .3, sy: .014, sz: .04, ao: 0 }); } // le couvercle
+  else { F(kk, cyl(.14, .14, 12), '#2c4a5e', { y: .1, sy: .02, ao: 0 }); if (!k.leger) F(kk, G.sph, '#5d8ca6', { x: -.035, y: .111, z: .03, sx: .045, sy: .003, sz: .03, ao: 0 }); } // l’eau, un reflet
+  for (const x of [-.215, .215]) F(kk, G.box, BOIS[2], { x, y: .27, sx: .035, sy: .54, sz: .035, ao: .25 }); // les montants
+  F(kk, cyl(.017, .017, 6), BOIS[1], { y: .42, sy: .43, rz: Math.PI / 2, ao: 0 }); // le treuil
+  const toit = choix(B.maisons.toits, v);
+  F(kk, G.prisme, toit[0], { y: .54, sx: .54, sy: .18, sz: .38, ao: .2, varie: .04 }); F(kk, G.box, toit[1], { y: .725, sx: .56, sy: .025, sz: .04, ao: 0 }); // le toit, son faîtage
+  if (B.enneige) F(kk, G.prisme, '#ffffff', { y: .63, sx: .56, sy: .1, sz: .2, ao: 0 });
+  if (k.leger) return;
+  F(kk, cyl(.028, .028, 8), corde, { y: .42, sy: .11, rz: Math.PI / 2, ao: 0 }); // la corde enroulée
+  baton(kk, [.232, .42, 0], [.232, .36, .045], .008, .008, '#4a4a55', 4); baton(kk, [.232, .36, .045], [.28, .36, .045], .007, .007, BOIS[2], 4); // la manivelle
+  const seau = (x, y, z) => { F(kk, cyl(.04, .031, 8), BOIS[1], { x, y, z, sy: .07, ao: .2 }); F(kk, cyl(.042, .042, 8), '#4a4a55', { x, y: y + .02, z, sy: .012, ao: 0 }); F(kk, G.margelle, '#4a4a55', { x, y: y + .035, z, s: .036, ao: 0 }); };
+  if (ferme) seau(.27, .035, .16); else { baton(kk, [0, .41, 0], [0, .3, 0], .004, .004, corde, 3); seau(0, .265, 0); } // le seau : pendu au-dessus de l’eau, ou posé au pied
+  if (st >= 2) seau(-.28, .035, .12);
+  if (st >= 3) { F(kk, G.box, tons[0], { x: .05, y: .045, z: .34, sx: .32, sy: .09, sz: .13, bosse: .05, graine: 9, ao: .3 }); F(kk, G.box, '#3f6a80', { x: .05, y: .092, z: .34, sx: .26, sy: .01, sz: .08, ao: 0 }); } // une auge
+}
+// La barque : une coque en lattes, pointue devant, son tableau derrière, deux bancs, deux rames, l’une dans l’eau. Fermée : une
+// bâche tendue, deux sangles. De loin, la coque seule.
+const COQUES = [['#7f5a36', '#a3784a'], ['#5d7fa3', '#7ea0c4'], ['#b4503c', '#dc6a52'], ['#3f6f63', '#5f9a88']];
+function uneBarque(k, coque, ferme) {
+  const L = .62, Bm = .24, D = .1, dy = .07; // longueur, largeur, creux ; le bord à dy au-dessus de l’eau
+  F(k, G.coqueBas, coque[0], { y: dy, sx: L, sy: D, sz: Bm, ao: .25, varie: .03 }); F(k, G.coqueHaut, coque[1], { y: dy, sx: L, sy: D, sz: Bm, ao: 0, varie: .03 });
+  F(k, G.coqueDedans, BOIS[0], { y: dy, sx: L, sy: D, sz: Bm, ao: .35, varie: .04 }); F(k, G.coqueBord, '#6d4a33', { y: dy, sx: L, sy: D, sz: Bm, ao: 0 });
+  F(k, cyl(1, 1, 14), BOIS[1], { x: -.04, y: dy - .042, sx: .2, sy: .006, sz: .075, ao: 0 }); // le plancher, au-dessus de la ligne d’eau : l’eau ne se voit pas dans la barque
+  if (k.leger) return;
+  for (const z of [-.025, .025]) F(k, G.box, '#8a6a4a', { x: -.04, y: dy - .038, z, sx: .34, sy: .003, sz: .004, ao: 0 }); // ses lattes
+  if (ferme) { F(k, G.ico1, '#8d97a2', { x: -.02, y: dy + .012, sx: .27, sy: .035, sz: Bm * .5, bosse: .08, graine: 3, ao: .1 }); for (const x of [-.1, .08]) F(k, G.box, '#5b534a', { x, y: dy + .03, sx: .012, sy: .012, sz: Bm * .96, ao: 0 }); return; } // une bâche, deux sangles
+  for (const x of [-.12, .08]) { const t = x / (L / 2); F(k, G.box, BOIS[1], { x, y: dy + D * (.35 * t * t - .28), sx: .045, sy: .012, sz: 1.6 * (demiLarg(t) - COQUE_E * .5) * Bm, ao: 0 }); } // les bancs, un peu sous le bord : la coque y est plus étroite
+  baton(k, [-.24, dy - .02, -.035], [.16, dy - .006, -.022], .006, .006, BOIS[0], 4); F(k, G.box, BOIS[0], { x: -.27, y: dy - .022, z: -.036, sx: .08, sy: .006, sz: .03, ao: 0 }); // une rame, dans la barque
+  const a = [.02, dy - .004, -.02], b = [.14, -.004, .27]; baton(k, a, b, .006, .006, BOIS[0], 4); F(k, G.box, BOIS[0], { x: .155, y: -.006, z: .305, sx: .08, sy: .006, sz: .03, ry: -Math.atan2(b[2] - a[2], b[0] - a[0]), ao: 0 }); // l’autre, dans l’eau
 }
 function culture(a, k) {
   const B = k.B, e = a.espece, st = a.stade, v = k.v, s0 = k.s ?? 1;
   if (e === 'champ') return champ(a, k);
-  if (e === 'puits') {
-    const kk = { ...k, s: s0 * [.8, .95, 1.1, 1.2][st] };
-    for (let i = 0; i < 9; i++) { const an = i / 9 * 6.28; F(kk, G.box, i % 2 ? '#b9b3a8' : '#a39d92', { x: Math.cos(an) * .17, y: .07, z: Math.sin(an) * .17, sx: .09, sy: .14, sz: .06, ry: -an, ao: .2 }); }
-    F(kk, cyl(.15, .15, 10), a.etats.ferme ? BOIS[1] : '#2c4a5e', { y: .1, sy: .02, ao: 0 });
-    for (const x of [-.18, .18]) F(kk, G.box, BOIS[2], { x, y: .3, sx: .03, sy: .46, sz: .03, ao: 0 });
-    F(kk, cyl(.015, .015, 5), BOIS[1], { y: .42, sy: .38, rz: Math.PI / 2, ao: 0 });
-    const toit = choix(B.maisons.toits, v); F(kk, G.prisme, toit[0], { y: .52, sx: .46, sy: .16, sz: .3, ao: .2 });
-    if (B.enneige) F(kk, G.prisme, '#ffffff', { y: .6, sx: .47, sy: .08, sz: .16, ao: 0 });
-    F(kk, cyl(.03, .025, 6), BOIS[2], { y: .3, sy: .06, ao: 0 });
-    return;
-  }
+  if (e === 'puits') return puits(a, k);
   if (e === 'feu') {
     const kk = { ...k, s: s0 * [.75, .9, 1.05, 1.2][st] };
     for (let i = 0; i < 7; i++) { const an = i / 7 * 6.28; F(kk, G.dode, PIERRES.pierre[i % 3], { x: Math.cos(an) * .2, y: .03, z: Math.sin(an) * .2, s: .05, bosse: .2, graine: i }); }
@@ -522,10 +594,8 @@ function culture(a, k) {
     return;
   }
   if (e === 'barque') {
-    const coque = choix([['#7f5a36', '#a3784a'], ['#5d7fa3', '#7ea0c4'], ['#b4503c', '#dc6a52']], v);
-    const une = kk => { F(kk, cyl(.11, .08, 6), coque[0], { y: .02, sx: .6, sy: .56, sz: .55, rz: Math.PI / 2, ao: .2 }); F(kk, G.box, a.etats.ferme ? '#98a1ab' : BOIS[0], { y: .07, sx: .44, sy: .012, sz: .14, ao: 0 }); F(kk, G.box, coque[1], { y: .085, sx: .5, sy: .012, sz: .018, ao: 0 }); baton(kk, [.05, .08, .05], [.3, .03, .16], .008, .008, BOIS[2], 4); };
-    une({ ...k, s: s0 * [.85, 1, 1.1, 1.2][st] });
-    if (st >= 2) une({ ...k, dx: (k.dx || 0) + .28 * s0, dz: (k.dz || 0) - .22 * s0, s: s0 * .7 });
+    uneBarque({ ...k, s: s0 * [.85, 1, 1.1, 1.2][st], ry: (v - .5) * 1.2 }, choix(COQUES, v), a.etats.ferme);
+    if (st >= 2) uneBarque({ ...k, dx: (k.dx || 0) + .3 * s0, dz: (k.dz || 0) - .24 * s0, s: s0 * .72, ry: (v - .5) * 1.2 + .5 }, choix(COQUES, (v * 3.1) % 1), a.etats.ferme); // redit : une deuxième barque
     return;
   }
 }
@@ -566,14 +636,27 @@ function meteo(a, k) {
 
 /* ───────── Le phare, les états, l’ensemble ───────── */
 
+// Le phare : une tour blanche qui s’effile sur son socle et ses rochers, trois bandes rouges, une porte et sa marche, de petites
+// fenêtres ; la galerie et son garde-corps, la lanterne vitrée et ses montants, un dôme rouge, sa boule et sa pointe. Le faisceau
+// tourne, la lanterne éclaire. De loin (k.leger), ni garde-corps ni montants.
 export function phare(k) {
-  for (const [x, z, r] of [[-.2, .15, .1], [.22, .12, .09], [.05, .25, .08]]) F(k, G.dode, PIERRES.pierre[1], { x, y: .04, z, s: r, bosse: .2, graine: x });
-  F(k, cyl(.11, .15, 10), '#fbfbf8', { y: .6, sy: 1.2, ao: .2 });
-  for (const y of [.35, .75]) F(k, cyl(.135 - y * .02, .14 - y * .02, 10), '#e04e4e', { y, sy: .14, ao: 0 });
-  F(k, G.box, '#7a5236', { y: .1, z: .14, sx: .08, sy: .18, sz: .02, ao: 0 });
-  F(k, cyl(.16, .16, 10), '#4a4a55', { y: 1.21, sy: .03, ao: 0 });
-  FL(k, cyl(.08, .08, 8), '#ffe9a3', { y: 1.31, sy: .16, ao: 0 });
-  F(k, cone(8), '#4a4a55', { y: 1.46, sx: .12, sy: .14, sz: .12, ao: 0 });
+  const blanc = '#fbfbf8', rouge = '#d9483f', sombre = '#3f4250', r = y => .152 - y * .045; // le rayon de la tour à la hauteur y
+  for (const [x, z, s, g] of [[-.2, .14, .1, 1], [.2, .13, .09, 2], [.04, .24, .075, 3], [-.14, -.19, .08, 4], [.18, -.15, .07, 5]]) F(k, G.dode, PIERRES.pierre[g % 3], { x, y: .035, z, s, sy: s * .75, bosse: .2, graine: g, ao: .3 }); // les rochers
+  F(k, cyl(.2, .22, 12), PIERRES.pierre[0], { y: .04, sy: .08, bosse: .04, graine: 7, ao: .3 }); // le socle
+  F(k, cyl(r(1.18), r(.08), 12), blanc, { y: .63, sy: 1.1, ao: .22 }); // la tour
+  for (const [y0, y1] of [[.26, .38], [.58, .7], [.9, 1.02]]) F(k, cyl(r(y1) + .004, r(y0) + .004, 12), rouge, { y: (y0 + y1) / 2, sy: y1 - y0, ao: 0 }); // les bandes
+  F(k, G.box, '#e9e3d6', { y: .17, z: r(.17) - .004, sx: .1, sy: .17, sz: .03, ao: 0 }); F(k, G.box, '#6d4a33', { y: .16, z: r(.16) + .007, sx: .07, sy: .14, sz: .014, ao: 0 }); F(k, G.box, '#bdb6aa', { y: .095, z: r(.09) + .05, sx: .12, sy: .03, sz: .09, ao: 0 }); // la porte, sa marche
+  for (const [y, an] of [[.48, .9], [.8, -.8], [1.1, 2.4]]) { const rr = r(y) + .004; F(k, G.box, '#39424f', { x: Math.sin(an) * rr, y, z: Math.cos(an) * rr, sx: .035, sy: .055, sz: .012, ry: an, ao: 0 }); } // les fenêtres, en spirale
+  F(k, cyl(.175, .165, 12), sombre, { y: 1.2, sy: .035, ao: 0 }); // la galerie
+  if (!k.leger) {
+    for (let i = 0; i < 12; i++) { const an = i / 12 * 6.28; baton(k, [Math.cos(an) * .165, 1.217, Math.sin(an) * .165], [Math.cos(an) * .165, 1.285, Math.sin(an) * .165], .005, .005, sombre, 3); } // le garde-corps
+    F(k, G.anneau, sombre, { y: 1.285, s: .165, rx: Math.PI / 2, ao: 0 });
+  }
+  F(k, cyl(.095, .1, 10), sombre, { y: 1.235, sy: .03, ao: 0 });
+  FL(k, cyl(.08, .08, 10), '#ffe9a3', { y: 1.31, sy: .14, ao: 0 }); // la lanterne, qui éclaire
+  if (!k.leger) for (let i = 0; i < 6; i++) { const an = i / 6 * 6.28 + .26; baton(k, [Math.cos(an) * .083, 1.245, Math.sin(an) * .083], [Math.cos(an) * .083, 1.375, Math.sin(an) * .083], .006, .006, sombre, 3); } // ses montants
+  F(k, cyl(.1, .095, 10), sombre, { y: 1.385, sy: .02, ao: 0 });
+  F(k, G.dome, rouge, { y: 1.39, sx: .1, sy: .09, sz: .1, ao: .15 }); F(k, G.sph, sombre, { y: 1.5, s: .022, ao: 0 }); baton(k, [0, 1.5, 0], [0, 1.58, 0], .004, .002, sombre, 3); // le dôme, la boule, la pointe
   if (k.grp) {
     const h = halo('#fff0b0', 1.1, .9); h.position.set(k.dx || 0, 1.31, k.dz || 0); k.grp.add(h);
     const faisceau = new THREE.Mesh(new THREE.ConeGeometry(.35, 2.4, 12, 1, true), new THREE.MeshBasicMaterial({ color: '#fff3c4', transparent: true, opacity: .16, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }));
@@ -720,7 +803,7 @@ export function modeleChose(a, B = B0, v = .5, o = {}) {
   if (!k.lum.vide()) grp.add(k.lum.maillage(MAT.lum, false));
   return { objet: grp, anims };
 }
-export function modelePhare(o = {}) { const grp = new THREE.Group(), anims = [], k = { b: new Bati(5), lum: new Bati(6), grp, anims, s: 1 }; phare(k); grp.add(k.b.maillage(), k.lum.maillage(MAT.lum, false)); return { objet: grp, anims }; }
+export function modelePhare(o = {}) { const grp = new THREE.Group(), anims = [], k = { b: new Bati(5), lum: new Bati(6), grp, anims, s: 1, leger: !!o.leger }; phare(k); grp.add(k.b.maillage(), k.lum.maillage(MAT.lum, false)); return { objet: grp, anims }; }
 export { nuageBati, F, G, cone, cyl, baton };
 
 /* ───────── Le petit décor du sol ───────── */
