@@ -3,11 +3,11 @@
 // La carte et les dépôts viennent de ile.js : l’île est recalculée à partir de ses dépôts.
 
 import * as THREE from './vendor/three.min.js?v=1';
-import { N, CLIMATS, eauDe, solVu, carte, deriver, etape } from './ile.js?v=9';
-import { biomeDe, BIOMES } from './biomes.js?v=2';
+import { N, CLIMATS, eauDe, solVu, carte, deriver, etape } from './ile.js?v=10';
+import { biomeDe, BIOMES } from './biomes.js?v=3';
 import { hash, melange, versHex, nuance } from './outils.js?v=1';
-import { Bati, MAT, modeleChose, modelePhare, decor, halo, nuageBati, F, G, cone, cyl, baton } from './modeles.js?v=12';
-import { vie } from './vie.js?v=5';
+import { Bati, MAT, modeleChose, modelePhare, decor, halo, nuageBati, F, G, cone, cyl, baton } from './modeles.js?v=13';
+import { vie } from './vie.js?v=6';
 
 const reduit = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 export const ECH_ARCH = .45; // la taille des îles dans l’archipel : la même pour toutes, pour que leurs tailles se comparent
@@ -61,24 +61,26 @@ function bruit(x, z, s = 0) { // un bruit de valeur, doux
 }
 // Le rivage : par endroits une falaise, où la terre reste haute jusqu’au bord puis tombe droit dans l’eau ; ailleurs une plage, qui
 // descend doucement jusqu’à l’eau avant le haut-fond. Les falaises viennent plutôt du côté de la colline ; le village, le phare et les
-// barques, au sud-est, gardent surtout leurs plages.
-export function relief(m) { // la hauteur du sol en (x, z), en tuiles de 0 à N
-  if (m._relief) return m._relief;
+// barques, au sud-est, gardent surtout leurs plages. Le paysage en règle la part (B.escarpe) : les tropiques ont surtout des plages,
+// la lande surtout des falaises.
+export function relief(m, B) { // la hauteur du sol en (x, z), en tuiles de 0 à N, dans ce paysage ; h.falaise(x, z) : 0, une plage ; 1, une falaise
+  const e = B?.escarpe || 0, garde = m._reliefs || (m._reliefs = new Map()); // une carte sert à tous les paysages : un relief par part de falaises
+  if (garde.has(e)) return garde.get(e);
   const terre = (i, j) => (i >= 0 && j >= 0 && i < N && j < N && m.land[i * N + j] ? 1 : 0);
   const coin = (i, j) => (i >= 0 && j >= 0 && i <= N && j <= N ? m.vh[i * (N + 1) + j] : 0);
   const loin = (i, j) => (i >= 0 && j >= 0 && i < N && j < N && m.dist ? m.dist[i * N + j] : 0); // la distance au rivage, en tuiles
   const bil = (f, x, y) => { const i = Math.floor(x), j = Math.floor(y), fx = x - i, fy = y - j; return f(i, j) * (1 - fx) * (1 - fy) + f(i + 1, j) * fx * (1 - fy) + f(i, j + 1) * (1 - fx) * fy + f(i + 1, j + 1) * fx * fy; };
-  const s = m.seed % 997;
-  m._falaise = (x, z) => lisse(.54, .66, bruit(x * .33, z * .33, s + 31) + .16 - .32 * lisse(N * .35, N * .75, (x + z) / 2)); // 0, une plage ; 1, une falaise
-  m._relief = (x, z) => {
-    const f = m._falaise(x, z), L = bil(terre, x - .5, z - .5) + (bruit(x * 1.3, z * 1.3, s) - .5) * .32 + (bruit(x * 3.3, z * 3.3, s + 41) - .5) * .2 * f; // une falaise : un bord plus découpé, qui efface les marches des tuiles
+  const s = m.seed % 997, falaise = (x, z) => lisse(.54, .66, bruit(x * .33, z * .33, s + 31) + .16 + e - .32 * lisse(N * .35, N * .75, (x + z) / 2));
+  const h = (x, z) => {
+    const f = falaise(x, z), L = bil(terre, x - .5, z - .5) + (bruit(x * 1.3, z * 1.3, s) - .5) * .32 + (bruit(x * 3.3, z * 3.3, s + 41) - .5) * .2 * f; // une falaise : un bord plus découpé, qui efface les marches des tuiles
     let S = Math.max(bil(coin, x, z) * YS, .14) + (bruit(x * 2.6, z * 2.6, s + 5) - .5) * .08;
     if (f > 0) { const haut = .44 + (bruit(x * 1.9, z * 1.9, s + 23) - .5) * .14, pres = m.dist ? lisse(2.3, 1, bil(loin, x - .5, z - .5)) : 1; S += Math.max(0, haut - S) * pres * f; } // le haut de la falaise, près du bord
     const plage = L > .5 ? lerp(NIV * .5, S, lisse(.5, .95, L)) : lerp(-.9, NIV * .5, lisse(.06, .5, L)); // douce au-dessus de l’eau, puis le haut-fond
     const abrupt = lerp(-.9, S, lisse(.46, .55, L)); // droite dans l’eau
     return lerp(plage, abrupt, f); // au large, le sol rejoint le fond marin, à la même hauteur
   };
-  return m._relief;
+  h.falaise = falaise; garde.set(e, h);
+  return h;
 }
 const _c = new THREE.Color();
 const RAIDE = .6, STRATE = .085, SABLE = [.035, .075, .2, .27]; // une paroi en dessous de cette pente ; l’épaisseur d’une strate ; les hauteurs où finissent l’écume, le sable mouillé, le sable sec, puis la lisière d’herbe
@@ -124,7 +126,7 @@ function tranche(poly, y0, dessus) { // le polygone, gardé au-dessus (ou au-des
 function sol3d(bati, m, B, fond, R, occ = null, fin = false) { // les triangles du sol, colorés un par un ; fond(x, z) : la couleur du fond marin à cet endroit ; occ(x, z) : l’ombre de contact
   // fin : l’île vue de près, où les bandes du sable et les strates des falaises sont découpées net ; de loin, chaque triangle garde une couleur
   // renvoie un second maillage : la pente sous l’eau, éclairée sans facettes, qui se fond dans le fond marin
-  const h = relief(m), n = Math.round((N + 2 * MARGE) * R), pas = 1 / R, x0 = -MARGE, H = [], s = m.seed % 991, dessous = new Bati(2);
+  const h = relief(m, B), n = Math.round((N + 2 * MARGE) * R), pas = 1 / R, x0 = -MARGE, H = [], s = m.seed % 991, dessous = new Bati(2);
   for (let i = 0; i <= n; i++) for (let j = 0; j <= n; j++) H.push(h(x0 + i * pas, x0 + j * pas));
   const P = (i, j) => [x0 + i * pas - N / 2, H[i * (n + 1) + j], x0 + j * pas - N / 2], pos = [], cols = [], posD = [], colsD = [];
   const poser = (a, b, c, r, sous) => {
@@ -172,7 +174,7 @@ function sol3d(bati, m, B, fond, R, occ = null, fin = false) { // les triangles 
 const GROS = new Set(['buisson', 'buissonfleuri', 'rocher']); // le décor qui ne tient pas sous une chose : sur sa case, une touffe à la place
 const occupees = d => { const o = new Set(d.assets.map(a => a.tile[0] * N + a.tile[1])); if (d.phareTile) o.add(d.phareTile[0] * N + d.phareTile[1]); return o; };
 function decor3d(bati, m, B, part = 1, occ = null) {
-  const h = relief(m);
+  const h = relief(m, B);
   for (const [i, j, dx, dy, r1, r2] of m.decor) {
     if (r2 > B.densite * part) continue;
     const x = i + dx, z = j + dy, y = h(x, z);
@@ -184,13 +186,13 @@ function decor3d(bati, m, B, part = 1, occ = null) {
   if (part >= .8) rivage(bati, m, B, part, occ); // de loin, les éboulis et la laisse de mer ne se verraient pas
 }
 function rivage(bati, m, B, part, occ) { // au pied des falaises, des éboulis à demi dans l’eau ; sur les plages, la laisse de mer
-  const h = relief(m), s = m.seed % 983, k = { b: bati, s: 1 }, tons = [...(B.falaise || BIOMES.prairie.falaise), B.sol.roche[1]];
+  const h = relief(m, B), s = m.seed % 983, k = { b: bati, s: 1 }, tons = [...(B.falaise || BIOMES.prairie.falaise), B.sol.roche[1]];
   for (const [i, j] of m.rive) {
     if (occ?.has(i * N + j)) continue; // une barque est là
     for (const [a, b] of [[i - 1, j], [i + 1, j], [i, j - 1], [i, j + 1]]) {
       if (a < 0 || b < 0 || a >= N || b >= N || !m.land[a * N + b]) continue;
       const r = hash(`${s}:r:${i}:${j}:${a}:${b}`), at = u => [i + .5 + (a - i) * u, j + .5 + (b - j) * u], ux = b - j, uz = -(a - i); // (ux, uz) : le long de la côte
-      if (m._falaise(...at(.5)) > .55) { // une falaise : ses éboulis, là où elle entre dans l’eau
+      if (h.falaise(...at(.5)) > .55) { // une falaise : ses éboulis, là où elle entre dans l’eau
         let u = .9; while (u > .25 && h(...at(u)) > -.03) u -= .05;
         const [px, pz] = at(u + .03);
         for (let q = 0; q < 1 + Math.floor(r * 3.4); q++) {
@@ -206,7 +208,7 @@ function rivage(bati, m, B, part, occ) { // au pied des falaises, des éboulis �
     }
   }
 }
-const posTuile = (m, [i, j], barque) => { const y = barque ? 0 : relief(m)(i + .5, j + .5); return [i + .5 - N / 2, y, j + .5 - N / 2]; };
+const posTuile = (h, [i, j], barque) => { const y = barque ? 0 : h(i + .5, j + .5); return [i + .5 - N / 2, y, j + .5 - N / 2]; }; // h : le relief de l’île, dans son paysage
 
 /* ───────── La mer, le fond, le ciel, les nuages ───────── */
 
@@ -298,25 +300,25 @@ function soleil(scene, climat, portee, ombre = true) { // ombre : non pour l’a
   return sun;
 }
 function ileStatique(d, part = .5, R = 2, fond = null) { // une île entière en un seul maillage (et un pour ce qui éclaire), pour l’archipel et les aperçus
-  const B = biomeDe(d.ile.biome), eau = eauDe(d.climat, B), b = new Bati(d.ile.seed % 997 + 1), lum = new Bati(3);
+  const B = biomeDe(d.ile.biome), h = relief(d.m, B), eau = eauDe(d.climat, B), b = new Bati(d.ile.seed % 997 + 1), lum = new Bati(3);
   const dessous = sol3d(b, d.m, B, fond || fondUni(teintes(d.climat, B)), R, occlusionDe(d)); decor3d(b, d.m, B, part, occupees(d));
-  for (const a of d.assets) { const [x, y, z] = posTuile(d.m, a.tile, a.espece === 'barque'); modeleChose(a, B, a.v ?? hash(`${a.key}:${d.ile.seed}`), { bati: b, lum, dx: x, dy: y, dz: z, s: ECH, eauHex: eau, leger: true }); } // v : la variante reçue avec la forme ; leger : vue de loin
+  for (const a of d.assets) { const [x, y, z] = posTuile(h, a.tile, a.espece === 'barque'); modeleChose(a, B, a.v ?? hash(`${a.key}:${d.ile.seed}`), { bati: b, lum, dx: x, dy: y, dz: z, s: ECH, eauHex: eau, leger: true }); } // v : la variante reçue avec la forme ; leger : vue de loin
   const grp = new THREE.Group(), m = b.maillage(); grp.add(m, dessous);
   if (!lum.vide()) grp.add(lum.maillage(MAT.lum, false));
-  if (d.phareTile) { const p = modelePhare({ leger: true }), [x, y, z] = posTuile(d.m, d.phareTile); p.objet.position.set(x, y, z); p.objet.scale.setScalar(ECH); grp.add(p.objet); } // de loin, sans le fin
+  if (d.phareTile) { const p = modelePhare({ leger: true }), [x, y, z] = posTuile(h, d.phareTile); p.objet.position.set(x, y, z); p.objet.scale.setScalar(ECH); grp.add(p.objet); } // de loin, sans le fin
   return grp;
 }
 function ileRiche(d, fond) { // l’île qu’on approche dans l’archipel : construite comme dans sa vue, décor entier, choses animées
-  const B = biomeDe(d.ile.biome), eau = eauDe(d.climat, B), b = new Bati(d.ile.seed % 997 + 1), anims = [];
+  const B = biomeDe(d.ile.biome), h = relief(d.m, B), eau = eauDe(d.climat, B), b = new Bati(d.ile.seed % 997 + 1), anims = [];
   const dessous = sol3d(b, d.m, B, fond, 3, occlusionDe(d), true); decor3d(b, d.m, B, 1, occupees(d));
   const grp = new THREE.Group(); grp.add(b.maillage(), dessous);
-  const v = vie(d, B, relief(d.m)); grp.add(v.grp); anims.push(...v.anims); // la vie qui ne dit rien
+  const v = vie(d, B, h); grp.add(v.grp); anims.push(...v.anims); // la vie qui ne dit rien
   for (const a of d.assets) {
-    const r = modeleChose(a, B, a.v ?? hash(`${a.key}:${d.ile.seed}`), { eauHex: eau }), [x, y, z] = posTuile(d.m, a.tile, a.espece === 'barque');
+    const r = modeleChose(a, B, a.v ?? hash(`${a.key}:${d.ile.seed}`), { eauHex: eau }), [x, y, z] = posTuile(h, a.tile, a.espece === 'barque');
     r.objet.position.set(x, y, z); r.objet.scale.setScalar(ECH); grp.add(r.objet); anims.push(...r.anims);
     if (a.espece === 'barque') { const o = r.objet; anims.push(T => { o.position.y = Math.sin(T * 1.3 + x) * .02; o.rotation.z = Math.sin(T * 1.1 + z) * .04; }); }
   }
-  if (d.phareTile) { const p = modelePhare(), [x, y, z] = posTuile(d.m, d.phareTile); p.objet.position.set(x, y, z); p.objet.scale.setScalar(ECH); grp.add(p.objet); anims.push(...p.anims); }
+  if (d.phareTile) { const p = modelePhare(), [x, y, z] = posTuile(h, d.phareTile); p.objet.position.set(x, y, z); p.objet.scale.setScalar(ECH); grp.add(p.objet); anims.push(...p.anims); }
   return { grp, anims };
 }
 function etiquette(texte) {
@@ -393,17 +395,17 @@ export class Vue3D {
     s.background = fondCiel(d.climat); s.fog = new THREE.Fog(T.brume, D * (d.climat === 'ED' ? 1.1 : 1.5), D * (d.climat === 'ED' ? 3.6 : 4.8));
     soleil(s, d.climat, 9);
     s.add(fondMarin(T)); this.eau = mer(T); s.add(this.eau);
-    const b = new Bati(d.ile.seed % 997 + 1), dessous = sol3d(b, d.m, B, fondIle(T), 3, occlusionDe(d), true); decor3d(b, d.m, B, 1, occupees(d));
+    const b = new Bati(d.ile.seed % 997 + 1), dessous = sol3d(b, d.m, B, fondIle(T), 3, occlusionDe(d), true), h = relief(d.m, B); decor3d(b, d.m, B, 1, occupees(d));
     const terrain = b.maillage(); terrain.castShadow = true; s.add(terrain, dessous);
-    const v = vie(d, B, relief(d.m)); s.add(v.grp); this.anims.push(...v.anims); // la vie qui ne dit rien
+    const v = vie(d, B, h); s.add(v.grp); this.anims.push(...v.anims); // la vie qui ne dit rien
     for (const a of d.assets) {
-      const r = modeleChose(a, B, hash(`${a.key}:${d.ile.seed}`), { eauHex: eau }), [x, y, z] = posTuile(d.m, a.tile, a.espece === 'barque');
+      const r = modeleChose(a, B, hash(`${a.key}:${d.ile.seed}`), { eauHex: eau }), [x, y, z] = posTuile(h, a.tile, a.espece === 'barque');
       r.objet.position.set(x, y, z); r.objet.rotation.y = (hash(`rot:${a.key}:${d.ile.seed}`) - .5) * .8; r.objet.userData.ech = ECH;
       r.objet.traverse(o => { o.userData.key = a.key; });
       s.add(r.objet); this.objets.set(a.key, r.objet); this.anims.push(...r.anims);
       if (a.espece === 'barque') { const o = r.objet; this.anims.push(T => { o.position.y = Math.sin(T * 1.3 + x) * .02; o.rotation.z = Math.sin(T * 1.1 + z) * .04; }); }
     }
-    if (d.phareTile) { const p = modelePhare(), [x, y, z] = posTuile(d.m, d.phareTile); p.objet.position.set(x, y, z); p.objet.userData.ech = ECH; p.objet.traverse(o => { o.userData.key = 'phare'; }); s.add(p.objet); this.objets.set('phare', p.objet); this.anims.push(...p.anims); }
+    if (d.phareTile) { const p = modelePhare(), [x, y, z] = posTuile(h, d.phareTile); p.objet.position.set(x, y, z); p.objet.userData.ech = ECH; p.objet.traverse(o => { o.userData.key = 'phare'; }); s.add(p.objet); this.objets.set('phare', p.objet); this.anims.push(...p.anims); }
     const nu = nuages(4, d.climat === 'ED' || d.climat === 'AD', 12, d.ile.seed % 7); s.add(nu.grp); this.anims.push(nu.anim);
     if (cl.oiseaux) { const oi = oiseaux(3, 6.5); s.add(oi.grp); this.anims.push(oi.anim); }
     const sc = scintillements(16, 12); s.add(sc.grp); this.anims.push(sc.anim);
@@ -487,10 +489,10 @@ export class Vue3D {
     for (let q = 0; q <= MOTS.flat().length; q++) {
       const m = etape(seed, 12 + 3 * q), b = new Bati(seed % 997 + 1), dessous = sol3d(b, m, B, this.fondArch, 3); decor3d(b, m, B, .8);
       const g = new THREE.Group(); g.add(b.maillage(), dessous); g.visible = !q; ile.add(g);
-      etapes.push({ m, g, h: relief(m) });
+      etapes.push({ m, g, h: relief(m, B) });
     }
     const d = deriver(demo.ile), choses = d.assets.map(a => { // la chose de chaque dépôt ; elle paraît quand son mot touche l’île
-      const k = demo.ile.depots.findIndex(x => x.id === a.ne), r = modeleChose(a, B, hash(`${a.key}:${seed}`), { eauHex: eau }), o = r.objet, [x, , z] = posTuile(d.m, a.tile);
+      const k = demo.ile.depots.findIndex(x => x.id === a.ne), r = modeleChose(a, B, hash(`${a.key}:${seed}`), { eauHex: eau }), o = r.objet, [x, , z] = posTuile(relief(d.m, B), a.tile);
       o.position.set(x, 0, z); o.rotation.y = (hash(`rot:${a.key}:${seed}`) - .5) * .8; o.visible = false; ile.add(o); this.anims.push(...r.anims);
       const lanternes = []; o.traverse(c => { if (c.userData.lanterne) lanternes.push({ o: c, s: c.scale.x, halos: [] }); });
       for (const l of lanternes) l.o.traverse(c => { if (c.isSprite) l.halos.push(c); });

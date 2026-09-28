@@ -3,7 +3,7 @@
 // Unité : une tuile = 1. Chaque chose est construite à son pied, en (0, 0, 0).
 
 import * as THREE from './vendor/three.min.js?v=1';
-import { BIOMES } from './biomes.js?v=2';
+import { BIOMES } from './biomes.js?v=3';
 import { nuance } from './outils.js?v=1';
 
 const B0 = BIOMES.prairie;
