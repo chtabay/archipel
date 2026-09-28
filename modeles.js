@@ -442,10 +442,10 @@ function boite(k, o) {
   if (sty === 'bois' && !kk.leger) buches(kk, BOIS[1]);
   if (oo.lit && k.anims) { const h1 = halo('#ffc86a', .5, .8); h1.position.set(W * .24 * s + (k.dx || 0), (.25 + bas) * s + (k.dy || 0), (D / 2 + .08) * s + (k.dz || 0)); k.grp.add(h1); if (!paill) fumee(kk, W * .27, H + .48, -D * .2); }
 }
-function fumee(k, x, y, z) {
+function fumee(k, x, y, z, { couleur = '#ffffff', n = 3, haut = .5, vitesse = .35, opacite = .55, taille = 1, forme = G.ico0 } = {}) { // des bouffées qui montent, grossissent et s’effacent
   if (!k.anims) return;
-  const s = k.s ?? 1, puffs = [0, 1, 2].map(() => { const p = new THREE.Mesh(G.ico0, new THREE.MeshStandardMaterial({ color: '#ffffff', transparent: true, opacity: .5, flatShading: true, depthWrite: false })); k.grp.add(p); return p; });
-  k.anims.push(T => puffs.forEach((p, i) => { const t = (T * .35 + i / 3) % 1; p.position.set(x * s + (k.dx || 0) + t * .12, y * s + (k.dy || 0) + t * .5, z * s + (k.dz || 0)); p.scale.setScalar((.04 + t * .07) * s); p.material.opacity = (1 - t) * .55; }));
+  const s = k.s ?? 1, puffs = Array.from({ length: n }, () => { const p = new THREE.Mesh(forme, new THREE.MeshStandardMaterial({ color: couleur, transparent: true, opacity: opacite, flatShading: true, depthWrite: false })); k.grp.add(p); return p; });
+  k.anims.push(T => puffs.forEach((p, i) => { const t = (T * vitesse + i / n) % 1; p.position.set(x * s + (k.dx || 0) + t * .12, y * s + (k.dy || 0) + t * haut, z * s + (k.dz || 0)); p.scale.setScalar((.04 + t * .07) * s * taille); p.material.opacity = (1 - t) * opacite; }));
 }
 function lanterne(k, x, z) {
   F(k, cyl(.012, .015, 5), '#3f3834', { x, y: .22, z, sy: .44, ao: 0 });
@@ -576,24 +576,63 @@ function uneBarque(k, coque, ferme) {
   baton(k, [-.24, dy - .02, -.035], [.16, dy - .006, -.022], .006, .006, BOIS[0], 4); F(k, G.box, BOIS[0], { x: -.27, y: dy - .022, z: -.036, sx: .08, sy: .006, sz: .03, ao: 0 }); // une rame, dans la barque
   const a = [.02, dy - .004, -.02], b = [.14, -.004, .27]; baton(k, a, b, .006, .006, BOIS[0], 4); F(k, G.box, BOIS[0], { x: .155, y: -.006, z: .305, sx: .08, sy: .006, sz: .03, ry: -Math.atan2(b[2] - a[2], b[0] - a[0]), ao: 0 }); // l’autre, dans l’eau
 }
+// Le feu de camp : un cercle de pierres, un lit de cendres et de braises, des bûches dressées en cône, noircies au bout ; des langues
+// de flamme qui vacillent chacune à son rythme, des étincelles qui montent, un filet de fumée, une lueur chaude sur le sol. Redit : un
+// banc de rondin, puis un second, et un tas de bois. Fermé : le feu est éteint, les bûches tombées, des braises, un reste de fumée.
+// De loin, les flammes restent posées.
+const FLAMMES = [[0, 0, .1, .3, '#ff5a1f'], [.05, .025, .07, .23, '#ff7d2e'], [-.045, -.02, .07, .22, '#ff7d2e'], [.015, -.04, .06, .19, '#ffa53c'], [-.012, .035, .055, .17, '#ffc75a'], [0, 0, .04, .12, '#fff1b8']]; // x, z, rayon, hauteur, couleur : du rouge dehors au blanc au cœur
+const MAT_FEU = {}, matFeu = c => MAT_FEU[c] || (MAT_FEU[c] = Object.assign(new THREE.MeshBasicMaterial({ color: c, toneMapped: false }), { _partage: true }));
+const G_FLAMME = Object.assign(new THREE.LatheGeometry([[0, 0], [.72, .07], [1, .24], [.86, .44], [.5, .7], [0, 1]].map(([x, y]) => new THREE.Vector2(x, y)), 6), { _partage: true }); // une goutte à l’envers, ronde en bas, pointue en haut ; la base en 0, elle grandit vers le haut
+function rondin(k, d, an) { // un banc de rondin, couché à côté du feu, ses deux bouts clairs
+  const c = Math.cos(an), sn = Math.sin(an), l = .16, p = [c * d + sn * l, .038, sn * d - c * l], q = [c * d - sn * l, .038, sn * d + c * l];
+  baton(k, p, q, .038, .038, BOIS[1], 7);
+  for (const [e, f] of [[p, 1], [q, -1]]) baton(k, e, [e[0] + sn * f * .007, e[1], e[2] - c * f * .007], .032, .032, '#dcc095', 7);
+}
+function tasDeBois(k, d, an) { // des bûches rangées en tas, leurs bouts clairs
+  const c = Math.cos(an), sn = Math.sin(an), l = .085;
+  [[-.042, .021], [0, .021], [.042, .021], [-.021, .056], [.021, .056], [0, .091]].forEach(([u, h], i) => {
+    const x = c * (d + u), z = sn * (d + u), p = [x + sn * l, h, z - c * l], q = [x - sn * l, h, z + c * l];
+    baton(k, p, q, .02, .02, BOIS[i % 3], 6); for (const [e, f] of [[p, 1], [q, -1]]) baton(k, e, [e[0] + sn * f * .006, e[1], e[2] - c * f * .006], .016, .016, '#dcc095', 6);
+  });
+}
+function feu(a, k) {
+  const st = a.stade, v = k.v, kk = { ...k, s: (k.s ?? 1) * [.8, .92, 1.02, 1.1][st] }, s = kk.s, eteint = a.etats.ferme, r = rngL(Math.floor(v * 1e5) + 17);
+  for (let i = 0; i < 9; i++) { // le cercle de pierres
+    const an = i / 9 * 6.283 + v * 3, t = .045 + r() * .025, d = .215 + r() * .02;
+    F(kk, G.dode, PIERRES.pierre[i % 3], { x: Math.cos(an) * d, y: t * .45, z: Math.sin(an) * d, s: t, sy: t * (.65 + r() * .3), ry: r() * 6, bosse: .22, graine: i + v * 50, ao: .45 });
+  }
+  F(kk, cyl(.18, .19, 12), '#8d8781', { y: .006, sy: .012, ao: 0, varie: .04 }); // les cendres
+  F(kk, cyl(.11, .13, 10), '#40362f', { y: .013, sy: .01, ao: 0 }); // le charbon, au milieu
+  const braises = eteint ? ['#b8421c', '#8f3417', '#d8602a'] : ['#ff6a24', '#ffa040', '#e2451c'];
+  for (let i = 0; i < 7; i++) { const an = r() * 6.28, d = r() * .1; FL(kk, G.ico0, braises[i % 3], { x: Math.cos(an) * d, y: .02, z: Math.sin(an) * d, s: .018 + r() * .012, sy: .012, ao: 0 }); }
+  if (eteint) for (const [a0, a1, y] of [[.3, 3.4, .03], [1.9, 5.1, .045], [4.2, .9, .035]]) baton(kk, [Math.cos(a0) * .14, y, Math.sin(a0) * .14], [Math.cos(a1) * .12, y + .01, Math.sin(a1) * .12], .022, .02, '#3a2e27', 5); // les bûches tombées
+  else for (let i = 0; i < 5; i++) { // des bûches dressées en cône, noircies au bout
+    const an = i / 5 * 6.283 + v * 2, pied = [Math.cos(an) * .15, .015, Math.sin(an) * .15], tete = [Math.cos(an) * .025, .2, Math.sin(an) * .025], mi = pied.map((x, j) => x + (tete[j] - x) * .62);
+    baton(kk, pied, mi, .02, .017, BOIS[(i + 1) % 3], 5); baton(kk, mi, tete, .017, .012, '#2f2622', 5);
+  }
+  if (st >= 2) rondin(kk, .42, v * 6.283 + 2.2); // redit : un banc de rondin
+  if (st >= 3) { rondin(kk, .42, v * 6.283 + 2.2 + Math.PI); tasDeBois(kk, .4, v * 6.283 + 2.2 + Math.PI / 2); } // puis un second, et un tas de bois
+  if (!k.grp) { if (!eteint) for (const [x, z, rr, h, c] of FLAMMES.slice(0, 3)) FL(kk, G_FLAMME, c, { x, y: .02, z, sx: rr, sy: h, sz: rr, ao: 0 }); return; } // de loin : les flammes posées
+  if (eteint) return fumee(kk, 0, .06, 0, { couleur: '#dcd8d4', n: 2, haut: .6, vitesse: .16, opacite: .32, taille: .8, forme: G.ico1 }); // un reste de fumée
+  const fl = new THREE.Group(); fl.position.set(k.dx || 0, (k.dy || 0) + .02 * s, k.dz || 0); fl.scale.setScalar(s); k.grp.add(fl);
+  const langues = FLAMMES.map(([x, z, rr, h, c], i) => { const m = new THREE.Mesh(G_FLAMME, matFeu(c)); m.position.set(x, 0, z); m.scale.set(rr, h, rr); fl.add(m); return { m, rr, h, ph: i * 1.9 + v * 7 }; });
+  const etincelles = Array.from({ length: 6 }, (_, i) => ({ ph: i / 6 + r() * .1, an: r() * 6.28, v: .5 + r() * .4 })), pts = new Float32Array(18), geo = new THREE.BufferGeometry(); // des étincelles, en un seul nuage de points
+  geo.setAttribute('position', new THREE.BufferAttribute(pts, 3)); const nuee = new THREE.Points(geo, new THREE.PointsMaterial({ color: '#ffb347', size: .028, transparent: true, depthWrite: false, toneMapped: false })); nuee.frustumCulled = false; fl.add(nuee);
+  const sol = new THREE.Mesh(new THREE.CircleGeometry(1, 24).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: texGlow(), color: '#ff8a3c', transparent: true, opacity: .3, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false }));
+  sol.position.y = .004; sol.scale.setScalar(.62); fl.add(sol); // la lueur sur le sol
+  const h = halo('#ff9a3c', .7, .5); h.position.y = .2; fl.add(h);
+  fumee(kk, 0, .42, 0, { couleur: '#e6e2de', n: 4, haut: .8, vitesse: .22, opacite: .38, forme: G.ico1 }); // une fumée claire, qui monte et se perd
+  k.anims.push(T => {
+    for (const l of langues) { const t = T + l.ph, f = 1 + .16 * Math.sin(t * 9.3) + .09 * Math.sin(t * 15.1 + 1) + .05 * Math.sin(t * 23.7 + 2); l.m.scale.set(l.rr * (1 - .08 * Math.sin(t * 11)), l.h * f, l.rr * (1 + .06 * Math.sin(t * 7.3))); l.m.rotation.set(.12 * Math.sin(t * 3.3), t * .8, .12 * Math.sin(t * 2.9 + 1)); }
+    etincelles.forEach((e, i) => { const u = (T * e.v + e.ph) % 1; pts.set([Math.cos(e.an + u * 2) * (.03 + u * .1), u < .85 ? .12 + u * .75 : -9, Math.sin(e.an + u * 2) * (.03 + u * .1)], i * 3); }); geo.attributes.position.needsUpdate = true; // elles montent en tournant, et s’éteignent en haut
+    const p = .85 + .1 * Math.sin(T * 7.1) + .05 * Math.sin(T * 12.9); h.material.opacity = .38 * p; sol.material.opacity = .24 * p;
+  });
+}
 function culture(a, k) {
   const B = k.B, e = a.espece, st = a.stade, v = k.v, s0 = k.s ?? 1;
   if (e === 'champ') return champ(a, k);
   if (e === 'puits') return puits(a, k);
-  if (e === 'feu') {
-    const kk = { ...k, s: s0 * [.75, .9, 1.05, 1.2][st] };
-    for (let i = 0; i < 7; i++) { const an = i / 7 * 6.28; F(kk, G.dode, PIERRES.pierre[i % 3], { x: Math.cos(an) * .2, y: .03, z: Math.sin(an) * .2, s: .05, bosse: .2, graine: i }); }
-    baton(kk, [-.14, .03, -.05], [.14, .06, .05], .025, .025, BOIS[2], 5); baton(kk, [-.12, .06, .08], [.13, .03, -.08], .025, .025, BOIS[1], 5);
-    if (a.etats.ferme) { for (const [x, z] of [[-.04, 0], [.04, .03], [0, -.04]]) FL(kk, G.ico0, '#e07a3a', { x, y: .04, z, s: .025, ao: 0 }); return; }
-    if (k.grp) {
-      const fl = new Bati(5), kf = { b: fl, s: 1 };
-      F(kf, cone(6), '#ff8e3c', { y: .15, sx: .09, sy: .3, sz: .09, ao: 0 }); F(kf, cone(5), '#ffd166', { y: .11, sx: .05, sy: .18, sz: .05, ry: .4, ao: 0 });
-      const m = fl.maillage(MAT.lum, false), s = kk.s; m.scale.setScalar(s); m.position.set(k.dx || 0, (k.dy || 0) + .02 * s, k.dz || 0); k.grp.add(m);
-      const h = halo('#ff9a3c', .9 * s, .8); h.position.set(k.dx || 0, (k.dy || 0) + .2 * s, k.dz || 0); k.grp.add(h);
-      k.anims?.push(T => { const f = 1 + .12 * Math.sin(T * 9) + .07 * Math.sin(T * 13.7); m.scale.set(s, s * f, s); h.material.opacity = .65 + .2 * Math.sin(T * 7); });
-    }
-    return;
-  }
+  if (e === 'feu') return feu(a, k);
   if (e === 'barque') {
     uneBarque({ ...k, s: s0 * [.85, 1, 1.1, 1.2][st], ry: (v - .5) * 1.2 }, choix(COQUES, v), a.etats.ferme);
     if (st >= 2) uneBarque({ ...k, dx: (k.dx || 0) + .3 * s0, dz: (k.dz || 0) - .24 * s0, s: s0 * .72, ry: (v - .5) * 1.2 + .5 }, choix(COQUES, (v * 3.1) % 1), a.etats.ferme); // redit : une deuxième barque
