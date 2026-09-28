@@ -172,9 +172,73 @@ const stockee = (p, cle = 'ile') => p.evaluate(k => JSON.parse(localStorage.getI
     verifier(/Rien ne quitte ce téléphone/.test(await lire(p, '#app .hint')) && !(await p.$('.actions .quiet:has-text("la retirer de l’archipel")')), 'et l’île ne se dit plus dans l’archipel');
     verifier(!calme(e).length && !x.length, `aucune erreur, hors le refus attendu${calme(e).length ? ' : ' + calme(e).join(' | ') : ''}`);
     await c.close(); }
+
+  // 11. après un dépôt, l’île propose de rejoindre l’archipel : ce qui partirait, et un seul geste ; rien sans lui
+  { const c = await contexte(b), p = await c.newPage(), e = [], x = [], a = c.archipel; surveiller(p, e, x);
+    await p.goto(BASE); await p.evaluate(sansIntro); await p.reload(); await p.waitForTimeout(1000);
+    await cocherPuisPoser(p, 'On m’a fait du mal');
+    const carte = await p.evaluate(() => ({ texte: document.querySelector('.proposer p')?.textContent || '', avant: !!document.querySelector('.proposer + nav.actions'), action: document.querySelector('#app .actions .btn')?.textContent, lien: !!document.querySelector('#mettre-ici'), garde: JSON.parse(localStorage.getItem('archipel:ile')).proposer }));
+    verifier(/^Ton île peut rejoindre l’archipel\. Les autres y verraient une île avec .+, dans son paysage, sans tes mots ni ton nom\. Tu pourras l’en retirer\.$/.test(carte.texte) && carte.avant && carte.action === 'Déposer autre chose' && !carte.lien && carte.garde === true, `après un dépôt, sous l’île, avant les actions : « ${carte.texte.slice(0, 96)}… »`);
+    verifier(!appels(a).length, 'la proposition seule n’envoie rien, et ne lit rien');
+    await p.screenshot({ path: path.join(OUT, '11-proposition.png') });
+    await p.reload(); await p.waitForTimeout(1200);
+    verifier(!!(await p.$('.proposer')) && !appels(a).length, 'rechargée, elle attend toujours une réponse');
+    await p.click('.proposer .btn:has-text("La mettre dans l’archipel")');
+    await attendre(p, () => p.evaluate(() => /^Elle est dans l’archipel\./.test(document.querySelector('.proposer p')?.textContent || '')), 10000);
+    const envoi = appels(a, 'archipel_poser')[0], garde = await stockee(p);
+    const vue = await p.evaluate(() => ({ hint: document.querySelector('#app .hint').textContent, retirer: [...document.querySelectorAll('.actions .quiet')].some(q => q.textContent === 'la retirer de l’archipel'), focus: document.activeElement?.textContent }));
+    verifier(a.etat.iles.length === 1 && envoi?.c.p_ile === null && formeValide(envoi.c.p_forme) && garde.archipel?.id === a.etat.iles[0].ile && garde.proposer === undefined, 'un geste : elle part, sa forme seulement, et le téléphone garde sa place');
+    verifier(/Sa forme est dans l’archipel/.test(vue.hint) && vue.retirer && vue.focus === 'la voir dans l’archipel', 'la vue de l’île le dit aussitôt, propose de la retirer, et de la voir là-bas');
+    await p.screenshot({ path: path.join(OUT, '11-mise.png') });
+    await p.click('.proposer .quiet:has-text("la voir dans l’archipel")');
+    const vue3 = await attendre(p, () => p.evaluate(() => /parmi les autres/.test(document.querySelector('#arch-caption')?.textContent || '') && window.archipel.vue.focus?.ile === window.archipel.ile), 10000);
+    verifier(vue3 && !(await p.$('#mettre-ile')), 'la voir dans l’archipel : on s’approche d’elle, parmi les autres');
+    await p.click('[data-onglet="deposer"]'); await p.waitForTimeout(300);
+    await cocherPuisPoser(p, 'J’ai fait quelque chose que je regrette');
+    await attendre(p, () => appels(a, 'archipel_poser').length === 2);
+    verifier(!(await p.$('.proposer')) && appels(a, 'archipel_poser')[1]?.c.p_ile === a.etat.iles[0].ile, 'dans l’archipel, le dépôt suivant la fait grandir là-bas, sans rien reproposer');
+    verifier(!e.length && !x.length, `aucune erreur, aucune requête extérieure${e.length ? ' : ' + e.slice(0, 4).join(' | ') : ''}`);
+    await c.close(); }
+
+  // 12. « pas maintenant » : gardé pour cette île ; un lien discret reste, et une île retirée ne se repropose pas
+  { const c = await contexte(b), p = await c.newPage(), e = [], x = [], a = c.archipel; surveiller(p, e, x);
+    await p.goto(BASE); await p.evaluate(sansIntro); await p.reload(); await p.waitForTimeout(1000);
+    await cocherPuisPoser(p, 'On m’a fait du mal');
+    await p.click('.proposer .quiet:has-text("pas maintenant")'); await p.waitForTimeout(300);
+    const non = await p.evaluate(() => ({ carte: !!document.querySelector('.proposer'), lien: document.querySelector('.actions .btn + #mettre-ici')?.textContent, focus: document.activeElement?.textContent, garde: JSON.parse(localStorage.getItem('archipel:ile')).proposer }));
+    verifier(!non.carte && non.lien === 'la mettre dans l’archipel' && non.garde === false && non.focus === 'Déposer autre chose' && !appels(a).length, '« pas maintenant » : la carte s’en va, rien ne part, un lien discret reste près de l’action principale');
+    await p.click('[data-onglet="deposer"]'); await p.waitForTimeout(300);
+    await cocherPuisPoser(p, 'J’ai fait quelque chose que je regrette');
+    await p.reload(); await p.waitForTimeout(1200);
+    verifier(!(await p.$('.proposer')) && !!(await p.$('#mettre-ici')) && !appels(a).length, 'la proposition ne revient pas pour cette île, même après un autre dépôt');
+    await p.click('#mettre-ici'); await p.waitForSelector('.sheet'); await p.click('.sheet .gesture:has-text("Y mettre ton île")'); await p.waitForSelector('.sheet', { state: 'detached', timeout: 10000 }); await p.waitForTimeout(300);
+    const posee = await p.evaluate(() => ({ hint: document.querySelector('#app .hint').textContent, mettre: !!document.querySelector('#mettre-ici'), retirer: [...document.querySelectorAll('.actions .quiet')].some(q => q.textContent === 'la retirer de l’archipel') }));
+    verifier(a.etat.iles.length === 1 && /Sa forme est dans l’archipel/.test(posee.hint) && !posee.mettre && posee.retirer, 'le lien ouvre la feuille ; posée, la vue de l’île le dit, et propose de la retirer');
+    await p.click('.actions .quiet:has-text("la retirer de l’archipel")'); await p.waitForSelector('.sheet'); await p.click('.sheet .gesture:has-text("La retirer de l’archipel")'); await p.waitForSelector('.sheet', { state: 'detached', timeout: 10000 });
+    await p.click('[data-onglet="deposer"]'); await p.waitForTimeout(300);
+    await cocherPuisPoser(p, 'Ça tourne en boucle dans ma tête');
+    verifier(!(await p.$('.proposer')) && !!(await p.$('#mettre-ici')) && appels(a, 'archipel_poser').length === 1 && !a.etat.iles.length, 'retirée, elle ne se repropose pas d’elle-même ; le lien reste');
+    verifier(!e.length && !x.length, `aucune erreur${e.length ? ' : ' + e.slice(0, 4).join(' | ') : ''}`);
+    await c.close(); }
+
+  // 13. l’archipel ne répond pas : la carte le dit, l’île reste ici, et le même geste réessaie
+  { const c = await contexte(b), p = await c.newPage(), e = [], x = [], a = c.archipel; surveiller(p, e, x);
+    await p.goto(BASE); await p.evaluate(sansIntro); await p.reload(); await p.waitForTimeout(1000);
+    await cocherPuisPoser(p, 'On m’a fait du mal');
+    a.etat.panne = true;
+    await p.click('.proposer .btn:has-text("La mettre dans l’archipel")');
+    await attendre(p, () => p.evaluate(() => /ne répond pas/.test(document.querySelector('.proposer [role=status]')?.textContent || '')), 10000);
+    const echec = await p.evaluate(() => ({ actif: !document.querySelector('.proposer .btn').disabled, garde: JSON.parse(localStorage.getItem('archipel:ile')) }));
+    verifier(echec.actif && !echec.garde.archipel && echec.garde.proposer === true && !a.etat.iles.length, 'sans réseau : la carte le dit calmement, l’île reste ici, le geste attend');
+    a.etat.panne = false;
+    await p.click('.proposer .btn:has-text("La mettre dans l’archipel")');
+    await attendre(p, () => p.evaluate(() => /^Elle est dans l’archipel\./.test(document.querySelector('.proposer p')?.textContent || '')), 10000);
+    verifier(a.etat.iles.length === 1, 'le réseau revenu, le même geste la pose');
+    verifier(!calme(e).length && !x.length, `aucune erreur, hors la panne voulue${calme(e).length ? ' : ' + calme(e).slice(0, 4).join(' | ') : ''}`);
+    await c.close(); }
   await b.close();
 
-  // 11. sans 3D : l’archipel se compte en mots, et on peut y mettre son île
+  // 14. sans 3D : l’archipel se compte en mots, et on peut y mettre son île
   { const sans = await chromium.launch({ args: ['--disable-3d-apis', '--disable-webgl'] });
     const c = await contexte(sans, { viewport: { width: 390, height: 844 } }), p = await c.newPage(), e = [], x = [], a = c.archipel; surveiller(p, e, x);
     await p.goto(BASE); await peupler(p, a, 3);
