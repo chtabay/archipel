@@ -6,8 +6,8 @@ import * as THREE from './vendor/three.min.js?v=1';
 import { N, CLIMATS, eauDe, sol, carte, deriver, etape } from './ile.js?v=8';
 import { biomeDe, BIOMES } from './biomes.js?v=2';
 import { hash, melange, versHex, nuance } from './outils.js?v=1';
-import { Bati, MAT, modeleChose, modelePhare, decor, halo, nuageBati, F, G, cone, cyl, baton } from './modeles.js?v=11';
-import { vie } from './vie.js?v=3';
+import { Bati, MAT, modeleChose, modelePhare, decor, halo, nuageBati, F, G, cone, cyl, baton } from './modeles.js?v=12';
+import { vie } from './vie.js?v=4';
 
 const reduit = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 export const ECH_ARCH = .45; // la taille des îles dans l’archipel : la même pour toutes, pour que leurs tailles se comparent
@@ -238,7 +238,7 @@ function ileStatique(d, part = .5, R = 2, fond = null) { // une île entière en
   for (const a of d.assets) { const [x, y, z] = posTuile(d.m, a.tile, a.espece === 'barque'); modeleChose(a, B, a.v ?? hash(`${a.key}:${d.ile.seed}`), { bati: b, lum, dx: x, dy: y, dz: z, s: ECH, eauHex: eau, leger: true }); } // v : la variante reçue avec la forme ; leger : vue de loin
   const grp = new THREE.Group(), m = b.maillage(); grp.add(m, dessous);
   if (!lum.vide()) grp.add(lum.maillage(MAT.lum, false));
-  if (d.phareTile) { const p = modelePhare(), [x, y, z] = posTuile(d.m, d.phareTile); p.objet.position.set(x, y, z); p.objet.scale.setScalar(ECH); grp.add(p.objet); }
+  if (d.phareTile) { const p = modelePhare({ leger: true }), [x, y, z] = posTuile(d.m, d.phareTile); p.objet.position.set(x, y, z); p.objet.scale.setScalar(ECH); grp.add(p.objet); } // de loin, sans le fin
   return grp;
 }
 function ileRiche(d, fond) { // l’île qu’on approche dans l’archipel : construite comme dans sa vue, décor entier, choses animées
