@@ -5,7 +5,7 @@
 // laisse en place. Les bêtes elles-mêmes sont dessinées dans modeles.js : la famille des animaux les partage.
 
 import * as THREE from './vendor/three.min.js?v=1';
-import { N, sol } from './ile.js?v=8';
+import { N, solVu } from './ile.js?v=9';
 import { BETES, bete, activite } from './modeles.js?v=12';
 import { rng } from './outils.js?v=1';
 
@@ -58,11 +58,11 @@ export function vie(d, B, h) {
   const occ = new Set(d.assets.map(a => a.tile[0] * N + a.tile[1])); if (d.phareTile) occ.add(d.phareTile[0] * N + d.phareTile[1]);
   const maisons = d.assets.filter(a => a.famille === 'maison' && (a.espece === 'maison' || a.espece === 'volets'));
   const hy = (x, z) => h(x + N / 2, z + N / 2);
-  const va = (x, z, sols) => { const i = Math.floor(x + N / 2), j = Math.floor(z + N / 2); return i >= 0 && j >= 0 && i < N && j < N && !!m.land[i * N + j] && !occ.has(i * N + j) && sols.includes(sol(m, i, j)) && hy(x, z) > .1; }; // une place où aller : de la terre, du bon sol, rien dessus, pas la rive
+  const va = (x, z, sols) => { const i = Math.floor(x + N / 2), j = Math.floor(z + N / 2); return i >= 0 && j >= 0 && i < N && j < N && !!m.land[i * N + j] && !occ.has(i * N + j) && sols.includes(solVu(m, i, j, h(i + .5, j + .5))) && hy(x, z) > .1; }; // une place où aller : de la terre, du bon sol, rien dessus, pas la rive
   const prises = new Set();
   const place = (sols, pres) => { // une case libre, de préférence à côté de pres
     const l = [];
-    for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) if (m.land[i * N + j] && !occ.has(i * N + j) && !prises.has(i * N + j) && sols.includes(sol(m, i, j)) && (!pres || (Math.abs(i - pres[0]) <= 1 && Math.abs(j - pres[1]) <= 1))) l.push([i, j]);
+    for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) if (m.land[i * N + j] && !occ.has(i * N + j) && !prises.has(i * N + j) && sols.includes(solVu(m, i, j, h(i + .5, j + .5))) && (!pres || (Math.abs(i - pres[0]) <= 1 && Math.abs(j - pres[1]) <= 1))) l.push([i, j]);
     if (!l.length) return null;
     const t = l[Math.floor(r() * l.length)]; prises.add(t[0] * N + t[1]); return t;
   };

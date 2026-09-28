@@ -53,6 +53,7 @@ export function carte(seed) {
   return m;
 }
 export const sol = (m, i, j) => { const z = m.h[i * N + j]; return z < 0 ? 'eau' : z < .34 ? 'sable' : z < 1.3 ? 'herbe' : z < 2.05 ? 'roche' : 'neige'; };
+export const solVu = (m, i, j, y) => { const t = sol(m, i, j); return t === 'sable' && y > .28 ? 'herbe' : t; }; // le sol tel qu’on le voit : le haut d’une falaise est de l’herbe, même sur une tuile de sable (y : la hauteur du relief)
 
 /* ───────── L’île grandit : la terre s’étend à chaque dépôt ───────── */
 // La carte ci-dessus est l’île pleine, celle d’après beaucoup de dépôts. Une île commence petite, au centre, et s’étend
@@ -99,7 +100,7 @@ export function etape(seed, L) { // l’île avec ses L premières tuiles : son 
     for (const [di, dj] of [[-1, -1], [-1, 0], [0, -1], [0, 0]]) { const ii = i + di, jj = j + dj; if (ii < 0 || jj < 0 || ii >= N || jj >= N || !land[ii * N + jj]) continue; t += h[ii * N + jj]; c++; }
     vh[i * (N + 1) + j] = c ? (t / c) * (.88 + hash(`${seed}:v:${i}:${j}`) * .24) : 0;
   }
-  const m = { N, h, vh, land, seed, rive: [], decor: [], taille: n, rayon: 0 };
+  const m = { N, h, vh, land, seed, rive: [], decor: [], taille: n, rayon: 0, dist }; // dist : la distance au rivage, en tuiles, pour le relief
   for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) {
     const k = i * N + j;
     if (!land[k]) { if (voisins(i, j).some(([a, b]) => land[a * N + b])) m.rive.push([i, j]); continue; }
