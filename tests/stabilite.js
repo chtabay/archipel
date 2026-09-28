@@ -101,7 +101,7 @@ const depot = (id, answers) => ({ id, date: new Date().toISOString(), quad: 'N',
   { const { c, p } = await nouvelle();
     await p.goto(BASE);
     const empilees = await p.evaluate(async () => {
-      const { deriver } = await import('./ile.js?v=12'), tous = Array.from({ length: 15 }, (_, i) => `s${i}`);
+      const { deriver } = await import('./ile.js?v=13'), tous = Array.from({ length: 15 }, (_, i) => `s${i}`);
       let pire = 0;
       for (let s = 1; s <= 40; s++) { const d = deriver({ id: 1, seed: 1000 + s * 7, biome: 'prairie', depots: [{ id: 1, quad: 'N', answers: { situ: ['regret', 'mal'], mots: [], sujets: tous, fait: [], subi: [] } }] }), vus = new Set(); let n = 0; for (const a of d.assets) { if (a.famille === 'meteo' && a.espece !== 'etang') continue; const k = a.tile.join(); if (vus.has(k)) n++; vus.add(k); } pire = Math.max(pire, n); }
       return pire;
@@ -137,11 +137,37 @@ const depot = (id, answers) => ({ id, date: new Date().toISOString(), quad: 'N',
   { const { c, p } = await nouvelle();
     await p.goto(BASE);
     const r = await p.evaluate(async () => {
-      const { deriver } = await import('./ile.js?v=12');
+      const { deriver } = await import('./ile.js?v=13');
       const d = deriver({ id: 1, seed: 77, biome: 'prairie', depots: [{ id: 1, quad: 'N', answers: { situ: ['regret'], mots: ['culpa'], sujets: ['s4', 's7', 's6'], fait: ['fpense'], subi: [] } }] });
       return d.assets.filter(a => a.famille !== 'meteo').map(a => `${a.famille}${a.etats.commis ? ' commis' : ''}`).sort();
     });
     verifier(r.join(',') === 'culture commis,culture commis,maison commis,pierre', `« je regrette », couple, travail et argent : une maison et deux cultures, chacune sa petite pierre, et une pierre pour le regret (${r.join(', ')})`);
+    await c.close(); }
+
+  // 12. le rivage : des falaises d’un seul côté, jamais tout autour ; la part du rivage en falaise, sur quarante îles, petites et pleines
+  { const { c, p } = await nouvelle();
+    await p.goto(BASE);
+    const parts = await p.evaluate(async () => {
+      const { relief } = await import('./monde.js?v=22'), { etape, tuilesPleines, N, BIOMES } = await import('./ile.js?v=13'), out = {};
+      for (const [id, B] of Object.entries(BIOMES)) {
+        let f = 0, t = 0, pire = 0;
+        for (let k = 0; k < 40; k++) for (const taille of [.3, 1]) {
+          const seed = 1000 + k * 7919, m = etape(seed, Math.max(12, tuilesPleines(seed) * taille)), h = relief(m, B); let fi = 0, ti = 0;
+          for (const [i, j] of m.rive) for (const [a, bb] of [[i - 1, j], [i + 1, j], [i, j - 1], [i, j + 1]]) {
+            if (a < 0 || bb < 0 || a >= N || bb >= N || !m.land[a * N + bb]) continue;
+            ti++; if (h.falaise(i + .5 + (a - i) * .5, j + .5 + (bb - j) * .5) > .55) fi++;
+          }
+          f += fi; t += ti; pire = Math.max(pire, fi / ti);
+        }
+        out[id] = { moyenne: Math.round(f / t * 100), pire: Math.round(pire * 100) };
+      }
+      return out;
+    });
+    const MOYENNE = { prairie: 25, automne: 25, neige: 25, tropique: 10, lande: 45 };
+    for (const [id, { moyenne, pire }] of Object.entries(parts)) {
+      verifier(pire <= 65, `${id} : jamais une île cernée de falaises (au pire ${pire} % du rivage)`);
+      verifier(moyenne <= (MOYENNE[id] ?? 25), `${id} : des falaises mesurées (${moyenne} % du rivage en moyenne)`);
+    }
     await c.close(); }
 
   await b.close();
