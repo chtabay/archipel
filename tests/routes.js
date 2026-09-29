@@ -177,6 +177,20 @@ const fermerFeuille = async p => { await p.click('.sheet .foot-row .quiet'); awa
   await A.p.goto(lien3); await attendre(A.p, () => A.p.evaluate(() => document.querySelector('h1')?.textContent === 'C’est ton île'));
   verifier(!(await A.p.$('#app .btn:has-text("Tracer une route")')) && !!(await A.p.$('#app .btn:has-text("Voir ton île")')), 'son propre lien : « C’est ton île », sans route à tracer');
 
+  // 12. « J’ai reçu un lien », dans le menu Plus : coller le lien l’ouvre dans l’app, là où est son île ; autre chose, c’est dit
+  await B.p.click('#app .quiet:has-text("continuer")'); await B.p.waitForTimeout(400);
+  await B.p.click('[data-onglet="plus"]'); await B.p.waitForSelector('.sheet .row');
+  const menu = await B.p.$$eval('.sheet .row', l => l.map(x => x.textContent.trim()));
+  verifier(menu.includes('J’ai reçu un lien') && menu.includes('Les îles qu’on t’a confiées'), `le menu Plus propose « J’ai reçu un lien » (${menu.join(' · ')})`);
+  await B.p.click('.sheet .row:has-text("J’ai reçu un lien")'); await B.p.waitForSelector('.sheet input.lien');
+  await B.p.fill('.sheet input.lien', 'bonjour'); await B.p.click('.sheet .gesture:has-text("Ouvrir le lien")');
+  verifier(/Ce n’est pas le lien d’une île/.test(await lire(B.p, '.sheet [role=status]')) && !!(await B.p.$('.sheet input.lien')), 'autre chose qu’un lien d’île : la feuille le dit, et reste ouverte');
+  const avant12 = appels().length;
+  await B.p.fill('.sheet input.lien', `  ${lien3}  `); await B.p.press('.sheet input.lien', 'Enter');
+  await attendre(B.p, () => B.p.evaluate(() => document.querySelector('h1')?.textContent === 'Une île t’est confiée' && !!document.querySelector('.lien-dit')));
+  verifier(await lire(B.p, 'h1') === 'Une île t’est confiée' && !(await B.p.$('.sheet')) && appels().slice(avant12).every(y => y.f === 'archipel_voir'), 'le lien collé ouvre l’île confiée, comme s’il était arrivé par l’adresse ; seule l’île est lue');
+  await B.p.screenshot({ path: path.join(OUT, '12-colle.png') });
+
   for (const [nom, t] of [['A', A], ['B', B]]) {
     verifier(!t.x.length, `${nom} : aucune requête extérieure${t.x.length ? ' : ' + t.x.join(', ') : ''}`);
     verifier(!calme(t.e).length, `${nom} : aucune erreur${calme(t.e).length ? ' : ' + calme(t.e).slice(0, 4).join(' | ') : ''}`);
