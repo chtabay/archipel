@@ -101,13 +101,14 @@ Sans WebGL, la page reste utilisable : l’île et l’archipel ne s’affichent
 
 ## L’archipel partagé
 
-L’archipel vit dans la base du projet Supabase de Pyramides, dans un espace à part : le schéma `archipel`, sans aucun lien avec les tables de Pyramides. On n’y entre que par trois fonctions publiques : `archipel_poser`, qui pose une île ou la fait grandir, `archipel_lire` et `archipel_retirer`. Le reste est fermé. La base est décrite dans `base/archipel.sql`.
+L’archipel vit dans la base du projet Supabase de Pyramides, dans un espace à part : le schéma `archipel`, sans aucun lien avec les tables de Pyramides. On n’y entre que par des fonctions publiques : `archipel_poser`, qui pose une île ou la fait grandir, `archipel_lire` et `archipel_retirer` ; et pour les routes entre les îles, `archipel_partager`, `archipel_voir`, `archipel_relier`, `archipel_couper`, `archipel_routes` et `archipel_voisines`. Le reste est fermé. La base est décrite dans `base/archipel.sql`.
 
 - **Seulement la forme.** Ce qui part est ce que la 3D dessine : le paysage, la graine du relief, la taille, le ciel, le phare, et pour chaque chose sa famille, son espèce, sa taille, sa case, ses états visibles et le nombre de ses lanternes. Jamais le texte, les cases cochées, les sujets, les dates, un nom ou un compte. La variante de chaque chose se tire de ce qui se voit, et les choses partent rangées par case : ni le sujet ni l’ordre des dépôts ne se lisent.
 - **Ce que la forme laisse deviner.** Elle montre ce qui a poussé, et la grammaire est publique : un phare dit un danger, une pierre fendue dit « jamais réparé ». C’est pour cela que rien ne part sans un geste, et que la feuille dit ce que les autres verront.
 - **Seulement quand on le choisit.** La carte proposée après un dépôt, « Y mettre ton île », ou la case en changeant d’île. Sans ce geste, rien ne part : même une île marquée « envoyée » avant le serveur reste sur le téléphone. Une fois dans l’archipel, chaque dépôt envoie sa nouvelle forme.
 - **Un jeton, pas de compte.** Le téléphone tire un jeton secret pour chaque île. La base n’en garde que l’empreinte : seul ce téléphone peut faire grandir l’île ou la retirer.
-- **La base se protège.** Chaque forme est vérifiée, clé par clé, valeur par valeur. Les places restent dans la mer. Au plus trente nouvelles îles par minute, pour tout l’archipel. Pas de date : un simple rang dit l’ordre des arrivées.
+- **Les routes.** Une île de l’archipel peut se partager par un lien : un code tiré au hasard sur le téléphone, dont la base ne garde que l’empreinte. Qui a le lien voit l’île, et peut tracer une route entre elle et une des siennes. Une route relie deux îles, et rien d’autre : ni mot, ni nom, ni date. Chacune des deux îles peut la couper, seule, à tout moment. Fermer le lien empêche d’autres routes ; retirer l’île efface ses routes et son lien. Avec son jeton, une île retrouve les îles au bout de ses routes, et seulement celles-là.
+- **La base se protège.** Chaque forme est vérifiée, clé par clé, valeur par valeur. Les places restent dans la mer. Au plus trente nouvelles îles par minute, pour tout l’archipel ; au plus douze routes par île, et soixante nouvelles routes par minute. Pas de date : un simple rang dit l’ordre des arrivées.
 - **Sans réseau**, l’archipel le dit, et les îles restent sur le téléphone. Une île quittée hors ligne part à la prochaine ouverture.
 
 ## Confidentialité
@@ -149,7 +150,7 @@ L’archipel vit dans la base du projet Supabase de Pyramides, dans un espace à
 | `vendor/` | three.js 0.186, réduit aux pièces utilisées (licence MIT) |
 | `fonts/` | Nunito (licence SIL OFL 1.1) |
 | `404.html` | Page introuvable ; les anciennes adresses des maquettes et de `limbes/` mènent à l’accueil |
-| `base/archipel.sql` | La base de l’archipel partagé, telle qu’elle est dans le projet de Pyramides |
+| `base/archipel.sql` | La base de l’archipel partagé, telle qu’elle est dans le projet de Pyramides : les îles, puis les liens et les routes |
 | `tests/` | Les tests, dans Chromium avec une 3D logicielle : le parcours, l’intro, le retour, la stabilité, l’archipel partagé, l’installation, la musique, le menu Plus. Ils parlent à un faux serveur, en mémoire, jamais à la vraie base |
 | `package.json` | Seulement pour les tests ; le site n’a besoin de rien |
 | `.nojekyll` | Sert les fichiers tels quels sur GitHub Pages |
