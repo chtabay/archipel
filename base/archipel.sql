@@ -1,12 +1,13 @@
 -- L’archipel : la base de l’archipel partagé, telle qu’elle est dans le projet Supabase de Pyramides
 -- (migrations « archipel_iles_partagees », puis « archipel_familles_animaux_buissons » pour les animaux et les buissons,
--- puis « archipel_etat_commis » pour la petite pierre de ce que tu as fait).
+-- « archipel_etat_commis » pour la petite pierre de ce que tu as fait, et « archipel_routes » pour les routes entre les îles).
 -- Gardée ici pour la lire et pouvoir la recréer ; rien ne l’applique tout seul.
--- Le site n’y accède que par les trois fonctions publiques, avec la clé publique de serveur.js.
+-- Le site n’y accède que par ses fonctions publiques, avec la clé publique de serveur.js.
 
 -- L’archipel : les îles partagées, dans un espace à part de la base, sans aucun lien avec Pyramides.
 -- On n’y garde que la forme visible de chaque île : jamais un texte, une case, une date, un nom ni une adresse.
--- On n’y entre que par trois fonctions publiques : poser une île ou la faire grandir, lire l’archipel, retirer son île.
+-- On n’y entre que par des fonctions publiques : poser une île ou la faire grandir, lire l’archipel, retirer son île ;
+-- et pour les routes : partager son île par un lien, voir l’île d’un lien, tracer une route, la couper, lire les routes.
 
 create schema if not exists archipel;
 comment on schema archipel is 'L’archipel : la forme des îles partagées. Jamais un texte, une case, une date, un nom ni une adresse.';
@@ -148,3 +149,138 @@ grant execute on function public.archipel_retirer(uuid, text) to anon, authentic
 comment on function public.archipel_poser(text, jsonb, real, real, uuid) is 'L’archipel : poser une île, ou la faire grandir avec son jeton. Seulement sa forme.';
 comment on function public.archipel_lire(bigint, integer) is 'L’archipel : les îles les plus récentes, ou celles arrivées et grandies depuis un rang.';
 comment on function public.archipel_retirer(uuid, text) is 'L’archipel : retirer son île, avec son jeton.';
+
+-- ───────── Les routes entre les îles ─────────
+-- Une île de l’archipel se partage par un lien : un code tiré au hasard sur le téléphone, dont la base ne garde que
+-- l’empreinte. Qui a le lien voit l’île, et peut tracer une route entre elle et une des siennes. Une route ne porte rien :
+-- ni mot, ni nom, ni date. Chacune des deux îles peut la couper, seule, à tout moment. Fermer le lien empêche d’autres
+-- routes ; retirer une île efface ses routes et son lien.
+
+create table if not exists archipel.partages (
+  ile uuid primary key references archipel.iles (id) on delete cascade,
+  code bytea not null unique -- l’empreinte du code ; le code lui-même n’est que dans le lien
+);
+alter table archipel.partages enable row level security; -- aucune politique : on ne passe que par les fonctions
+revoke all on archipel.partages from public, anon, authenticated;
+
+create table if not exists archipel.routes (
+  a uuid not null references archipel.iles (id) on delete cascade,
+  b uuid not null references archipel.iles (id) on delete cascade,
+  primary key (a, b),
+  check (a < b) -- une seule route entre deux îles
+);
+create index if not exists routes_b on archipel.routes (b);
+alter table archipel.routes enable row level security;
+revoke all on archipel.routes from public, anon, authenticated;
+
+create table if not exists archipel.debit_routes (minute bigint primary key, n integer not null); -- un garde-fou contre les rafales de routes
+alter table archipel.debit_routes enable row level security;
+revoke all on archipel.debit_routes from public, anon, authenticated;
+
+-- vrai si le jeton est celui de l’île
+create or replace function archipel.a_moi(p_ile uuid, p_jeton text) returns boolean
+language plpgsql stable set search_path = '' as $$
+begin
+  if p_ile is null or p_jeton is null or p_jeton !~ '^[0-9a-f]{64}$' then return false; end if;
+  return exists (select 1 from archipel.iles i where i.id = p_ile and i.jeton = extensions.digest(p_jeton, 'sha256'));
+end $$;
+
+-- le code d’un lien : seize octets tirés au hasard, en 22 signes pour les adresses
+create or replace function archipel.code_valide(p_code text) returns boolean
+language sql immutable set search_path = '' as $$ select coalesce(p_code ~ '^[A-Za-z0-9_-]{22}$', false) $$;
+
+-- partager son île : un lien neuf remplace l’ancien ; sans code, le lien est fermé et ne mène plus nulle part
+create or replace function public.archipel_partager(p_ile uuid, p_jeton text, p_code text default null)
+returns boolean
+language plpgsql security definer set search_path = '' as $$
+begin
+  if not archipel.a_moi(p_ile, p_jeton) then raise exception 'île inconnue'; end if;
+  if p_code is null then delete from archipel.partages where ile = p_ile; return true; end if;
+  if not archipel.code_valide(p_code) then raise exception 'code invalide'; end if;
+  insert into archipel.partages as p (ile, code) values (p_ile, extensions.digest(p_code, 'sha256'))
+    on conflict (ile) do update set code = excluded.code;
+  return true;
+end $$;
+
+-- l’île d’un lien ouvert : sa forme et sa place ; rien si le lien est fermé
+create or replace function public.archipel_voir(p_code text)
+returns table (ile uuid, ordre bigint, forme jsonb, x real, z real)
+language plpgsql stable security definer set search_path = '' as $$
+begin
+  if not archipel.code_valide(p_code) then return; end if;
+  return query select i.id, i.rang, i.forme, i.x, i.z from archipel.partages p join archipel.iles i on i.id = p.ile where p.code = extensions.digest(p_code, 'sha256');
+end $$;
+
+-- tracer une route entre une de ses îles et l’île d’un lien ouvert ; douze routes au plus par île
+create or replace function public.archipel_relier(p_code text, p_ile uuid, p_jeton text)
+returns uuid
+language plpgsql security definer set search_path = '' as $$
+declare
+  autre uuid;
+  minute_ bigint := floor(extract(epoch from clock_timestamp()) / 60);
+  compte integer;
+begin
+  if not archipel.a_moi(p_ile, p_jeton) then raise exception 'île inconnue'; end if;
+  if not archipel.code_valide(p_code) then raise exception 'lien fermé'; end if;
+  select p.ile into autre from archipel.partages p where p.code = extensions.digest(p_code, 'sha256');
+  if autre is null then raise exception 'lien fermé'; end if;
+  if autre = p_ile then raise exception 'la même île'; end if;
+  perform 1 from archipel.iles i where i.id in (p_ile, autre) order by i.id for update; -- deux routes en même temps : l’une attend l’autre
+  if exists (select 1 from archipel.routes r where r.a = least(p_ile, autre) and r.b = greatest(p_ile, autre)) then return autre; end if;
+  if (select count(*) from archipel.routes r where p_ile in (r.a, r.b)) >= 12 or (select count(*) from archipel.routes r where autre in (r.a, r.b)) >= 12 then raise exception 'trop de routes'; end if;
+  insert into archipel.debit_routes as d (minute, n) values (minute_, 1)
+    on conflict (minute) do update set n = d.n + 1 returning d.n into compte;
+  delete from archipel.debit_routes where minute < minute_ - 10;
+  if compte > 60 then raise exception 'l’archipel reçoit trop de routes en ce moment'; end if;
+  insert into archipel.routes (a, b) values (least(p_ile, autre), greatest(p_ile, autre));
+  return autre;
+end $$;
+
+-- couper une route, seul, depuis l’une ou l’autre île : vrai si elle existait
+create or replace function public.archipel_couper(p_ile uuid, p_jeton text, p_autre uuid)
+returns boolean
+language plpgsql security definer set search_path = '' as $$
+begin
+  if p_autre is null or not archipel.a_moi(p_ile, p_jeton) then return false; end if;
+  delete from archipel.routes where a = least(p_ile, p_autre) and b = greatest(p_ile, p_autre);
+  return found;
+end $$;
+
+-- les routes qui touchent ces îles : deux îles, rien d’autre
+create or replace function public.archipel_routes(p_iles uuid[])
+returns table (a uuid, b uuid)
+language sql stable security definer set search_path = '' as $$
+  select r.a, r.b from archipel.routes r
+  where cardinality(p_iles) <= 200 and (r.a = any (p_iles) or r.b = any (p_iles))
+  limit 2400
+$$;
+
+-- les îles au bout des routes d’une de ses îles : leur forme et leur place
+create or replace function public.archipel_voisines(p_ile uuid, p_jeton text)
+returns table (ile uuid, ordre bigint, forme jsonb, x real, z real)
+language plpgsql stable security definer set search_path = '' as $$
+begin
+  if not archipel.a_moi(p_ile, p_jeton) then raise exception 'île inconnue'; end if;
+  return query select i.id, i.rang, i.forme, i.x, i.z from archipel.routes r join archipel.iles i on i.id = (case when r.a = p_ile then r.b else r.a end) where p_ile in (r.a, r.b);
+end $$;
+
+revoke all on function archipel.a_moi(uuid, text) from public, anon, authenticated;
+revoke all on function archipel.code_valide(text) from public, anon, authenticated;
+revoke all on function public.archipel_partager(uuid, text, text) from public, anon, authenticated;
+revoke all on function public.archipel_voir(text) from public, anon, authenticated;
+revoke all on function public.archipel_relier(text, uuid, text) from public, anon, authenticated;
+revoke all on function public.archipel_couper(uuid, text, uuid) from public, anon, authenticated;
+revoke all on function public.archipel_routes(uuid[]) from public, anon, authenticated;
+revoke all on function public.archipel_voisines(uuid, text) from public, anon, authenticated;
+grant execute on function public.archipel_partager(uuid, text, text) to anon, authenticated;
+grant execute on function public.archipel_voir(text) to anon, authenticated;
+grant execute on function public.archipel_relier(text, uuid, text) to anon, authenticated;
+grant execute on function public.archipel_couper(uuid, text, uuid) to anon, authenticated;
+grant execute on function public.archipel_routes(uuid[]) to anon, authenticated;
+grant execute on function public.archipel_voisines(uuid, text) to anon, authenticated;
+comment on function public.archipel_partager(uuid, text, text) is 'L’archipel : partager son île par un lien, ou fermer le lien. Seule l’empreinte du code est gardée.';
+comment on function public.archipel_voir(text) is 'L’archipel : l’île d’un lien ouvert, sa forme et sa place.';
+comment on function public.archipel_relier(text, uuid, text) is 'L’archipel : tracer une route entre une de ses îles et l’île d’un lien ouvert.';
+comment on function public.archipel_couper(uuid, text, uuid) is 'L’archipel : couper une route, seul, depuis l’une ou l’autre île.';
+comment on function public.archipel_routes(uuid[]) is 'L’archipel : les routes qui touchent ces îles.';
+comment on function public.archipel_voisines(uuid, text) is 'L’archipel : les îles au bout des routes d’une de ses îles.';
