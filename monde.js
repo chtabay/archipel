@@ -334,6 +334,61 @@ function voilier() {
   return b.maillage();
 }
 
+/* ───────── Deux de tes îles, côte à côte : collées, ou reliées par un pont ───────── */
+// Une nouvelle île peut se poser à côté d’une île d’avant. Collées, leurs rivages se touchent ; par un pont, un bras de mer les
+// sépare, qu’un petit pont de bois enjambe. La place de l’une se déduit de l’autre : un angle, et la distance que leurs formes demandent.
+
+export const JEU = { collee: .6, pont: 3.3 }; // la plus courte distance entre une tuile de terre de chacune, en tuiles : collées, elles se touchent ; par un pont, un bras de mer
+export function ecart(m1, m2, angle, jeu) { // la distance entre leurs centres, le long de l’angle, pour que la terre de la seconde garde ce jeu avec celle de la première
+  const ux = Math.cos(angle), uz = Math.sin(angle); let t = 0;
+  for (let a = 0; a < N * N; a++) if (m1.land[a]) for (let b = 0; b < N * N; b++) if (m2.land[b]) {
+    const wx = Math.floor(b / N) - Math.floor(a / N), wz = (b % N) - (a % N), p = wx * ux + wz * uz, D = p * p - wx * wx - wz * wz + jeu * jeu;
+    if (D > 0) t = Math.max(t, Math.sqrt(D) - p); // trop près tant que t reste sous cette valeur
+  }
+  return t;
+}
+// Le pont : là où les deux rives sont le plus proches, de préférence deux plages sans rien dessus. Des planches en travers, en arc
+// léger, sur deux poutres ; des poteaux et une main courante ; des pieux dans l’eau. Dans le repère de la première île ; dx, dz : le
+// centre de la seconde, en tuiles. Rien, si les deux îles se touchent.
+function pont3d(d1, d2, dx, dz, leger = false) {
+  const h1 = relief(d1.m, biomeDe(d1.ile.biome)), h2p = relief(d2.m, biomeDe(d2.ile.biome)), h2 = (x, z) => h2p(x - dx, z - dz), o1 = occupees(d1), o2 = occupees(d2);
+  const terres = (m, ox, oz) => { const l = []; for (let k = 0; k < N * N; k++) if (m.land[k]) l.push([Math.floor(k / N) + .5 + ox, (k % N) + .5 + oz, k]); return l; };
+  const T1 = terres(d1.m, 0, 0), T2 = terres(d2.m, dx, dz);
+  let dmin = Infinity; for (const a of T1) for (const b of T2) dmin = Math.min(dmin, Math.hypot(b[0] - a[0], b[1] - a[1]));
+  const rive = (h, x0, z0, ux, uz, L) => { for (let s = 0; s < L; s += .04) if (h(x0 + ux * s, z0 + uz * s) < .015) return s; return null; }; // où le sol passe sous l’eau, depuis la terre
+  let best = null;
+  for (const a of T1) for (const b of T2) {
+    const L = Math.hypot(b[0] - a[0], b[1] - a[1]); if (L > dmin + .9) continue;
+    const ux = (b[0] - a[0]) / L, uz = (b[1] - a[1]) / L, s1 = rive(h1, a[0], a[1], ux, uz, L), s2 = rive(h2, b[0], b[1], -ux, -uz, L);
+    if (s1 === null || s2 === null || s1 + s2 > L - .3) continue; // elles se touchent là
+    const f = h1.falaise(a[0] + ux * (s1 - .3), a[1] + uz * (s1 - .3)) + h2p.falaise(b[0] - ux * (s2 - .3) - dx, b[1] - uz * (s2 - .3) - dz);
+    const note = L - s1 - s2 + 2.5 * f + (o1.has(a[2]) ? 4 : 0) + (o2.has(b[2]) ? 4 : 0);
+    if (!best || note < best.note) best = { note, a, b, ux, uz, s1, s2 };
+  }
+  if (!best) return null;
+  const { a, b, ux, uz } = best, vx = -uz, vz = ux, ry = Math.atan2(-uz, ux), r1 = Math.max(0, best.s1 - .55), r2 = Math.max(0, best.s2 - .55);
+  const P = [a[0] + ux * r1, a[1] + uz * r1], Q = [b[0] - ux * r2, b[1] - uz * r2], L = Math.hypot(Q[0] - P[0], Q[1] - P[1]); // d’un peu dans les terres à un peu dans les terres
+  const y0 = Math.max(.06, h1(...P)) + .05, y1 = Math.max(.06, h2(...Q)) + .05, bosse = Math.min(.3, .08 + .05 * L);
+  const Y = s => lerp(y0, y1, s / L) + bosse * Math.sin(Math.PI * s / L), pente = s => Math.atan((y1 - y0) / L + bosse * Math.PI / L * Math.cos(Math.PI * s / L));
+  const ici = (s, c = 0) => [P[0] + ux * s + vx * c - N / 2, P[1] + uz * s + vz * c - N / 2], k = { b: new Bati(14), s: 1 };
+  for (let s = .05, i = 0; s < L; s += .115, i++) { const [x, z] = ici(s); F(k, G.box, i % 3 ? '#a3784a' : '#b98c5a', { x, y: Y(s), z, sx: .1, sy: .028, sz: .42, ry, rz: pente(s), ao: .15, varie: .08 }); } // les planches, en travers
+  const n = Math.max(2, Math.round(L / .45));
+  for (const c of [-.2, .2]) { // de chaque côté : une poutre sous les planches ; des poteaux et leur main courante
+    for (let q = 0; q < n; q++) {
+      const s0 = q * L / n, s1 = (q + 1) * L / n, [x, z] = ici((s0 + s1) / 2, c), l = Math.hypot(s1 - s0, Y(s1) - Y(s0)), rz = Math.atan2(Y(s1) - Y(s0), s1 - s0), ym = (Y(s0) + Y(s1)) / 2;
+      F(k, G.box, '#7a5a3e', { x, y: ym - .035, z, sx: l, sy: .045, sz: .05, ry, rz, ao: .1 });
+      if (!leger) F(k, G.box, '#8a6446', { x, y: ym + .2, z, sx: l, sy: .03, sz: .035, ry, rz, ao: .05 });
+    }
+    if (!leger) for (let q = 0; q <= n; q++) { const s = q * L / n, [x, z] = ici(s, c); F(k, cyl(.017, .021, 5), '#6d4f36', { x, y: Y(s) + .1, z, sy: .22, ao: .1 }); }
+  }
+  for (let s = .5; s < L - .4; s += .8) { // les pieux, là où il y a de l’eau dessous
+    const [px, pz] = [P[0] + ux * s, P[1] + uz * s]; if (Math.max(h1(px, pz), h2(px, pz)) > -.02) continue;
+    for (const c of [-.18, .18]) { const [x, z] = ici(s, c); F(k, cyl(.026, .032, 6), '#5b4330', { x, y: (Y(s) - .6) / 2, z, sy: Y(s) + .6, ao: .25 }); }
+  }
+  const m = k.b.maillage(); m.castShadow = !leger; m.name = 'pont';
+  return m;
+}
+
 /* ───────── L’intro : parler fait pousser l’île, elle en garde la lumière, puis rejoint l’archipel ───────── */
 // Rien de littéral : les mots sont des pastilles de lumière, sans lettres. Tout ce que l’intro montre se déduit
 // de son temps, en secondes : on peut la revoir, ou la montrer d’emblée terminée quand le mouvement est réduit.
@@ -364,7 +419,7 @@ export class Vue3D {
     this.camera = new THREE.PerspectiveCamera(30, 1, .1, 400);
     this.orbite = new Orbite(this.camera, this.canvas);
     this.orbite.onTap = e => this.toucher(e);
-    this.ray = new THREE.Raycaster(); this.mode = null; this.anims = []; this.animsRoutes = []; this.cle = ''; this.vie = new Map(); this.objets = new Map();
+    this.ray = new THREE.Raycaster(); this.mode = null; this.anims = []; this.animsRoutes = []; this.animsVoisins = []; this.cle = ''; this.vie = new Map(); this.objets = new Map();
     this.t0 = performance.now(); this.dernier = 0; this.dimsArch = [18, 36];
   }
   attacher(parent) { parent.append(this.canvas); this.redim(); }
@@ -378,7 +433,7 @@ export class Vue3D {
     this.distIle = fit(e, e * .62); this.distArch = fit(L * 1.2 + 4, (P * 1.24 + 4) * Math.sin(.72));
     if (this.mode === 'ile' && !this.zoomManuel) this.orbite.but.dist = this.distIle;
   }
-  vider() { if (this.scene) { liberer(this.scene); this.scene.background?.dispose?.(); } this.scene = new THREE.Scene(); this.anims = []; this.objets = new Map(); this.routes = this.pontons = this.clePontons = null; this.animsRoutes = []; }
+  vider() { if (this.scene) { liberer(this.scene); this.scene.background?.dispose?.(); } this.scene = new THREE.Scene(); this.anims = []; this.objets = new Map(); this.routes = this.pontons = this.clePontons = this.voisins = this.cleVoisines = this.ponts = null; this.animsRoutes = []; this.animsVoisins = []; }
 
   montrerIle(d, opts = {}) {
     const B = biomeDe(d.ile.biome), eau = eauDe(d.climat, B), cle = `${d.ile.id}:${d.ile.seed}:${d.ile.biome}:${d.climat}:${d.ile.depots.length}`;
@@ -488,16 +543,16 @@ export class Vue3D {
   // Les routes, vues de l’île : un ponton par route, tourné vers l’île au bout, sa barque amarrée, et un sillage qui part au
   // large. Le ponton cherche une plage, pas trop loin de sa direction, et jamais sur une chose ; sinon, le pied d’une falaise.
   // Une route qui attend que l’île rejoigne l’archipel : sa barque est sous sa bâche, et aucun sillage ne part encore.
-  // liste : [{ angle, attente }], l’angle vers l’autre île, dans le plan de l’archipel
-  montrerPontons(liste) {
+  // liste : [{ angle, attente }], l’angle vers l’autre île, dans le plan de l’archipel ; evite : les côtés où sont ses îles voisines
+  montrerPontons(liste, evite = []) {
     if (this.mode !== 'ile' || !this.d) return;
-    const cle = liste.map(p => `${p.angle.toFixed(2)}${p.attente ? '+' : ''}`).join('|');
+    const cle = `${liste.map(p => `${p.angle.toFixed(2)}${p.attente ? '+' : ''}`).join('|')}/${evite.map(a => a.toFixed(2)).join('|')}`;
     if (cle === (this.clePontons ?? '')) return;
     this.clePontons = cle;
     if (this.pontons) { this.scene.remove(this.pontons); liberer(this.pontons); this.pontons = null; }
     this.animsRoutes = [];
     if (!liste.length) return;
-    const d = this.d, B = biomeDe(d.ile.biome), h = relief(d.m, B), occ = occupees(d), eau = eauDe(d.climat, B), grp = new THREE.Group(), k = { b: new Bati(12), s: 1 }, sillage = [], pris = [];
+    const d = this.d, B = biomeDe(d.ile.biome), h = relief(d.m, B), occ = occupees(d), eau = eauDe(d.climat, B), grp = new THREE.Group(), k = { b: new Bati(12), s: 1 }, sillage = [], pris = [...evite]; // pas de ponton face à une île voisine
     let cx = 0, cz = 0, n = 0; for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) if (d.m.land[i * N + j]) { cx += i + .5; cz += j + .5; n++; }
     cx /= n || 1; cz /= n || 1; // le centre de l’île, en tuiles
     const rive = a => { // le bord de l’île dans cette direction : là où le sol passe sous l’eau
@@ -539,13 +594,47 @@ export class Vue3D {
     }
     this.pontons = grp; this.scene.add(grp);
   }
+  // Tes îles reliées à celle qu’on regarde, à côté d’elle : collées, ou au bout d’un pont. Elles se construisent comme elle, avec
+  // leur vie ; les toucher dit qui elles sont. liste : [{ d, angle, t, pont, cle }] ; t : la distance entre les centres, en tuiles
+  montrerVoisines(liste) {
+    if (this.mode !== 'ile' || !this.d) return;
+    const cle = liste.map(v => `${v.cle}:${v.d.m.taille}:${v.d.assets.length}:${v.angle.toFixed(3)}:${v.t.toFixed(2)}:${v.pont ? 1 : 0}`).join('|');
+    if (cle === (this.cleVoisines ?? '')) return;
+    this.cleVoisines = cle;
+    if (this.voisins) { this.scene.remove(this.voisins); liberer(this.voisins); this.voisins = null; }
+    this.animsVoisins = [];
+    const base = Math.max(this.d.m.rayon * 2 - .2, 4.6), ids = liste.map(v => v.cle).join('|'); // avec une voisine, la vue recule un peu, pour en montrer le rivage
+    this.etendue = liste.length ? Math.max(base, Math.min(9, liste[0].t * .85)) : base; this.redim();
+    if (liste.length && ids !== this.idsVoisines) { const a = Math.atan2(-Math.cos(liste[0].angle), -Math.sin(liste[0].angle)) + .45, o = this.orbite.but; o.azim += Math.atan2(Math.sin(a - o.azim), Math.cos(a - o.azim)); } // la voisine, de l’autre côté de l’île, un peu de biais
+    this.idsVoisines = ids;
+    if (!liste.length) return;
+    const grp = new THREE.Group(), T = teintes(this.d.climat, biomeDe(this.d.ile.biome));
+    liste.forEach((v, i) => {
+      const dx = Math.cos(v.angle) * v.t, dz = Math.sin(v.angle) * v.t, r = ileRiche(v.d, fondIle(T)), ici = o => { o.userData.key = `voisine:${i}`; };
+      r.grp.position.set(dx, 0, dz); r.grp.traverse(ici); grp.add(r.grp); this.animsVoisins.push(...r.anims);
+      if (v.pont) { const p = pont3d(this.d, v.d, dx, dz); if (p) { p.traverse(ici); grp.add(p); } }
+    });
+    this.voisins = grp; this.scene.add(grp);
+  }
+  montrerPonts(paires) { // les ponts entre tes îles, dans l’archipel : dessinés sur ce téléphone seulement, les autres n’en voient rien
+    if (this.ponts) { this.scene.remove(this.ponts); liberer(this.ponts); this.ponts = null; }
+    const grp = new THREE.Group();
+    for (const [p, q] of paires) {
+      const m = pont3d(p.d || (p.d = deriver(p.ile)), q.d || (q.d = deriver(q.ile)), (q.x - p.x) / ECH_ARCH, (q.z - p.z) / ECH_ARCH, true);
+      if (m) { m.scale.setScalar(ECH_ARCH); m.position.set(p.x, 0, p.z); grp.add(m); }
+    }
+    if (!grp.children.length) return;
+    this.ponts = grp; this.scene.add(grp);
+  }
   vague(x, z, T0) { // une île arrive : un anneau s’ouvre sur l’eau
     const m = new THREE.Mesh(new THREE.RingGeometry(.9, 1, 40).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: .8, depthWrite: false })); m.position.set(x, .02, z); this.scene.add(m);
     this.anims.push(T => { const a = T - T0; if (a > 2) { m.visible = false; return; } m.scale.setScalar(1 + a * 2.2); m.material.opacity = (1 - a / 2) * .8; });
   }
-  viser(it) { // s’approcher d’une île, ou revenir à l’archipel
+  viser(it) { // s’approcher d’une île, ou revenir à l’archipel ; de près, son nom ne flotte plus au-dessus d’elle
     if (this.focus && this.focus !== it) this.eloigner(this.focus);
+    if (this.focus?.lab) this.focus.lab.visible = true;
     this.focus = it;
+    if (it?.lab) it.lab.visible = false;
     if (it) { const ray = (it.d || (it.d = deriver(it.ile))).m.rayon * ECH_ARCH; this.orbite.but.cible.set(it.x, .3, it.z); this.orbite.but.dist = 5 + ray * 2.6; this.orbite.but.elev = .62; this.anneau.visible = true; this.anneau.position.set(it.x, .03, it.z); this.anneau.scale.setScalar((ray + .35) / 2.6); this.approcher(it); }
     else { const [cx, cz] = this.centreArch || [0, -1]; this.orbite.but.cible.set(cx, 0, cz); this.orbite.but.dist = this.distArch; this.orbite.but.elev = .72; this.anneau.visible = false; }
   }
@@ -672,6 +761,7 @@ export class Vue3D {
     if (this.eau) this.eau.position.y = Math.sin(T * .6) * .015; // la marée, à peine
     for (const f of this.anims) f(T);
     for (const f of this.animsRoutes) f(T); // les barques des routes
+    for (const f of this.animsVoisins) f(T); // la vie des îles voisines
     if (this.focus?.riche) for (const f of this.focus.riche.anims) f(T); // l’île qu’on approche vit
     if (this.mode === 'intro') this.introFrame(Math.min(.1, ecart || .016)); // le temps de l’intro s’arrête quand la page est cachée
     const Tv = this.vieT ? this.vieT() : T;

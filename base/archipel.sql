@@ -1,6 +1,7 @@
 -- L’archipel : la base de l’archipel partagé, telle qu’elle est dans le projet Supabase de Pyramides
 -- (migrations « archipel_iles_partagees », puis « archipel_familles_animaux_buissons » pour les animaux et les buissons,
--- « archipel_etat_commis » pour la petite pierre de ce que tu as fait, et « archipel_routes » pour les routes entre les îles).
+-- « archipel_etat_commis » pour la petite pierre de ce que tu as fait, « archipel_routes » pour les routes entre les îles,
+-- et « archipel_deplacer » pour qu’une île reste à côté d’une autre des siennes).
 -- Gardée ici pour la lire et pouvoir la recréer ; rien ne l’applique tout seul.
 -- Le site n’y accède que par ses fonctions publiques, avec la clé publique de serveur.js.
 
@@ -284,3 +285,25 @@ comment on function public.archipel_relier(text, uuid, text) is 'L’archipel : 
 comment on function public.archipel_couper(uuid, text, uuid) is 'L’archipel : couper une route, seul, depuis l’une ou l’autre île.';
 comment on function public.archipel_routes(uuid[]) is 'L’archipel : les routes qui touchent ces îles.';
 comment on function public.archipel_voisines(uuid, text) is 'L’archipel : les îles au bout des routes d’une de ses îles.';
+
+-- ───────── Deux îles côte à côte ─────────
+-- Une nouvelle île peut se poser à côté d’une île d’avant de la même personne : collée à elle, ou au bout d’un pont. Le lien
+-- reste sur son téléphone ; la base n’en sait rien. En grandissant, l’île s’écarte juste ce qu’il faut : sa place change,
+-- avec son jeton, et rien d’autre. Le rang monte, pour que ceux qui regardent la voient bouger.
+
+create or replace function public.archipel_deplacer(p_ile uuid, p_jeton text, p_x real, p_z real)
+returns boolean
+language plpgsql security definer set search_path = '' as $$
+declare i uuid;
+begin
+  if p_ile is null or p_jeton is null or p_jeton !~ '^[0-9a-f]{64}$' then raise exception 'île inconnue'; end if;
+  if p_x is null or p_z is null or not (abs(p_x) <= 40 and abs(p_z) <= 60) then raise exception 'place invalide'; end if;
+  update archipel.iles set x = p_x, z = p_z, rang = nextval('archipel.rangs')
+    where id = p_ile and jeton = extensions.digest(p_jeton, 'sha256') returning id into i;
+  if i is null then raise exception 'île inconnue'; end if;
+  return true;
+end $$;
+
+revoke all on function public.archipel_deplacer(uuid, text, real, real) from public, anon, authenticated;
+grant execute on function public.archipel_deplacer(uuid, text, real, real) to anon, authenticated;
+comment on function public.archipel_deplacer(uuid, text, real, real) is 'L’archipel : déplacer son île, avec son jeton, pour qu’elle reste à côté d’une autre des siennes. Seulement sa place.';

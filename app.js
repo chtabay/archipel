@@ -4,8 +4,8 @@
 import { SUBJECTS, QUESTIONS, KEYS, BASE, LEX, HUMANS } from './contenu.js?v=2';
 import { graines, quadDe, nomDe, phrasesDe, casesDe, sujetLabel, listeDe, listeGraines, FAMILLES, ESPECES, NOMS } from './grammaire.js?v=5';
 import { nouvelleIle, deriver, resume, forme, depuisForme, archipelInvente, ileInventee, BIOMES, BIOME_IDS, biomeDe } from './ile.js?v=13';
-import { Vue3D, Ilot3D, apercu, disponible, ECH_ARCH, ILE_INTRO } from './monde.js?v=25';
-import { lireArchipel, poserIle, retirerIle, nouveauJeton, partagerIle, voirIle, relierIle, couperRoute, lireRoutes, voisines, nouveauCode } from './serveur.js?v=2';
+import { Vue3D, Ilot3D, apercu, disponible, ECH_ARCH, ILE_INTRO, JEU, ecart } from './monde.js?v=26';
+import { lireArchipel, poserIle, deplacerIle, retirerIle, nouveauJeton, partagerIle, voirIle, relierIle, couperRoute, lireRoutes, voisines, nouveauCode } from './serveur.js?v=3';
 import { musique } from './musique.js?v=2';
 import { lire } from './lexique.js?v=2';
 
@@ -85,6 +85,8 @@ function saine(x) { // une île relue sur ce téléphone : sa forme est vérifi�
   const attente = (Array.isArray(x.routesEnAttente) ? x.routesEnAttente : []).filter(c => typeof c === 'string' && CODE.test(c)); // des routes qui partiront avec elle
   if (attente.length) r.routesEnAttente = [...new Set(attente)].slice(0, 12); else delete r.routesEnAttente;
   const nom = propre(x.nom); if (nom) r.nom = nom; else delete r.nom; // son nom, s’il est lisible ; sinon elle en recevra un
+  const v = x.voisine; // l’île d’avant à côté de laquelle elle se pose : laquelle, comment, et à quel angle
+  if (v && typeof v === 'object' && (typeof v.ile === 'number' || typeof v.ile === 'string') && v.ile !== r.id && (v.mode === 'pont' || v.mode === 'collee') && Number.isFinite(v.angle)) r.voisine = { ile: v.ile, mode: v.mode, angle: v.angle }; else delete r.voisine;
   return r;
 }
 
@@ -178,7 +180,7 @@ function renderIle() {
     if (ile.depots.length) nav.append(quiet('changer d’île', changerSheet));
     else nav.append(quiet('choisir le paysage', paysageSheet));
     nav.append(quiet('la renommer', () => nomSheet(ile)));
-    if (iles.length) nav.append(quiet('tes îles d’avant', ilesSheet));
+    if (iles.length) nav.append(quiet(ile.voisine ? 'sa voisine' : 'la relier à une île d’avant', relierSheet), quiet('tes îles d’avant', ilesSheet));
     const inst = quiet('installer l’app', installerSheet); inst.id = 'installer'; inst.hidden = !installable(); nav.append(inst); // paraît quand le navigateur le permet
   } else nav.append(bouton('Revenir à ton île', () => { regard = null; go('ile'); }), quiet('la renommer', () => nomSheet(regard)));
   if ((regard || ile).archipel?.id) nav.append(quiet('la retirer de l’archipel', () => retirerSheet(regard || ile)));
@@ -199,7 +201,7 @@ function renderIle() {
     el('p', { className: 'tiny', textContent: 'Ton île reste sur ce téléphone, sans chiffrement. Si tu la mets dans l’archipel, seule sa forme part, telle qu’on la voit : ni tes mots, ni tes dates, ni ton nom, ni le sien.' }),
   );
   titre = null;
-  scene.d = d;
+  scene.d = d; scene.voisines = vue ? voisinesVues(regard || ile) : []; // ses îles reliées, à côté d’elle
   if (!vue) { wrap.classList.add('sans'); caption.hidden = true; wrap.append(el('p', { className: 'sans3d', textContent: 'Cet appareil n’affiche pas la 3D. Ton île est bien là : ce qui a poussé est écrit plus bas.' })); updateIleLine(); suivreRoutes(regard || ile); return; }
   vue.attacher(wrap);
   vue.canvas.setAttribute('aria-label', mine ? `${nomIle(ile)}, ton île, en 3D, et ce qui y a poussé` : `${nomIle(regard)}, une de tes îles d’avant, en 3D`);
@@ -207,11 +209,12 @@ function renderIle() {
   tourner.setAttribute('aria-label', 'Tourner l’île'); tourner.addEventListener('click', () => { vue.tourner(); note('geste : tourner l’île'); });
   wrap.append(tourner);
   if (musique.disponible) wrap.append(boutonSon('ile')); // le son, sur la vue aussi
-  vue.montrerIle(d, { vie }); vue.choisir(null);
+  vue.montrerIle(d, { vie }); vue.choisir(null); vue.montrerVoisines(scene.voisines);
   vue.onTouche = key => {
     const best = key ? { key } : null;
     excerpt.hidden = true;
     if (!best) { caption.textContent = invite; return; }
+    if (best.key.startsWith('voisine:')) { const v = scene.voisines[+best.key.slice(8)]; caption.textContent = v ? `${nomDit(v.x)}, une de tes îles, ${v.pont ? 'reliée à celle-ci par un pont' : 'collée à celle-ci'}. ${v.pont ? 'Le pont et son nom ne se voient' : 'Son nom ne se voit'} que sur ce téléphone.` : invite; return; }
     if (best.key === 'phare') { caption.replaceChildren('Un phare. Si tu veux parler à quelqu’un, c’est là. ', quiet('parler à quelqu’un', () => humansSheet(signals().other ? 'other' : 'self'))); return; }
     const a = d.assets.find(x => x.key === best.key);
     caption.textContent = ligneDe(a, d);
@@ -382,13 +385,13 @@ function viserLaTienne(cap) { // elle vient d’y être mise : on s’en approch
 function legendeArch(it) {
   const rs = resume(it.d || deriver(it.ile)), nr = it.mine ? it.ile.archipel?.routes?.length || 0 : 0;
   const routes = it.mine ? (nr ? ` ${nr > 1 ? `${nr} routes la relient` : 'Une route la relie'} à d’autres îles.` : '') : reliees().has(it.id) ? ' Une route la relie à ton île.' : gardees.some(g => g.id === it.id) ? ' On te l’a confiée.' : '';
-  return (it.mine ? `La tienne, ${nomDit(it.ile)}${NB}: ${listeDe(rs.comptes)}.` :`Une île avec ${listeDe(rs.comptes)}${rs.phare ? ', et un phare' : ''}. ${it.born ? 'Arrivée à l’instant.' : 'Là depuis un moment.'}`) + routes;
+  return (it.mine ? `La tienne, ${nomDit(it.ile)}${NB}: ${listeDe(rs.comptes)}.${lieeDit(it.ile) ? ` ${cap(lieeDit(it.ile))}.` : ''}` :`Une île avec ${listeDe(rs.comptes)}${rs.phare ? ', et un phare' : ''}. ${it.born ? 'Arrivée à l’instant.' : 'Là depuis un moment.'}`) + routes;
 }
 const inviteArch = () => (arch.panne ? 'L’archipel ne répond pas pour l’instant. Tes îles sont bien là, sur ce téléphone.' : !arch.lu ? 'L’archipel se charge…' : arch.items.length ? INVITE_ARCH : 'L’archipel attend sa première île.');
 function montrerArchipel(caption) {
   if (!vue) return;
   const { dims, centre } = cadrer();
-  vue.dimsArch = dims; vue.montrerArchipel(arch.items, { centre }); vue.montrerRoutes(pairesRoutes());
+  vue.dimsArch = dims; vue.montrerArchipel(arch.items, { centre }); vue.montrerRoutes(pairesRoutes()); vue.montrerPonts(pairesPonts()); // les ponts entre tes îles : sur ce téléphone seulement
   vue.onTouche = it => {
     if (!it) { caption.textContent = inviteArch(); return; }
     caption.replaceChildren(`${legendeArch(it)} `, quiet('revenir à l’archipel', () => { vue.viser(null); caption.textContent = inviteArch(); }));
@@ -429,10 +432,11 @@ async function envoyer(x) {
   try {
     if (!arch.lu || arch.panne) await chargerArchipel(); // après une panne, on relit avant de réessayer
     if (arch.panne) return false;
-    const d = deriver(x), rs = resume(d), it = { d }, jeton = x.archipel?.jeton || nouveauJeton();
-    const autres = [...arch.reelles, ...miennes().filter(m => m !== x && m.archipel?.id).map(m => ({ d: deriver(m), x: m.archipel.x, z: m.archipel.z }))];
+    const d = deriver(x), rs = resume(d), it = { d }, jeton = x.archipel?.jeton || nouveauJeton(), p = partenaire(x);
+    const autres = [...arch.reelles, ...miennes().filter(m => m !== x && m.archipel?.id).map(m => ({ id: m.archipel.id, d: deriver(m), x: m.archipel.x, z: m.archipel.z }))];
     if (x.archipel?.loin) autres.push({ d: { m: { rayon: 12 } }, x: x.archipel.loin[0], z: x.archipel.loin[1] }); // déplacée : loin de la place qu’elle a quittée
-    placeLibre(it, autres, posArch(rs.a, rs.v));
+    if (p?.archipel?.id) [it.x, it.z] = placeVoisine(x, autres.filter(f => f.id !== p.archipel.id)); // reliée à une île d’avant : à côté d’elle
+    else placeLibre(it, autres, posArch(rs.a, rs.v));
     const r = await poserIle(jeton, forme(d), { x: it.x, z: it.z });
     x.archipel = { id: r.ile, jeton, x: it.x, z: it.z }; x.envoyee = true; delete x.proposer; sauver(x);
     arch.total++;
@@ -449,7 +453,7 @@ function synchroniser() {
   return synchro;
 }
 async function envoyerTout() {
-  for (const x of [ile, ...iles]) {
+  for (const x of [...iles, ile]) { // celles d’avant d’abord : une nouvelle île se pose à côté de la sienne
     const a = x.archipel;
     if (!a) continue;
     if (!a.id) { if (!(await envoyer(x))) return; continue; }
@@ -457,6 +461,7 @@ async function envoyerTout() {
       try { await poserIle(a.jeton, forme(deriver(x)), { ile: a.id }); delete a.enRetard; sauver(x); }
       catch (e) { if (/inconnue/.test(e.message)) { delete x.archipel; x.envoyee = false; sauver(x); continue; } return; } // retirée de l’archipel : elle n’y est plus
     }
+    if (x.voisine && !(await rapprocher(x))) { if (x.archipel) { x.archipel.enRetard = true; sauver(x); } return; } // sans réseau, elle suivra sa voisine plus tard
     if (x.routesEnAttente?.length) await relierEnAttente(x); // des routes qui n’avaient pas pu partir
   }
 }
@@ -528,6 +533,7 @@ async function toutCouper(x) { // le lien et les routes s’effacent avec l’î
   await retirerIle(a.id, a.jeton); // sans réseau, rien n’a changé
   arch.reelles = arch.reelles.filter(r => r.id !== a.id); arch.total = Math.max(0, arch.total - 1); voisinage.delete(a.id);
   x.archipel = { attente: true, loin: [a.x, a.z] }; x.envoyee = false; delete x.routesEnAttente; sauver(x); note('route : tout coupé, l’île déplacée');
+  for (const y of [ile, ...iles]) if (y === x ? y.voisine : y.voisine?.ile === x.id) { delete y.voisine; sauver(y); } // ailleurs, elle n’est plus à côté de ses voisines
   return (await envoyer(x)) || (synchroniser(), false); // sans réseau, elle reviendra dès que possible
 }
 
@@ -540,7 +546,7 @@ function pontonsDe(x) { // les routes de l’île, vues de chez elle : vers où 
 function majRoutesIle() { // la vue de l’île dit ses routes, sans se redessiner ; et une fois, celles qui sont arrivées ou ont été coupées
   if (ecran !== 'ile') return;
   const x = regard || ile, nav = $('#app .actions'), n = x.archipel?.routes?.length || 0, att = x.routesEnAttente?.length || 0;
-  if (vue?.mode === 'ile') vue.montrerPontons(pontonsDe(x)); // un ponton par route, tourné vers l’île au bout
+  if (vue?.mode === 'ile') vue.montrerPontons(pontonsDe(x), (scene.voisines || []).map(v => v.angle)); // un ponton par route, tourné vers l’île au bout ; jamais face à une île voisine
   let b = $('#les-routes');
   if (nav && (n || att || x.archipel?.code)) { const t = n ? `ses routes (${n})` : att ? (att > 1 ? `${att} routes attendent` : 'une route attend') : 'ses routes'; if (!b) { b = quiet(t, () => routesSheet(x)); b.id = 'les-routes'; nav.append(b); } else b.textContent = t; } // un lien ouvert : ses routes, et de quoi tout couper
   else b?.remove();
@@ -558,6 +564,100 @@ function suivreRoutes(x) { // les routes de l’île, lues au plus une fois par 
   lues.set(a.id, Date.now());
   lireVoisines(x).then(() => { if ((regard || ile) === x) majRoutesIle(); })
     .catch(() => { if (!x.archipel && ecran === 'ile' && (regard || ile) === x) render('ile'); }); // retirée ailleurs : la vue le dit
+}
+
+/* ───────── Tes îles, côte à côte ───────── */
+// Une nouvelle île peut se poser à côté d’une île d’avant : par un pont, au-dessus d’un bras de mer, ou collée à elle. Le lien est
+// gardé sur ce téléphone, sur la plus récente des deux : l’île d’avant, comment, et l’angle où elle se pose. Dans l’archipel, les
+// deux îles sont voisines, et c’est tout ce que les autres voient : ni le pont, ni les noms. En grandissant, la nouvelle s’écarte
+// juste ce qu’il faut pour rester collée, ou au bout de son pont.
+
+const LIENS = { pont: ['Par un pont', 'un petit pont de bois, au-dessus d’un bras de mer'], collee: ['Collée à côté', 'les deux îles se touchent'] };
+const AVIS_VOISINES = 'Dans l’archipel, les deux îles seront voisines : qui reconnaît l’une pourra deviner que l’autre est à toi aussi. Le pont et les noms restent sur ce téléphone.';
+const partenaire = x => (x?.voisine ? [ile, ...iles].find(y => y !== x && y.id === x.voisine.ile) || null : null); // l’île d’avant à côté de laquelle elle se pose
+const dependantes = x => [ile, ...iles].filter(y => y !== x && y.voisine?.ile === x.id); // les îles posées à côté d’elle
+const deriveeDe = x => (x === ile && courant?.ile === ile ? courant : deriver(x));
+const lieeDit = x => { const p = partenaire(x); return p ? `${x.voisine.mode === 'pont' ? 'reliée par un pont à' : 'collée à'} ${nomDit(p)}` : ''; };
+function voisinesVues(x) { // les îles reliées à celle-ci, vues de chez elle : à quel angle, et à quelle distance, en tuiles
+  const out = [], dx = deriveeDe(x), p = partenaire(x);
+  if (p) { const dp = deriveeDe(p); out.push({ x: p, d: dp, cle: p.id, angle: x.voisine.angle + Math.PI, t: ecart(dp.m, dx.m, x.voisine.angle, JEU[x.voisine.mode]), pont: x.voisine.mode === 'pont' }); }
+  for (const y of dependantes(x)) { const dy = deriveeDe(y); out.push({ x: y, d: dy, cle: y.id, angle: y.voisine.angle, t: ecart(dx.m, dy.m, y.voisine.angle, JEU[y.voisine.mode]), pont: y.voisine.mode === 'pont' }); }
+  return out.slice(0, 4);
+}
+function angleDepart(x, p) { // d’abord, du côté où ce qu’elle porte la placerait : de la place de l’une vers celle de l’autre
+  const sa = y => (y.archipel?.id ? [y.archipel.x, y.archipel.z] : (rs => posArch(rs.a, rs.v))(resume(deriveeDe(y)))), [ax, az] = sa(p), [bx, bz] = sa(x);
+  return Math.hypot(bx - ax, bz - az) > .5 ? Math.atan2(bz - az, bx - ax) : (x.seed % 628) / 100;
+}
+const borner = ([x, z]) => [Math.max(-39.5, Math.min(39.5, x)), Math.max(-59.5, Math.min(59.5, z))]; // la base garde les îles dans la mer
+function placeVoisine(x, autres) { // dans l’archipel, à côté de sa voisine : à son angle si l’île pleine y tient, sinon au plus proche qui le permet
+  const p = partenaire(x), v = x.voisine, jeu = JEU[v.mode], mP = deriveeDe(p).m, pleine = deriver(x, { pleine: true }).m, r = pleine.rayon * ECH_ARCH + .15;
+  const R = f => (f.d || (f.d = deriver(f.ile))).m.rayon * ECH_ARCH + .15;
+  const place = (a, m) => { const t = ecart(mP, m, a, jeu) * ECH_ARCH; return [p.archipel.x + Math.cos(a) * t, p.archipel.z + Math.sin(a) * t]; };
+  const jeuA = a => { const [px, pz] = place(a, pleine); return Math.abs(px) > 39 || Math.abs(pz) > 59 ? -Infinity : autres.reduce((m, f) => Math.min(m, Math.hypot(f.x - px, f.z - pz) - R(f) - r - .3), Infinity); };
+  let choisi = v.angle, mieux = -Infinity;
+  for (let k = 0; k <= 24; k++) { const a = v.angle + (k % 2 ? 1 : -1) * Math.ceil(k / 2) * Math.PI / 12, j = jeuA(a); if (j >= 0) { choisi = a; break; } if (j > mieux) { mieux = j; choisi = a; } }
+  v.angle = choisi;
+  return borner(place(choisi, deriveeDe(x).m));
+}
+async function rapprocher(x) { // elle a grandi : sa place suit sa taille, pour rester collée, ou au bout de son pont
+  const p = partenaire(x), a = x.archipel;
+  if (!p?.archipel?.id || !a?.id) return true;
+  const t = ecart(deriveeDe(p).m, deriveeDe(x).m, x.voisine.angle, JEU[x.voisine.mode]) * ECH_ARCH, [px, pz] = borner([p.archipel.x + Math.cos(x.voisine.angle) * t, p.archipel.z + Math.sin(x.voisine.angle) * t]);
+  if (Math.hypot(px - a.x, pz - a.z) < .02) return true;
+  try { await deplacerIle(a.id, a.jeton, px, pz); } catch (e) { signaler(e); oublieeSi(x, e); return !x.archipel; } // retirée ailleurs : plus rien à déplacer
+  a.x = px; a.z = pz; sauver(x); note('île : sa place suit sa voisine');
+  return true;
+}
+async function deplacerVers(x) { // déjà dans l’archipel : elle vient se poser à côté de sa voisine
+  try {
+    if (!arch.lu || arch.panne) await chargerArchipel();
+    if (arch.panne) return false;
+    const p = partenaire(x), autres = [...arch.reelles.filter(r => r.id !== x.archipel.id && r.id !== p.archipel.id), ...miennes().filter(m => m !== x && m !== p && m.archipel?.id).map(m => ({ id: m.archipel.id, d: deriveeDe(m), x: m.archipel.x, z: m.archipel.z }))];
+    const [px, pz] = placeVoisine(x, autres);
+    await deplacerIle(x.archipel.id, x.archipel.jeton, px, pz);
+    x.archipel.x = px; x.archipel.z = pz; sauver(x); note('île : posée à côté de sa voisine');
+    return true;
+  } catch (e) { signaler(e); oublieeSi(x, e); return false; }
+}
+const pairesPonts = () => { const par = new Map(arch.items.filter(it => it.mine).map(it => [it.ile, it])); return [ile, ...iles].filter(x => x.voisine?.mode === 'pont').map(x => [par.get(partenaire(x)), par.get(x)]).filter(([p, q]) => p && q); };
+
+function relierSheet() { // relier ton île à une île d’avant : par un pont, ou collée à côté ; ou la détacher
+  const x = ile, p0 = partenaire(x), etat = el('p', { className: 'tiny' }), dit = el('p', { className: 'tiny' });
+  etat.setAttribute('role', 'status');
+  let choisie = p0 || iles[iles.length - 1], mode = x.voisine?.mode || 'pont';
+  const maj = () => { dit.textContent = !x.archipel?.id ? '' : !choisie.archipel?.id ? `${nomDit(choisie)} n’est pas dans l’archipel : là-bas, ton île reste où elle est.` : choisie === p0 ? 'Dans l’archipel, elle reste à côté d’elle.' : 'Dans l’archipel, ton île viendra se poser à côté d’elle.'; };
+  const choix = (lignes, actif, clic) => {
+    const l = el('div', { className: 'list choix' });
+    for (const [cle, texte, sous] of lignes) {
+      const b = el('button', { type: 'button', className: 'row' }, texte, el('small', { textContent: sous }));
+      b.setAttribute('aria-pressed', String(cle === actif));
+      b.addEventListener('click', () => { for (const c of l.children) c.setAttribute('aria-pressed', String(c === b)); clic(cle); maj(); });
+      l.append(b);
+    }
+    return l;
+  };
+  const ou = choix([...iles].reverse().map(y => [y, nomIle(y), y.archipel?.id ? 'dans l’archipel' : 'sur ce téléphone']), choisie, y => { choisie = y; });
+  const comment = choix(Object.entries(LIENS).map(([k, [t, s]]) => [k, t, s]), mode, k => { mode = k; });
+  const ok = el('button', { type: 'button', className: 'gesture', textContent: p0 ? 'La relier ainsi' : 'La relier' });
+  ok.addEventListener('click', async () => {
+    ok.disabled = true; etat.textContent = 'Un instant…';
+    x.voisine = { ile: choisie.id, mode, angle: x.voisine?.ile === choisie.id ? x.voisine.angle : angleDepart(x, choisie) };
+    if (x.archipel?.id && choisie.archipel?.id && !(await deplacerVers(x)) && x.archipel) x.archipel.enRetard = true; // sans réseau, elle s’approchera dès que possible
+    saveIle(); note(`île : reliée à une île d’avant, ${LIENS[mode][0].toLowerCase()}`);
+    closeSheet(); titre = { h1: mode === 'pont' ? 'Un pont' : 'Côte à côte', line: `Ton île est ${lieeDit(x)}. Le lien reste sur ce téléphone.` }; render('ile');
+  });
+  maj();
+  const body = el('div', {}, el('h2', { textContent: p0 ? 'Sa voisine' : 'La relier à une île d’avant' }),
+    el('p', { className: 'intro', textContent: p0 ? `Ton île est ${lieeDit(x)}.` : 'Ton île peut se poser à côté d’une de tes îles d’avant : par un pont, ou collée à elle.' }),
+    el('h3', { textContent: 'À côté de' }), ou, el('h3', { textContent: 'Comment' }), comment,
+    el('p', { className: 'avertir', textContent: AVIS_VOISINES }), dit, ok, etat);
+  if (p0) {
+    const effacer = el('p', { className: 'effacer' }), lien = quiet('la détacher', () => effacer.replaceChildren('Elle ne sera plus à côté de ' + nomDit(p0) + '. Dans l’archipel, elle reste où elle est. ',
+      quiet('la détacher', () => { delete x.voisine; saveIle(); note('île : détachée de sa voisine'); closeSheet(); titre = { h1: 'Seule', line: 'Ton île n’est plus reliée à une île d’avant.' }; render('ile'); }), ' · ', quiet('non', () => effacer.replaceChildren(lien))));
+    effacer.append(lien); body.append(effacer);
+  }
+  body.append(footRow(quiet('pas maintenant', closeSheet)));
+  openSheet(body);
 }
 
 async function dessinerQR(c, texte) { // le code du lien, dessiné ici : aucun service extérieur ne voit le lien
@@ -633,7 +733,7 @@ function partagerSheet(x) { // un lien vers une de tes îles, à envoyer ou à m
   openSheet(el('div', {},
     el('h2', { textContent: 'Partager ton île' }),
     el('p', { className: 'intro', textContent: 'Un lien à envoyer, ou un code à montrer. Qui l’ouvre voit ton île telle qu’elle est dans l’archipel, et peut tracer une route jusqu’à elle.' }),
-    el('p', { className: 'avertir', textContent: 'Qui a ce lien reconnaîtra ton île dans l’archipel, et la verra grandir après chaque dépôt. Donne-le seulement à quelqu’un de confiance.' }),
+    el('p', { className: 'avertir', textContent: `Qui a ce lien reconnaîtra ton île dans l’archipel, et la verra grandir après chaque dépôt.${partenaire(x) || dependantes(x).length ? ' Il pourra aussi deviner que ses voisines sont à toi.' : ''} Donne-le seulement à quelqu’un de confiance.` }),
     el('p', { className: 'intro', textContent: `${DEFINITIVE} Tu pourras aussi fermer le lien, ou tout couper.` }),
     zone, etat, footRow(quiet('revenir', closeSheet))), () => { if (!x.archipel?.id && ecran === 'ile') render('ile'); }); // retirée ailleurs entre-temps : la vue le dit
 }
@@ -664,7 +764,7 @@ function routesSheet(x) { // les routes d’une de tes îles : les couper une à
       if (!liste.children.length) liste.append(el('p', { className: 'tiny', textContent: 'Aucune route pour l’instant.' }));
     }).catch(e => { lecture.textContent = pourquoi(e); });
     const effacer = el('p', { className: 'effacer' }), lien = quiet('tout couper, et déplacer ton île', () => effacer.replaceChildren(
-      'Le lien ne mènera plus nulle part, toutes les routes disparaîtront, et ton île changera de place dans l’archipel : qui l’avait repérée ne la retrouvera plus. ',
+      `Le lien ne mènera plus nulle part, toutes les routes disparaîtront, et ton île changera de place dans l’archipel : qui l’avait repérée ne la retrouvera plus.${partenaire(x) || dependantes(x).length ? ' Elle ne sera plus à côté de tes autres îles.' : ''} `,
       quiet('tout couper', async () => {
         etat.textContent = 'Un instant…';
         let revenue; try { revenue = await toutCouper(x); } catch (e) { signaler(e); etat.textContent = pourquoi(e); effacer.replaceChildren(lien); return; }
@@ -1190,18 +1290,30 @@ function changerSheet() {
   body.append(el('h3', { textContent: 'Le paysage de la prochaine' }), choixPaysage(paysage, id => { paysage = id; }));
   const [champ, zone] = champNom(nomAuHasard(nomsPris()), nomsPris()); // un nom tiré au hasard, qu’on peut garder ou changer
   body.append(el('h3', { textContent: 'Son nom' }), zone, el('p', { className: 'tiny', textContent: 'Il reste sur ce téléphone : personne d’autre ne le voit.' }));
+  let lien = 'non'; // la prochaine, à côté de celle-ci : par un pont, ou collée
+  const avis = el('p', { className: 'tiny', hidden: true, textContent: AVIS_VOISINES });
+  const liens = el('div', { className: 'list choix' }, ...[['non', 'Non', 'une île seule, à sa place'], ...Object.entries(LIENS).map(([k, [t, s]]) => [k, t, s])].map(([k, t, s]) => {
+    const r = el('button', { type: 'button', className: 'row' }, t, el('small', { textContent: s }));
+    r.setAttribute('aria-pressed', String(k === lien));
+    r.addEventListener('click', () => { lien = k; for (const c of liens.children) c.setAttribute('aria-pressed', String(c === r)); avis.hidden = k === 'non'; });
+    return r;
+  }));
+  body.append(el('h3', { textContent: 'À côté de celle-ci ?' }), liens, avis);
   const b = el('button', { type: 'button', className: 'gesture', textContent: 'Commencer une nouvelle île' });
   b.addEventListener('click', () => {
     closeSheet();
     if (!ile.envoyee && send.checked) { ile.archipel = { attente: true }; note(`île : mise dans l’archipel (${listeDe(rs.comptes)})`); } // elle partira dès que possible
     else if (!ile.archipel) delete ile.routesEnAttente; // elle reste ici : ses routes ne partiront pas
     ile.quittee = new Date().toISOString();
+    const avant = ile;
     iles = [...iles, ile]; saveIles();
-    ile = nouvelleIle(paysage); ile.nom = propre(champ.value) || nomAuHasard(nomsPris()); saveIle();
-    note(`paysage : ${BIOMES[paysage].nom}`);
+    ile = nouvelleIle(paysage); ile.nom = propre(champ.value) || nomAuHasard(nomsPris());
     courant = deriver(ile); vie.clear();
+    if (lien !== 'non') { ile.voisine = { ile: avant.id, mode: lien, angle: angleDepart(ile, avant) }; note(`île : la prochaine, ${LIENS[lien][0].toLowerCase()}`); }
+    saveIle();
+    note(`paysage : ${BIOMES[paysage].nom}`);
     note('geste : changer d’île');
-    titre = { h1: 'Une île vide', line: 'Elle poussera avec ce que tu déposeras. Celle d’avant reste ici.' };
+    titre = { h1: 'Une île vide', line: lien === 'non' ? 'Elle poussera avec ce que tu déposeras. Celle d’avant reste ici.' : `Elle poussera avec ce que tu déposeras, ${lieeDit(ile)}.` };
     go('ile');
     synchroniser();
   });
@@ -1250,7 +1362,7 @@ function ilesSheet() {
   const body = el('div', {}, el('h2', { textContent: 'Tes îles d’avant' }), el('p', { className: 'intro', textContent: 'Elles restent ici. Elles ne poussent plus.' }));
   body.append(el('div', { className: 'list' }, ...[...iles].reverse().map(x => {
     const d = deriver(x), rs = resume(d);
-    const open = el('button', { type: 'button', className: 'row' }, nomIle(x), el('small', { textContent: `${listeDe(rs.comptes)}${x.envoyee ? ' · dans l’archipel' : ''}` }));
+    const open = el('button', { type: 'button', className: 'row' }, nomIle(x), el('small', { textContent: `${listeDe(rs.comptes)}${x.envoyee ? ' · dans l’archipel' : ''}${lieeDit(x) ? ` · ${lieeDit(x)}` : ''}` }));
     open.addEventListener('click', () => { closeSheet(); regard = x; go('ile'); });
     return open;
   })));

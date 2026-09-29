@@ -17,7 +17,7 @@ En bas de l’écran, trois onglets restent toujours à portée de pouce : **Dé
 3. **La page.** Des débuts de phrases tirés des cases. Le texte est lu sur le téléphone : les sujets dont il parle s’ajoutent aux graines, et des lanternes s’allument sur l’îlot pendant qu’on écrit. Si des mots inquiètent, des numéros d’écoute s’affichent.
 4. **Terminer.** Tout ce qui a été déposé pousse sur l’île, texte compris : on ne choisit pas ce que le texte fait pousser. S’il y a un texte, le seul choix porte sur lui : le garder sur le téléphone, pour le relire en touchant ce qu’il a fait pousser, ou le brûler sous ses yeux. Il n’en reste alors que ses lanternes. Un lien discret permet aussi de tout effacer sans rien poser, après confirmation.
 5. **L’île.** Son nom en titre, et ce qui vient de pousser, avec une phrase. On la fait tourner du doigt, ou avec le bouton posé sur la vue, et on zoome en écartant deux doigts. Toucher une chose dit ce qu’elle est, d’après quelles cases, et depuis quand. L’action principale est « Déposer autre chose ». Juste après un dépôt, si l’île n’est pas dans l’archipel, une carte sous la vue propose de l’y mettre : ce que les autres verraient, un seul geste, ou « pas maintenant ». Rien ne part sans ce geste. « Pas maintenant » est gardé pour cette île, et une île retirée de l’archipel ne se repropose pas d’elle-même ; un lien discret, « la mettre dans l’archipel », reste à côté des actions. Mise, la carte le dit, et mène à l’archipel, qui s’approche d’elle.
-6. **Changer d’île.** Celle-ci reste sur le téléphone et se revoit, par son nom. Une case, décochée d’office, la met dans l’archipel : les autres verraient « une île avec deux arbres nus, une pierre et une maison », dans son paysage, rien d’autre. La prochaine a déjà un nom, tiré au hasard, qu’on garde ou qu’on change.
+6. **Changer d’île.** Celle-ci reste sur le téléphone et se revoit, par son nom. Une case, décochée d’office, la met dans l’archipel : les autres verraient « une île avec deux arbres nus, une pierre et une maison », dans son paysage, rien d’autre. La prochaine a déjà un nom, tiré au hasard, qu’on garde ou qu’on change. Elle peut aussi se poser à côté de celle-ci, par un pont ou collée à elle.
 7. **L’archipel.** Une mer au soir, avec des voiliers, et les îles réelles : celles que des personnes y ont mises, les soixante plus récentes. Aucune n’est inventée ; tant que personne n’y a mis d’île, l’archipel le dit. Pendant qu’on regarde, les îles qui arrivent viennent de l’horizon, et celles qui grandissent changent sur place. Toucher une île fait s’en approcher : de près, elle se construit comme dans sa vue, avec tout son décor et ses choses animées ; de loin, les îles sont dessinées en version légère. « Y mettre ton île » y pose la sienne, dans l’eau libre la plus proche de sa sensation ; ensuite, chaque dépôt la fait grandir là-bas aussi. On peut l’en retirer depuis son île.
 
 ## Le nom de ton île
@@ -25,6 +25,15 @@ En bas de l’écran, trois onglets restent toujours à portée de pouce : **Dé
 Chaque île a un nom, à la place d’une date. Il est tiré au hasard dans une liste d’îles, d’oiseaux de mer, de vents et de lumières, qui ne dit rien de ce qu’on dépose : « L’île aux Mouettes », « L’île du Levant »… Le hasard ne donne jamais à une île le nom d’une autre des siennes. On le change quand on veut, avec « la renommer », sous la vue de l’île : un autre nom au hasard, ou un nom écrit à la main, sur une ligne, de quarante signes au plus. En changeant d’île, la prochaine reçoit le sien, qu’on garde ou qu’on change. Les îles d’avant se retrouvent par leur nom, et se renomment aussi ; celles d’avant cette version en ont reçu un, tiré de la même liste.
 
 Le nom reste sur le téléphone. Il ne part jamais dans l’archipel : personne d’autre ne le voit. Dans l’archipel, il flotte au-dessus de ses îles, sur ce téléphone seulement, et les routes le disent pour choisir d’où tracer.
+
+## Tes îles côte à côte
+
+Une nouvelle île peut se poser à côté d’une île d’avant : **par un pont**, un petit pont de bois au-dessus d’un bras de mer, ou **collée à côté**, les deux rivages se touchant. On le choisit en changeant d’île, pour la prochaine, à côté de celle qu’on quitte ; ou plus tard, sous la vue de l’île, avec « la relier à une île d’avant », vers n’importe laquelle. Non, d’office.
+
+- **Dans la vue de l’île**, sa voisine est là, construite comme elle, avec sa vie : au bout du pont, ou collée. La vue recule un peu pour montrer son rivage, et tourne d’abord pour la laisser de l’autre côté. La toucher dit son nom, et comment elles sont reliées. Une île d’avant, regardée, montre de même les îles posées à côté d’elle. Les pontons des routes ne se mettent jamais face à une voisine.
+- **Dans l’archipel**, les deux îles sont voisines. La nouvelle s’y pose à côté de sa voisine, du côté où ce qu’elle porte la placerait, si l’île pleine y tient ; sinon au plus près qui le permet. En grandissant, elle s’écarte juste ce qu’il faut pour rester collée, ou au bout de son pont : sa place change, rien d’autre. Si l’une des deux n’est pas dans l’archipel, chacune y reste à sa place.
+- **Ce que les autres voient** : deux îles voisines, rien de plus. Le pont, les noms et le lien restent sur le téléphone : le pont n’est dessiné que sur celui-ci. Mais qui reconnaît l’une pourra deviner que l’autre est à la même personne : la feuille le dit avant tout geste, et la feuille du partage aussi.
+- **Sa voisine**, sous la vue : la relier autrement, à une autre, ou la détacher, avec une seconde touche ; détachée, elle reste où elle est dans l’archipel. Tout couper l’emmène ailleurs : elle n’est alors plus à côté de ses voisines.
 
 ## L’installer comme une app
 
@@ -108,12 +117,12 @@ Sans WebGL, la page reste utilisable : l’île et l’archipel ne s’affichent
 
 ## L’archipel partagé
 
-L’archipel vit dans la base du projet Supabase de Pyramides, dans un espace à part : le schéma `archipel`, sans aucun lien avec les tables de Pyramides. On n’y entre que par des fonctions publiques : `archipel_poser`, qui pose une île ou la fait grandir, `archipel_lire` et `archipel_retirer` ; et pour les routes entre les îles, `archipel_partager`, `archipel_voir`, `archipel_relier`, `archipel_couper`, `archipel_routes` et `archipel_voisines`. Le reste est fermé. La base est décrite dans `base/archipel.sql`.
+L’archipel vit dans la base du projet Supabase de Pyramides, dans un espace à part : le schéma `archipel`, sans aucun lien avec les tables de Pyramides. On n’y entre que par des fonctions publiques : `archipel_poser`, qui pose une île ou la fait grandir, `archipel_lire`, `archipel_retirer`, et `archipel_deplacer`, qui garde une île à côté d’une autre des siennes ; et pour les routes entre les îles, `archipel_partager`, `archipel_voir`, `archipel_relier`, `archipel_couper`, `archipel_routes` et `archipel_voisines`. Le reste est fermé. La base est décrite dans `base/archipel.sql`.
 
 - **Seulement la forme.** Ce qui part est ce que la 3D dessine : le paysage, la graine du relief, la taille, le ciel, le phare, et pour chaque chose sa famille, son espèce, sa taille, sa case, ses états visibles et le nombre de ses lanternes. Jamais le texte, les cases cochées, les sujets, les dates, un nom ou un compte. La variante de chaque chose se tire de ce qui se voit, et les choses partent rangées par case : ni le sujet ni l’ordre des dépôts ne se lisent.
 - **Ce que la forme laisse deviner.** Elle montre ce qui a poussé, et la grammaire est publique : un phare dit un danger, une pierre fendue dit « jamais réparé ». C’est pour cela que rien ne part sans un geste, et que la feuille dit ce que les autres verront.
 - **Seulement quand on le choisit.** La carte proposée après un dépôt, « Y mettre ton île », ou la case en changeant d’île. Sans ce geste, rien ne part : même une île marquée « envoyée » avant le serveur reste sur le téléphone. Une fois dans l’archipel, chaque dépôt envoie sa nouvelle forme.
-- **Un jeton, pas de compte.** Le téléphone tire un jeton secret pour chaque île. La base n’en garde que l’empreinte : seul ce téléphone peut faire grandir l’île ou la retirer.
+- **Un jeton, pas de compte.** Le téléphone tire un jeton secret pour chaque île. La base n’en garde que l’empreinte : seul ce téléphone peut faire grandir l’île, la déplacer ou la retirer. Déplacer ne change que sa place, dans la mer.
 - **Les routes.** Une île de l’archipel peut se partager par un lien : un code tiré au hasard sur le téléphone, dont la base ne garde que l’empreinte. Qui a le lien voit l’île, et peut tracer une route entre elle et une des siennes. Une route relie deux îles, et rien d’autre : ni mot, ni nom, ni date. Chacune des deux îles peut la couper, seule, à tout moment. Fermer le lien empêche d’autres routes ; retirer l’île efface ses routes et son lien. Avec son jeton, une île retrouve les îles au bout de ses routes, et seulement celles-là.
 - **La base se protège.** Chaque forme est vérifiée, clé par clé, valeur par valeur. Les places restent dans la mer. Au plus trente nouvelles îles par minute, pour tout l’archipel ; au plus douze routes par île, et soixante nouvelles routes par minute. Pas de date : un simple rang dit l’ordre des arrivées.
 - **Sans réseau**, l’archipel le dit, et les îles restent sur le téléphone. Une île quittée hors ligne part à la prochaine ouverture.
@@ -155,7 +164,7 @@ Une île de l’archipel peut se relier à d’autres, par des routes sur l’ea
 | `index.html` | La page |
 | `style.css` | Le style |
 | `app.js` | Les écrans, les feuilles, les gestes, le stockage local, l’archipel partagé |
-| `serveur.js` | Les appels au serveur de l’archipel : lire, poser, faire grandir, retirer une île ; partager, voir, relier, couper, lire les routes |
+| `serveur.js` | Les appels au serveur de l’archipel : lire, poser, faire grandir, déplacer, retirer une île ; partager, voir, relier, couper, lire les routes |
 | `musique.js` | Les deux musiques, le feu de camp et la mer, calculées et jouées par le navigateur |
 | `sw.js` | Le service worker : les fichiers du site, gardés pour s’ouvrir sans réseau |
 | `manifest.webmanifest` | Le manifeste de l’app installable : nom, couleurs, icônes |
@@ -165,19 +174,19 @@ Une île de l’archipel peut se relier à d’autres, par des routes sur l’ea
 | `lexique.js` | Les mots qui font pousser un sujet ou donnent une sensation, lus sur l’appareil |
 | `biomes.js` | Les paysages : couleurs, essences, maisons, cultures, décor, la vie qui s’y promène |
 | `ile.js` | La carte, les quartiers, l’île recalculée depuis ses dépôts, sa forme partagée, les îles inventées de l’intro |
-| `monde.js` | Le relief, la mer, le ciel, la lumière, la caméra, l’île, l’archipel, l’intro, l’îlot, les aperçus |
+| `monde.js` | Le relief, la mer, le ciel, la lumière, la caméra, l’île et ses voisines, les ponts, l’archipel, l’intro, l’îlot, les aperçus |
 | `modeles.js` | Les choses en 3D, leurs formes, leurs états, le petit décor |
 | `vie.js` | La vie qui ne dit rien : les bêtes du paysage et leurs allées et venues, les oiseaux du ciel et leur vol |
 | `outils.js` | Les nombres stables et le mélange des couleurs |
 | `vendor/` | three.js 0.186, réduit aux pièces utilisées, et qrcode-generator 2.0.4, pour le code du lien d’une île (licences MIT) |
 | `fonts/` | Nunito (licence SIL OFL 1.1) |
 | `404.html` | Page introuvable ; les anciennes adresses des maquettes et de `limbes/` mènent à l’accueil |
-| `base/archipel.sql` | La base de l’archipel partagé, telle qu’elle est dans le projet de Pyramides : les îles, puis les liens et les routes |
-| `tests/` | Les tests, dans Chromium avec une 3D logicielle : le parcours, l’intro, le retour, la stabilité, l’archipel partagé, les routes entre les îles, le nom des îles, l’installation, la musique, le menu Plus. Ils parlent à un faux serveur, en mémoire, jamais à la vraie base |
+| `base/archipel.sql` | La base de l’archipel partagé, telle qu’elle est dans le projet de Pyramides : les îles, les liens et les routes, puis le déplacement d’une île |
+| `tests/` | Les tests, dans Chromium avec une 3D logicielle : le parcours, l’intro, le retour, la stabilité, l’archipel partagé, les routes entre les îles, le nom des îles, les îles côte à côte, l’installation, la musique, le menu Plus. Ils parlent à un faux serveur, en mémoire, jamais à la vraie base |
 | `package.json` | Seulement pour les tests ; le site n’a besoin de rien |
 | `.nojekyll` | Sert les fichiers tels quels sur GitHub Pages |
 
-Le stockage local utilise le préfixe `archipel:`. Chaque île y garde son nom. Une île mise dans l’archipel y garde sa place et son jeton ; partagée, le code de son lien ; reliée, les îles au bout de ses routes. Une route qui attend l’île y garde le lien de l’autre. `archipel:gardees` garde les îles confiées. Au premier passage, l’île gardée sous un ancien nom du projet est reprise, sans rien effacer. `archipel:intro` retient que l’intro a été vue ou passée.
+Le stockage local utilise le préfixe `archipel:`. Chaque île y garde son nom ; posée à côté d’une île d’avant, laquelle, comment, et l’angle. Une île mise dans l’archipel y garde sa place et son jeton ; partagée, le code de son lien ; reliée, les îles au bout de ses routes. Une route qui attend l’île y garde le lien de l’autre. `archipel:gardees` garde les îles confiées. Au premier passage, l’île gardée sous un ancien nom du projet est reprise, sans rien effacer. `archipel:intro` retient que l’intro a été vue ou passée.
 
 Chaque fichier est appelé avec un numéro de version, comme `?v=1`. Après une modification, on augmente le numéro de ce fichier là où il est appelé, pour qu’un téléphone ne mélange pas deux versions en cache. Le service worker s’y fie aussi : en local, sans changer le numéro, il resservirait l’ancien fichier ; les outils de développement du navigateur permettent de le contourner.
 
@@ -193,7 +202,7 @@ Lancer les tests, qui servent eux-mêmes le site, en une dizaine de minutes :
 ```sh
 npm install
 npm test            # toutes les suites
-npm test -- archipel    # une seule : parcours, intro, retour, stabilite, archipel, routes, noms, pwa, musique ou plus
+npm test -- archipel    # une seule : parcours, intro, retour, stabilite, archipel, routes, noms, voisines, pwa, musique ou plus
 ```
 
 Les captures d’écran des tests vont dans un dossier temporaire, ou dans celui que désigne `CAPTURES`. Sur GitHub, les tests tournent à chaque proposition de changement, une suite par job, en parallèle : le tout dure le temps de la plus longue, 4 à 5 minutes.
