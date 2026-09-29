@@ -442,9 +442,10 @@ main { padding-top: .6rem; }
 .ilewrap.mer { aspect-ratio: 3 / 4; background: linear-gradient(#f6cfa6, #fbe6d2); }
 .ilewrap { position: relative; }
 .ilewrap canvas.vue3d { display: block; width: 100%; height: 100%; touch-action: pan-y; cursor: grab; }
-.tourner, .son { position: absolute; z-index: 1; right: .7rem; bottom: .7rem; display: grid; place-items: center; width: 2.9rem; height: 2.9rem; padding: 0; border: 0; border-radius: 50%; background: rgba(255, 255, 255, .88); color: var(--accent-ink); box-shadow: 0 .15rem .6rem rgba(43, 39, 35, .18); cursor: pointer; -webkit-tap-highlight-color: transparent; }
-.tourner svg, .son svg { width: 1.45rem; height: 1.45rem; fill: none; stroke: currentColor; stroke-width: 2.1; stroke-linecap: round; stroke-linejoin: round; }
-.tourner:focus-visible, .son:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.tourner, .son, .partager-vue { position: absolute; z-index: 1; right: .7rem; bottom: .7rem; display: grid; place-items: center; width: 2.9rem; height: 2.9rem; padding: 0; border: 0; border-radius: 50%; background: rgba(255, 255, 255, .88); color: var(--accent-ink); box-shadow: 0 .15rem .6rem rgba(43, 39, 35, .18); cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.tourner svg, .son svg, .partager-vue svg { width: 1.45rem; height: 1.45rem; fill: none; stroke: currentColor; stroke-width: 2.1; stroke-linecap: round; stroke-linejoin: round; }
+.tourner:focus-visible, .son:focus-visible, .partager-vue:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.partager-vue { top: .7rem; bottom: auto; } /* partager l’île, en haut à droite de la vue */
 .son { right: auto; left: .7rem; } /* le son, en bas à gauche de la vue ; coupé, il s’efface un peu */
 .son[aria-pressed="false"] { color: var(--muted); background: rgba(255, 255, 255, .72); }
 .ilewrap canvas.vue3d:active { cursor: grabbing; }
