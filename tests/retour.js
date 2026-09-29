@@ -31,7 +31,7 @@ const brouillon = JSON.stringify({ answers: { situ: ['regret'], mots: [], sujets
 
   await ouvrir({ 'archipel:intro': '1', 'archipel:ile': ile(2, []), 'archipel:iles': JSON.stringify([JSON.parse(ile(1, [depot(1, ['s4'])], { quittee: new Date().toISOString() }))]) });
   e = await etat();
-  verifier(e.onglet === 'ile' && await p.$('.actions .quiet:has-text("tes îles d’avant")') !== null, 'une île vide, mais des îles d’avant : on arrive aussi sur l’île, avec ses îles d’avant à portée');
+  verifier(e.onglet === 'ile' && await p.$('.actions .outil:has-text("tes îles d’avant")') !== null, 'une île vide, mais des îles d’avant : on arrive aussi sur l’île, avec ses îles d’avant à portée');
 
   await ouvrir({ 'archipel:intro': '1', 'archipel:ile': ile(3, []), 'archipel:draft': brouillon });
   e = await etat();

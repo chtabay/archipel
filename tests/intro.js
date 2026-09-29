@@ -54,7 +54,7 @@ const dansLaVue = (p, sel) => p.evaluate(s => { const r = document.querySelector
 
   // 4. la revoir depuis l’archipel, puis passer : retour à l’archipel
   await p.click('[data-onglet="archipel"]'); await p.waitForTimeout(1500);
-  await p.click('.actions .quiet:has-text("revoir l’intro")'); await p.waitForSelector('.intro-nav .quiet:has-text("passer")', { timeout: 20000 });
+  await p.click('.actions .outil:has-text("revoir l’intro")'); await p.waitForSelector('.intro-nav .quiet:has-text("passer")', { timeout: 20000 });
   verifier(await p.evaluate(() => document.body.classList.contains('en-intro')), 'l’archipel propose de revoir l’intro');
   await p.click('.intro-nav .quiet:has-text("passer")'); await p.waitForTimeout(1500);
   verifier(await p.evaluate(() => !!document.querySelector('#arch-line')), 'revue puis passée, on revient à l’archipel');
