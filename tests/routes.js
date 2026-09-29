@@ -142,7 +142,8 @@ const fermerFeuille = async p => { await p.click('.sheet .foot-row .quiet'); awa
   verifier(code2 !== code && /^[A-Za-z0-9_-]{22}$/.test(code2), 'un lien neuf, un code neuf');
   await B.p.goto(lien2); await attendre(B.p, () => B.p.evaluate(() => document.querySelector('h1')?.textContent === 'Une île t’est confiée' && !!document.querySelector('#app .btn')));
   const route2 = await feuille(B.p, '#app .btn:has-text("Tracer une route")');
-  verifier(/La route reliera ton île d’aujourd’hui à cette île\./.test(route2), 'depuis une île déjà dans l’archipel, la route part tout de suite');
+  const nomB = (await stockee(B.p)).nom;
+  verifier(!!nomB && route2.includes(`La route reliera «\u202f${nomB}\u202f» à cette île.`), `depuis une île déjà dans l’archipel, la route part tout de suite ; la feuille dit l’île par son nom (${nomB})`);
   await B.p.click('.sheet .gesture:has-text("Tracer la route")'); await B.p.waitForSelector('.sheet', { state: 'detached' });
   verifier(a.etat.routes.size === 1 && /La route est tracée/.test(await lire(B.p, '.lien-etat')), 'la route est tracée, et l’accueil le dit');
   const placeAvant = (await stockee(A.p)).archipel;

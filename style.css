@@ -389,6 +389,12 @@ textarea:focus { outline: none; border-color: var(--accent); }
 .lien-dit { margin: .8rem .2rem 0; color: var(--muted); }
 .lien-etat:empty, #ile-routes:empty { display: none; }
 
+/* ───────── Le nom de l’île ───────── */
+
+.nommer { display: grid; justify-items: center; gap: .45rem; margin: .2rem 0 .7rem; }
+.nommer input { width: 100%; padding: .7rem .85rem; border: 1.5px solid var(--line-hi); border-radius: .7rem; background: var(--card); color: var(--ink); font: 700 1.05rem/1.3 var(--sans); }
+.nommer input:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px var(--accent-soft); }
+
 .noscript { max-width: 32rem; margin: 2rem auto; padding: 0 1rem; text-align: center; }
 
 @keyframes fade { from { opacity: 0; } }
