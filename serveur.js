@@ -20,6 +20,8 @@ async function appeler(fonction, corps, delai = 10000) {
 export const lireArchipel = (depuis = 0, limite = 60) => appeler('archipel_lire', { p_depuis: depuis, p_limite: limite });
 // poser une île (sa place x, z), ou la faire grandir (ile) : { ile, ordre }
 export const poserIle = (jeton, forme, { x = null, z = null, ile = null } = {}) => appeler('archipel_poser', { p_jeton: jeton, p_forme: forme, p_x: x, p_z: z, p_ile: ile }).then(r => r?.[0]);
+// la déplacer, avec son jeton : pour qu’elle reste à côté d’une autre de tes îles quand elle grandit ; vrai
+export const deplacerIle = (ile, jeton, x, z) => appeler('archipel_deplacer', { p_ile: ile, p_jeton: jeton, p_x: x, p_z: z });
 // la retirer : vrai si elle y était
 export const retirerIle = (ile, jeton) => appeler('archipel_retirer', { p_ile: ile, p_jeton: jeton });
 // un jeton secret, tiré au hasard sur ce téléphone

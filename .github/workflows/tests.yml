@@ -13,7 +13,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        suite: [parcours, intro, retour, stabilite, archipel, routes, noms, pwa, musique, plus]
+        suite: [parcours, intro, retour, stabilite, archipel, routes, noms, voisines, pwa, musique, plus]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

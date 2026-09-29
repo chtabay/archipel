@@ -73,6 +73,11 @@ function archipelFactice() {
       if (typeof c.p_x !== 'number' || typeof c.p_z !== 'number') return json({ message: 'place invalide' }, 400);
       const i = ajouter(c.p_forme, c.p_x, c.p_z, c.p_jeton); return json([{ ile: i.ile, ordre: i.ordre }]);
     }
+    if (f === 'archipel_deplacer') { // sa place seulement, avec son jeton, dans la mer
+      const i = aMoi(c.p_ile, c.p_jeton); if (!i) return json({ message: 'île inconnue' }, 400);
+      if (typeof c.p_x !== 'number' || typeof c.p_z !== 'number' || !(Math.abs(c.p_x) <= 40 && Math.abs(c.p_z) <= 60)) return json({ message: 'place invalide' }, 400);
+      i.x = c.p_x; i.z = c.p_z; i.ordre = ++etat.rang; return json(true);
+    }
     if (f === 'archipel_retirer') { // son lien et ses routes s’en vont avec elle
       const n = etat.iles.length; etat.iles = etat.iles.filter(x => !(x.ile === c.p_ile && x.jeton === c.p_jeton));
       if (etat.iles.length < n) { fermer(c.p_ile); for (const [a, b] of routesDe(c.p_ile)) etat.routes.delete(cle(a, b)); }
