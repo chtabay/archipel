@@ -1,4 +1,4 @@
-// Le menu « Plus », dans la barre du bas : quitter vite, la musique, installer l’app, parler à quelqu’un, revoir l’intro.
+// Le menu « Plus », dans la barre du bas : quitter vite, la musique, installer l’app, parler à quelqu’un, j’ai reçu un lien, revoir l’intro.
 const { chromium } = require('playwright');
 const path = require('path'), fs = require('fs');
 const { BASE, OUT: CAPTURES, GL, verifier, bilan, surveiller, contexte } = require('./commun');
@@ -20,7 +20,7 @@ const sonore = p => p.evaluate(() => window.archipel.musique.etat());
     verifier((await p.$$('.onglets button')).length === 4 && (await p.textContent('[data-onglet="plus"]')).trim() === 'Plus', 'la barre du bas a quatre boutons, le dernier est « Plus »');
     await ouvrirMenu(p);
     const l = await lignes(p);
-    verifier(l.join(' · ') === 'Quitter vite ce site · Allumer la musique · Installer l’app · Parler à quelqu’un · Revoir l’intro' && (await p.$eval('.onglets [aria-current="page"]', b => b.dataset.onglet)) === 'ile', `le menu : ${l.join(' · ')} ; l’onglet allumé reste Ton île`);
+    verifier(l.join(' · ') === 'Quitter vite ce site · Allumer la musique · Installer l’app · Parler à quelqu’un · J’ai reçu un lien · Revoir l’intro' && (await p.$eval('.onglets [aria-current="page"]', b => b.dataset.onglet)) === 'ile', `le menu : ${l.join(' · ')} ; l’onglet allumé reste Ton île`);
     await p.waitForTimeout(500); await p.screenshot({ path: path.join(OUT, 'menu.png') });
 
     // 2. la musique, depuis le menu : allumée sur l’île, le feu de camp joue ; le bouton de la vue et la ligne le disent
@@ -83,7 +83,7 @@ const sonore = p => p.evaluate(() => window.archipel.musique.etat());
     await p.goto(BASE); await semer(p); await p.reload(); await p.waitForTimeout(800);
     await ouvrirMenu(p);
     const l = await lignes(p);
-    verifier(l.length === 4 && !l.includes('Revoir l’intro') && !e.length, `sans 3D : le menu a ${l.length} lignes, sans l’intro`);
+    verifier(l.length === 5 && !l.includes('Revoir l’intro') && !e.length, `sans 3D : le menu a ${l.length} lignes, sans l’intro`);
     await sans.close(); }
 
   await b.close();

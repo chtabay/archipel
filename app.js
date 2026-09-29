@@ -1292,7 +1292,27 @@ const ICONES_MENU = {
   parler: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 4.5h3l1.5 4-2 1.5a10 10 0 0 0 5 5l1.5-2 4 1.5v3a1.5 1.5 0 0 1-1.5 1.5A14 14 0 0 1 5 6a1.5 1.5 0 0 1 1.5-1.5z"/></svg>',
   intro: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10-6.5z"/></svg>',
   confiees: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 18.5c1.2-.7 2.4-.7 3.6 0M17.9 18.5c1.2-.7 2.4-.7 3.6 0"/><path d="M3.2 16.2c.5-1.5 1.4-2.3 2.5-2.3s2 .8 2.5 2.3M15.8 16.2c.5-1.5 1.4-2.3 2.5-2.3s2 .8 2.5 2.3"/><path d="M6.5 10.5c3-4.5 8-4.5 11 0" stroke-dasharray="1.4 2.2"/></svg>',
+  lien: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.2 13.8a3.6 3.6 0 0 0 5.1 0l3.2-3.2a3.6 3.6 0 0 0-5.1-5.1l-1.1 1.1"/><path d="M13.8 10.2a3.6 3.6 0 0 0-5.1 0l-3.2 3.2a3.6 3.6 0 0 0 5.1 5.1l1.1-1.1"/></svg>',
 };
+// J’ai reçu un lien : dans l’app installée, on colle le lien d’une île pour l’ouvrir là où est son île. Sur iPhone surtout, un lien
+// ou un code QR s’ouvre dans le navigateur, qui a une autre mémoire que l’app installée. Le lien n’est gardé nulle part.
+const codeDe = texte => { const t = String(texte || '').trim(), m = t.match(/#ile=([A-Za-z0-9_-]{22})(?![A-Za-z0-9_-])/) || t.match(/^([A-Za-z0-9_-]{22})$/); return m ? m[1] : null; }; // le code, dans un lien ou seul
+function lienSheet() {
+  const champ = el('input', { type: 'text', className: 'lien', placeholder: 'Colle le lien ici', autocomplete: 'off', spellcheck: false, inputMode: 'url' }), etat = el('p', { className: 'tiny' });
+  champ.setAttribute('aria-label', 'Le lien reçu'); champ.setAttribute('autocapitalize', 'off'); etat.setAttribute('role', 'status');
+  const ouvrir = () => {
+    const code = codeDe(champ.value);
+    if (!code) { etat.textContent = champ.value.trim() ? 'Ce n’est pas le lien d’une île : il se termine par #ile=, suivi de vingt-deux signes.' : 'Colle d’abord le lien.'; champ.focus(); return; }
+    closeSheet(); note('route : un lien reçu, collé ici'); recu = { code }; go('lien');
+  };
+  champ.addEventListener('keydown', e => { if (e.key === 'Enter') ouvrir(); });
+  const b = el('button', { type: 'button', className: 'gesture', textContent: 'Ouvrir le lien' }); b.addEventListener('click', ouvrir);
+  const coller = navigator.clipboard?.readText ? quiet('coller le lien copié', async () => { try { champ.value = (await navigator.clipboard.readText()).trim(); etat.textContent = ''; } catch { champ.focus(); etat.textContent = 'Appuie longuement dans le champ, puis « Coller ».'; } }) : null;
+  openSheet(el('div', {}, el('h2', { textContent: 'J’ai reçu un lien' }),
+    el('p', { className: 'intro', textContent: 'Le lien d’une île, reçu par message : colle-le ici, pour l’ouvrir dans l’app, là où est ton île.' }),
+    el('p', { className: 'tiny', textContent: 'Un code QR s’ouvre avec l’appareil photo. S’il s’ouvre dans le navigateur, copie le lien, puis colle-le ici.' }),
+    el('div', { className: 'partage' }, champ, ...(coller ? [el('p', { className: 'partage-gestes' }, coller)] : [])), b, etat, footRow(quiet('revenir', closeSheet))));
+}
 function plusSheet() { // compact : une icône et quelques mots par ligne
   note('geste : menu plus');
   const ligne = (icone, titre, fn) => { const b = el('button', { type: 'button', className: 'row' }); b.innerHTML = icone; b.append(el('span', { textContent: titre })); b.addEventListener('click', fn); return b; };
@@ -1302,6 +1322,7 @@ function plusSheet() { // compact : une icône et quelques mots par ligne
     ...(musique.disponible ? [ligneMusique()] : []),
     ligne(ICONES_MENU.installer, installee() ? 'L’app est installée' : 'Installer l’app', installerSheet),
     ligne(ICONES_MENU.parler, 'Parler à quelqu’un', () => humansSheet()),
+    ligne(ICONES_MENU.lien, 'J’ai reçu un lien', lienSheet),
     ...(gardees.length ? [ligne(ICONES_MENU.confiees, 'Les îles qu’on t’a confiées', () => gardeesSheet())] : []),
     ...(vue ? [ligne(ICONES_MENU.intro, 'Revoir l’intro', () => { closeSheet(); revue = true; go('intro'); })] : []));
   openSheet(el('div', {}, el('h2', { textContent: 'Plus' }), liste, footRow(quiet('revenir', closeSheet))));
