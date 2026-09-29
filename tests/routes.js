@@ -100,8 +100,8 @@ const fermerFeuille = async p => { await p.click('.sheet .foot-row .quiet'); awa
   verifier(arch.barques === 1 && arch.bouge > .005, `une barque fait l’aller-retour sur la route (${arch.bouge.toFixed(3)} en une seconde et demie)`);
   await A.p.screenshot({ path: path.join(OUT, '5-archipel.png') });
   await A.p.click('[data-onglet="ile"]'); await attendre(A.p, () => A.p.evaluate(() => !!document.querySelector('#ile-routes')?.textContent));
-  const vueA = await A.p.evaluate(() => ({ dit: document.querySelector('#ile-routes')?.textContent, bouton: document.querySelector('#les-routes small')?.textContent, ligne: document.querySelector('#ile-line')?.textContent }));
-  verifier(vueA.dit === 'Une route est arrivée jusqu’à ton île.' && vueA.bouton === 'une route' && /· 1 route$/.test(vueA.ligne), `l’île de A dit qu’une route est arrivée (« ${vueA.dit} »)`);
+  const vueA = await A.p.evaluate(() => ({ dit: document.querySelector('#ile-routes')?.textContent, bouton: document.querySelector('#les-routes .outil-dit')?.textContent, ligne: document.querySelector('#ile-line')?.textContent }));
+  verifier(vueA.dit === 'Une route est arrivée jusqu’à ton île.' && vueA.bouton === '1' && /· 1 route$/.test(vueA.ligne), `l’île de A dit qu’une route est arrivée (« ${vueA.dit} »)`);
   const [pa, pb] = [a.etat.iles.find(y => y.ile === idA), a.etat.iles.find(y => y.ile === idB)], vise = Math.atan2(pb.z - pa.z, pb.x - pa.x);
   const ponton = await A.p.evaluate(() => { const g = window.archipel.vue.pontons, bq = g?.children.find(o => o.userData.barque); return bq ? { angle: Math.atan2(bq.position.z, bq.position.x), bache: bq.userData.attente, sillage: !!g.getObjectByName('sillage') } : null; });
   const ecartAngle = ponton ? Math.abs(Math.atan2(Math.sin(ponton.angle - vise), Math.cos(ponton.angle - vise))) : 9;
@@ -130,7 +130,7 @@ const fermerFeuille = async p => { await p.click('.sheet .foot-row .quiet'); awa
   verifier(await B.p.evaluate(() => !location.hash && /Une île peut toujours se refermer/.test(document.querySelector('#app').textContent)), 'B rouvre le lien : il ne mène plus nulle part, calmement');
   await B.p.click('#app .btn:has-text("Continuer")'); await B.p.waitForTimeout(300);
   await B.p.click('[data-onglet="archipel"]'); await B.p.waitForTimeout(600);
-  const confiees = await feuille(B.p, '.actions .outil:has-text("Les îles qu’on t’a confiées")');
+  const confiees = await feuille(B.p, '.actions .outil:has-text("Îles confiées")');
   verifier(/Son lien est fermé\./.test(confiees) && /Oublier une île ne coupe pas sa route/.test(confiees), 'l’île gardée dit que son lien est fermé');
   await fermerFeuille(B.p);
 

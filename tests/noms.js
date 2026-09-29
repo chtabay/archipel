@@ -35,7 +35,7 @@ const NOM = 'Le refuge du soir';
   await p.screenshot({ path: path.join(OUT, '1-titre.png') });
 
   // 2. la renommer : un autre nom, au hasard, jamais celui d’une autre de ses îles ; ou un nom écrit à la main, nettoyé
-  await p.click('#app .actions .outil:has-text("la renommer")'); await p.waitForSelector('.sheet .nommer input');
+  await p.click('#app .actions .outil:has-text("Renommer")'); await p.waitForSelector('.sheet .nommer input');
   const feuille = await lire(p, '.sheet');
   verifier(/Le nom de ton île/.test(feuille) && /Personne d’autre ne le voit, même quand ton île est dans l’archipel/.test(feuille) && await p.inputValue('.sheet .nommer input') === s.ile.nom, 'la renommer : la feuille dit que le nom reste ici, et montre le nom d’aujourd’hui');
   const tires = [];
@@ -64,7 +64,7 @@ const NOM = 'Le refuge du soir';
   await p.click('.sheet .list .row >> nth=0'); await p.waitForTimeout(1000);
   const avant = s.iles[s.iles.length - 1];
   verifier(await lire(p, '#app h1') === avant.nom && await lire(p, '#app .step') === 'Une île d’avant' && (await lire(p, '#ile-hint')).startsWith('Elle ne pousse plus'), `une île d’avant a son nom pour titre : « ${avant.nom} »`);
-  await p.click('#app .actions .outil:has-text("la renommer")'); await p.waitForSelector('.sheet .nommer input');
+  await p.click('#app .actions .outil:has-text("Renommer")'); await p.waitForSelector('.sheet .nommer input');
   await p.fill('.sheet .nommer input', 'L’île des premiers jours'); await p.press('.sheet .nommer input', 'Enter'); await p.waitForSelector('.sheet', { state: 'detached' });
   s = await stock(p);
   verifier(await lire(p, '#app h1') === 'L’île des premiers jours' && s.iles[s.iles.length - 1].nom === 'L’île des premiers jours' && s.ile.nom === NOM, 'renommée, l’île d’avant garde son nouveau nom ; celle d’aujourd’hui garde le sien');
@@ -72,7 +72,7 @@ const NOM = 'Le refuge du soir';
 
   // 5. l’archipel : seule sa forme part ; son nom, dessiné ici seulement, est sur l’eau au-dessus d’elle
   await peupler(p, a, 6);
-  await p.click('#app .actions .outil:has-text("la mettre dans l’archipel")'); await p.waitForSelector('.sheet .gesture');
+  await p.click('#app .actions .outil:has-text("Mettre dans l’archipel")'); await p.waitForSelector('.sheet .gesture');
   await p.click('.sheet .gesture:has-text("Y mettre ton île")'); await p.waitForSelector('.sheet', { state: 'detached', timeout: 10000 });
   const envoi = appels().find(y => y.f === 'archipel_poser');
   verifier(!!envoi && appels().every(y => !y.corps.includes('refuge') && !y.corps.includes('premiers jours') && !Object.keys(y.c).some(k => /nom/i.test(k))), `dans l’archipel, seule sa forme part : ni son nom, ni celui d’une autre de ses îles (${appels().length} requêtes relues)`);
@@ -106,7 +106,7 @@ const NOM = 'Le refuge du soir';
   const sans = await chromium.launch({ args: ['--disable-3d-apis', '--disable-webgl'] });
   const c2 = await contexte(sans), p2 = await c2.newPage(), e2 = [], x2 = []; surveiller(p2, e2, x2);
   await p2.goto(BASE); await semer(p2, { ile: ile(5, [depot(1, ['s4'])], { nom: 'Mon île sans 3D' }) }); await p2.reload(); await p2.waitForTimeout(800);
-  await p2.click('#app .actions .outil:has-text("la renommer")'); await p2.waitForSelector('.sheet .nommer input');
+  await p2.click('#app .actions .outil:has-text("Renommer")'); await p2.waitForSelector('.sheet .nommer input');
   await p2.fill('.sheet .nommer input', 'Toujours là'); await p2.click('.sheet .gesture:has-text("Garder ce nom")'); await p2.waitForSelector('.sheet', { state: 'detached' });
   verifier(await lire(p2, '#app h1') === 'Toujours là' && !e2.length && !x2.length, `sans 3D, le nom se lit et se change de même${e2.length ? ' : ' + e2.join(' | ') : ''}`);
   await sans.close();

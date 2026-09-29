@@ -33,7 +33,7 @@ const vue = p => p.evaluate(() => { const v = window.archipel.vue; return { vois
   await peupler(p, a, 8);
   await p.evaluate(i => { localStorage.clear(); localStorage.setItem('archipel:intro', '1'); localStorage.setItem('archipel:ile', i); }, JSON.stringify({ id: 1, seed: 5151, nee: new Date().toISOString(), biome: 'automne', depots: [depot(1, ['s4']), depot(2, ['s11']), depot(3, ['s7'])], envoyee: false, quittee: null, nom: 'L’île aux Hérons' }));
   await p.reload(); await p.waitForTimeout(1200);
-  await p.click('#app .actions .outil:has-text("la mettre dans l’archipel")'); await p.waitForSelector('.sheet .gesture');
+  await p.click('#app .actions .outil:has-text("Mettre dans l’archipel")'); await p.waitForSelector('.sheet .gesture');
   await p.click('.sheet .gesture:has-text("Y mettre ton île")'); await p.waitForSelector('.sheet', { state: 'detached', timeout: 10000 });
   const P = (await stockee(p)).archipel;
   verifier(!!P?.id, 'une île d’avant, mise dans l’archipel');
@@ -116,10 +116,10 @@ const vue = p => p.evaluate(() => { const v = window.archipel.vue; return { vois
   verifier(/Dans l’archipel, elle reste où elle est/.test(await lire(p, '.sheet .effacer')), 'la détacher : une seconde touche, et la feuille dit qu’elle reste à sa place');
   await p.click('.sheet .effacer .quiet:has-text("la détacher")'); await p.waitForSelector('.sheet', { state: 'detached' }); await p.waitForTimeout(1200);
   s = await stockee(p); v = await vue(p);
-  verifier(!s.voisine && v.voisines === 0 && s.archipel.x === ici8.x && s.archipel.z === ici8.z && appels().length === avant8 && !!(await p.$('#app .actions .outil:has-text("la relier à une île d’avant")')), 'détachée : plus de voisine, la même place, rien n’est parti');
+  verifier(!s.voisine && v.voisines === 0 && s.archipel.x === ici8.x && s.archipel.z === ici8.z && appels().length === avant8 && !!(await p.$('#app .actions .outil:has-text("Relier")')), 'détachée : plus de voisine, la même place, rien n’est parti');
 
   // 9. la relier de nouveau, par un pont ; puis tout couper : ailleurs, elle n’est plus à côté d’elle
-  await p.click('#app .actions .outil:has-text("la relier à une île d’avant")'); await p.waitForSelector('.sheet .list.choix');
+  await p.click('#app .actions .outil:has-text("Relier")'); await p.waitForSelector('.sheet .list.choix');
   await p.click('.sheet .gesture:has-text("La relier")'); await p.waitForSelector('.sheet', { state: 'detached', timeout: 10000 }); await p.waitForTimeout(1200);
   q = await place(p);
   verifier(q.mode === 'pont' && Math.hypot(q.ici[0] - q.attendu[0], q.ici[1] - q.attendu[1]) < .01, 'reliée de nouveau, par un pont : elle revient au bout de son pont');

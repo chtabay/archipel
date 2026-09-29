@@ -89,8 +89,8 @@ const stockee = (p, cle = 'ile') => p.evaluate(k => JSON.parse(localStorage.getI
 
     // 5. la retirer : elle disparaît du serveur, et reste entière ici
     await p.click('[data-onglet="ile"]'); await p.waitForTimeout(1200);
-    verifier(/Sa forme est dans l’archipel/.test(await lire(p, '#app .hint')) && !!(await p.$('.actions .outil:has-text("la retirer de l’archipel")')), 'sur l’île : elle se dit dans l’archipel, et on peut l’en retirer');
-    await p.click('.actions .outil:has-text("la retirer de l’archipel")'); await p.waitForSelector('.sheet');
+    verifier(/Sa forme est dans l’archipel/.test(await lire(p, '#app .hint')) && !!(await p.$('.actions .outil:has-text("Retirer de l’archipel")')), 'sur l’île : elle se dit dans l’archipel, et on peut l’en retirer');
+    await p.click('.actions .outil:has-text("Retirer de l’archipel")'); await p.waitForSelector('.sheet');
     await p.click('.sheet .gesture:has-text("La retirer de l’archipel")'); await p.waitForSelector('.sheet', { state: 'detached', timeout: 10000 }); await p.waitForTimeout(500);
     const retiree = await stockee(p);
     verifier(!a.etat.iles.some(i => i.ile === garde.id) && !retiree.archipel && !retiree.envoyee && retiree.depots.length === 3 && /Rien ne quitte ce téléphone/.test(await lire(p, '#app .hint')), 'la retirer : elle disparaît du serveur, et reste entière ici');
@@ -169,7 +169,7 @@ const stockee = (p, cle = 'ile') => p.evaluate(k => JSON.parse(localStorage.getI
     const oubliee = await stockee(p);
     verifier(appels(a, 'archipel_poser')[0]?.c.p_ile === id && !oubliee.archipel && !oubliee.envoyee && oubliee.depots.length === 2, 'retirée ailleurs : à la mise à jour, le serveur ne la connaît plus, et le téléphone l’oublie aussi, sans rien perdre');
     await p.click('[data-onglet="ile"]'); await p.waitForTimeout(600);
-    verifier(/Rien ne quitte ce téléphone/.test(await lire(p, '#app .hint')) && !(await p.$('.actions .outil:has-text("la retirer de l’archipel")')), 'et l’île ne se dit plus dans l’archipel');
+    verifier(/Rien ne quitte ce téléphone/.test(await lire(p, '#app .hint')) && !(await p.$('.actions .outil:has-text("Retirer de l’archipel")')), 'et l’île ne se dit plus dans l’archipel');
     verifier(!calme(e).length && !x.length, `aucune erreur, hors le refus attendu${calme(e).length ? ' : ' + calme(e).join(' | ') : ''}`);
     await c.close(); }
 
@@ -186,7 +186,7 @@ const stockee = (p, cle = 'ile') => p.evaluate(k => JSON.parse(localStorage.getI
     await p.click('.proposer .btn:has-text("La mettre dans l’archipel")');
     await attendre(p, () => p.evaluate(() => /^Elle est dans l’archipel\./.test(document.querySelector('.proposer p')?.textContent || '')), 10000);
     const envoi = appels(a, 'archipel_poser')[0], garde = await stockee(p);
-    const vue = await p.evaluate(() => ({ hint: document.querySelector('#app .hint').textContent, retirer: [...document.querySelectorAll('.actions .outil .outil-texte')].some(q => q.firstChild.textContent === 'La retirer de l’archipel'), focus: document.activeElement?.textContent }));
+    const vue = await p.evaluate(() => ({ hint: document.querySelector('#app .hint').textContent, retirer: [...document.querySelectorAll('.actions .outil .outil-texte')].some(q => q.textContent === 'Retirer de l’archipel'), focus: document.activeElement?.textContent }));
     verifier(a.etat.iles.length === 1 && envoi?.c.p_ile === null && formeValide(envoi.c.p_forme) && garde.archipel?.id === a.etat.iles[0].ile && garde.proposer === undefined, 'un geste : elle part, sa forme seulement, et le téléphone garde sa place');
     verifier(/Sa forme est dans l’archipel/.test(vue.hint) && vue.retirer && vue.focus === 'la voir dans l’archipel', 'la vue de l’île le dit aussitôt, propose de la retirer, et de la voir là-bas');
     await p.screenshot({ path: path.join(OUT, '11-mise.png') });
@@ -205,16 +205,16 @@ const stockee = (p, cle = 'ile') => p.evaluate(k => JSON.parse(localStorage.getI
     await p.goto(BASE); await p.evaluate(sansIntro); await p.reload(); await p.waitForTimeout(1000);
     await cocherPuisPoser(p, 'On m’a fait du mal');
     await p.click('.proposer .quiet:has-text("pas maintenant")'); await p.waitForTimeout(300);
-    const non = await p.evaluate(() => ({ carte: !!document.querySelector('.proposer'), lien: document.querySelector('.actions .btn ~ .outils #mettre-ici .outil-texte')?.firstChild.textContent, focus: document.activeElement?.textContent, garde: JSON.parse(localStorage.getItem('archipel:ile')).proposer }));
-    verifier(!non.carte && non.lien === 'La mettre dans l’archipel' && non.garde === false && non.focus === 'Déposer autre chose' && !appels(a).length, '« pas maintenant » : la carte s’en va, rien ne part ; « la mettre dans l’archipel » reste parmi les outils de l’île');
+    const non = await p.evaluate(() => ({ carte: !!document.querySelector('.proposer'), lien: document.querySelector('.actions .btn ~ .outils #mettre-ici .outil-texte')?.textContent, focus: document.activeElement?.textContent, garde: JSON.parse(localStorage.getItem('archipel:ile')).proposer }));
+    verifier(!non.carte && non.lien === 'Mettre dans l’archipel' && non.garde === false && non.focus === 'Déposer autre chose' && !appels(a).length, '« pas maintenant » : la carte s’en va, rien ne part ; « la mettre dans l’archipel » reste parmi les outils de l’île');
     await p.click('[data-onglet="deposer"]'); await p.waitForTimeout(300);
     await cocherPuisPoser(p, 'J’ai fait quelque chose que je regrette');
     await p.reload(); await p.waitForTimeout(1200);
     verifier(!(await p.$('.proposer')) && !!(await p.$('#mettre-ici')) && !appels(a).length, 'la proposition ne revient pas pour cette île, même après un autre dépôt');
     await p.click('#mettre-ici'); await p.waitForSelector('.sheet'); await p.click('.sheet .gesture:has-text("Y mettre ton île")'); await p.waitForSelector('.sheet', { state: 'detached', timeout: 10000 }); await p.waitForTimeout(300);
-    const posee = await p.evaluate(() => ({ hint: document.querySelector('#app .hint').textContent, mettre: !!document.querySelector('#mettre-ici'), retirer: [...document.querySelectorAll('.actions .outil .outil-texte')].some(q => q.firstChild.textContent === 'La retirer de l’archipel') }));
+    const posee = await p.evaluate(() => ({ hint: document.querySelector('#app .hint').textContent, mettre: !!document.querySelector('#mettre-ici'), retirer: [...document.querySelectorAll('.actions .outil .outil-texte')].some(q => q.textContent === 'Retirer de l’archipel') }));
     verifier(a.etat.iles.length === 1 && /Sa forme est dans l’archipel/.test(posee.hint) && !posee.mettre && posee.retirer, 'le lien ouvre la feuille ; posée, la vue de l’île le dit, et propose de la retirer');
-    await p.click('.actions .outil:has-text("la retirer de l’archipel")'); await p.waitForSelector('.sheet'); await p.click('.sheet .gesture:has-text("La retirer de l’archipel")'); await p.waitForSelector('.sheet', { state: 'detached', timeout: 10000 });
+    await p.click('.actions .outil:has-text("Retirer de l’archipel")'); await p.waitForSelector('.sheet'); await p.click('.sheet .gesture:has-text("La retirer de l’archipel")'); await p.waitForSelector('.sheet', { state: 'detached', timeout: 10000 });
     await p.click('[data-onglet="deposer"]'); await p.waitForTimeout(300);
     await cocherPuisPoser(p, 'Ça tourne en boucle dans ma tête');
     verifier(!(await p.$('.proposer')) && !!(await p.$('#mettre-ici')) && appels(a, 'archipel_poser').length === 1 && !a.etat.iles.length, 'retirée, elle ne se repropose pas d’elle-même ; le lien reste');
