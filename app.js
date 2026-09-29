@@ -4,7 +4,7 @@
 import { SUBJECTS, QUESTIONS, KEYS, BASE, LEX, HUMANS } from './contenu.js?v=2';
 import { graines, quadDe, nomDe, phrasesDe, casesDe, sujetLabel, listeDe, listeGraines, FAMILLES, ESPECES, NOMS } from './grammaire.js?v=5';
 import { nouvelleIle, deriver, resume, forme, depuisForme, archipelInvente, ileInventee, BIOMES, BIOME_IDS, biomeDe } from './ile.js?v=13';
-import { Vue3D, Ilot3D, apercu, disponible, ECH_ARCH, ILE_INTRO } from './monde.js?v=23';
+import { Vue3D, Ilot3D, apercu, disponible, ECH_ARCH, ILE_INTRO } from './monde.js?v=24';
 import { lireArchipel, poserIle, retirerIle, nouveauJeton, partagerIle, voirIle, relierIle, couperRoute, lireRoutes, voisines, nouveauCode } from './serveur.js?v=2';
 import { musique } from './musique.js?v=2';
 import { lire } from './lexique.js?v=2';
@@ -471,6 +471,10 @@ async function lireVoisines(x) { // les îles au bout de ses routes, et ce qui a
   a.routes = ids; sauver(x); voisinage.set(a.id, v); lues.set(a.id, Date.now());
   return v;
 }
+function voisineDe(x, g, autre) { // une route vient d’être tracée vers une île confiée : son ponton, sans attendre la prochaine lecture
+  const l = g && lisible({ ile: autre, forme: g.forme, x: g.x, z: g.z }); if (!l) return;
+  voisinage.set(x.archipel.id, [...(voisinage.get(x.archipel.id) || []).filter(r => r.id !== autre), l]);
+}
 async function chargerRoutes() { // les routes entre les îles de l’archipel ; les tiennes, même vers une île qu’il ne montre pas
   for (const x of miennes().filter(m => m.archipel?.id && (m.archipel.code || m.archipel.routes?.length))) {
     try { for (const r of await lireVoisines(x)) if (!arch.reelles.some(y => y.id === r.id)) arch.reelles.push(r); } catch { /* sans ses routes, pour cette fois */ }
@@ -483,12 +487,12 @@ async function tracer(g, x) { // une route depuis une de tes îles ; si elle n�
   garder(g);
   if (!x.archipel?.id) { x.routesEnAttente = [...new Set([...(x.routesEnAttente || []), g.code])].slice(0, 12); sauver(x); note('route : attend que ton île rejoigne l’archipel'); return 'attend'; }
   let autre; try { autre = await relierIle(g.code, x.archipel.id, x.archipel.jeton); } catch (e) { oublieeSi(x, e); throw e; }
-  x.archipel.routes = [...new Set([...(x.archipel.routes || []), autre])]; sauver(x); note('route : tracée');
+  x.archipel.routes = [...new Set([...(x.archipel.routes || []), autre])]; sauver(x); note('route : tracée'); voisineDe(x, g, autre);
   return 'tracee';
 }
 async function relierEnAttente(x) { // l’île est dans l’archipel : les routes qui l’attendaient partent avec elle
   for (const code of [...(x.routesEnAttente || [])]) {
-    try { const autre = await relierIle(code, x.archipel.id, x.archipel.jeton); x.archipel.routes = [...new Set([...(x.archipel.routes || []), autre])]; note('route : partie avec l’île'); }
+    try { const autre = await relierIle(code, x.archipel.id, x.archipel.jeton); x.archipel.routes = [...new Set([...(x.archipel.routes || []), autre])]; note('route : partie avec l’île'); voisineDe(x, gardees.find(y => y.code === code), autre); }
     catch (e) { if (!/lien fermé|même île|trop de routes/.test(e.message)) return; } // sans réseau, elle attend encore ; refusée, elle s’efface
     x.routesEnAttente = (x.routesEnAttente || []).filter(c => c !== code); if (!x.routesEnAttente.length) delete x.routesEnAttente; sauver(x);
   }
@@ -501,9 +505,16 @@ async function toutCouper(x) { // le lien et les routes s’effacent avec l’î
   return (await envoyer(x)) || (synchroniser(), false); // sans réseau, elle reviendra dès que possible
 }
 
+function pontonsDe(x) { // les routes de l’île, vues de chez elle : vers où part chacune ; celles qui attendent, sous leur bâche
+  const a = x.archipel, ici = a?.id ? [a.x, a.z] : (rs => posArch(rs.a, rs.v))(resume(x === ile ? courant : deriver(x))), vers = (px, pz) => Math.atan2(pz - ici[1], px - ici[0]); // sans place encore : celle de sa sensation
+  const ids = new Set(a?.routes || []), out = a?.id ? (voisinage.get(a.id) || []).filter(r => ids.has(r.id)).map(r => ({ angle: vers(r.x, r.z) })) : [];
+  for (const code of x.routesEnAttente || []) { const g = gardees.find(y => y.code === code); if (g) out.push({ angle: vers(g.x, g.z), attente: true }); }
+  return out.slice(0, 12);
+}
 function majRoutesIle() { // la vue de l’île dit ses routes, sans se redessiner ; et une fois, celles qui sont arrivées ou ont été coupées
   if (ecran !== 'ile') return;
   const x = regard || ile, nav = $('#app .actions'), n = x.archipel?.routes?.length || 0, att = x.routesEnAttente?.length || 0;
+  if (vue?.mode === 'ile') vue.montrerPontons(pontonsDe(x)); // un ponton par route, tourné vers l’île au bout
   let b = $('#les-routes');
   if (nav && (n || att || x.archipel?.code)) { const t = n ? `ses routes (${n})` : att ? (att > 1 ? `${att} routes attendent` : 'une route attend') : 'ses routes'; if (!b) { b = quiet(t, () => routesSheet(x)); b.id = 'les-routes'; nav.append(b); } else b.textContent = t; } // un lien ouvert : ses routes, et de quoi tout couper
   else b?.remove();
