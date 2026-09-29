@@ -377,7 +377,7 @@ export class Vue3D {
     this.distIle = fit(e, e * .62); this.distArch = fit(L * 1.2 + 4, (P * 1.24 + 4) * Math.sin(.72));
     if (this.mode === 'ile' && !this.zoomManuel) this.orbite.but.dist = this.distIle;
   }
-  vider() { if (this.scene) { liberer(this.scene); this.scene.background?.dispose?.(); } this.scene = new THREE.Scene(); this.anims = []; this.objets = new Map(); }
+  vider() { if (this.scene) { liberer(this.scene); this.scene.background?.dispose?.(); } this.scene = new THREE.Scene(); this.anims = []; this.objets = new Map(); this.routes = null; }
 
   montrerIle(d, opts = {}) {
     const B = biomeDe(d.ile.biome), eau = eauDe(d.climat, B), cle = `${d.ile.id}:${d.ile.seed}:${d.ile.biome}:${d.climat}:${d.ile.depots.length}`;
@@ -396,7 +396,7 @@ export class Vue3D {
     const terrain = b.maillage(); terrain.castShadow = true; s.add(terrain, dessous);
     const v = vie(d, B, h); s.add(v.grp); this.anims.push(...v.anims); // la vie qui ne dit rien
     for (const a of d.assets) {
-      const r = modeleChose(a, B, hash(`${a.key}:${d.ile.seed}`), { eauHex: eau }), [x, y, z] = posTuile(h, a.tile, a.espece === 'barque');
+      const r = modeleChose(a, B, a.v ?? hash(`${a.key}:${d.ile.seed}`), { eauHex: eau }), [x, y, z] = posTuile(h, a.tile, a.espece === 'barque'); // v : la variante reçue avec la forme, pour une île venue d’ailleurs
       r.objet.position.set(x, y, z); r.objet.rotation.y = (hash(`rot:${a.key}:${d.ile.seed}`) - .5) * .8; r.objet.userData.ech = ECH;
       r.objet.traverse(o => { o.userData.key = a.key; });
       s.add(r.objet); this.objets.set(a.key, r.objet); this.anims.push(...r.anims);
@@ -451,6 +451,27 @@ export class Vue3D {
     this.scene.add(grp); it.grp = grp;
     if (it.mine) { const lab = etiquette(it.label || 'la tienne'); lab.position.set(it.x, 2.6, it.z); this.scene.add(lab); it.lab = lab; }
     if (depuis) { const t0 = (performance.now() - this.t0) / 1000, [x0, z0] = depuis, x1 = it.x, z1 = it.z; grp.position.set(x0, 0, z0); this.anims.push(T => { const p = Math.min(1, (T - t0) / 5), k = 1 - (1 - p) ** 3; grp.position.set(lerp(x0, x1, k), 0, lerp(z0, z1, k)); if (p >= 1 && !it.arrivee) { it.arrivee = true; this.vague(x1, z1, T); } }); }
+  }
+  montrerRoutes(paires) { // les routes entre les îles : un sillage en pointillé sur l’eau, d’une rive à l’autre, en arc léger
+    if (this.routes) { this.scene.remove(this.routes); liberer(this.routes); this.routes = null; }
+    const pos = [], y = .035, trait = .26, pas = .5, large = .035;
+    for (const [p, q] of paires) {
+      const R = it => (it.d || (it.d = deriver(it.ile))).m.rayon * ECH_ARCH + .12, dx = q.x - p.x, dz = q.z - p.z, L = Math.hypot(dx, dz);
+      if (L < R(p) + R(q) + .3) continue; // deux îles qui se touchent presque : pas de route à dessiner
+      const ux = dx / L, uz = dz / L, x0 = p.x + ux * R(p), z0 = p.z + uz * R(p), x1 = q.x - ux * R(q), z1 = q.z - uz * R(q), l = Math.hypot(x1 - x0, z1 - z0);
+      const sens = p.id < q.id ? 1 : -1, bombe = Math.min(1.4, Math.max(.25, l * .18)) * sens, cx = (x0 + x1) / 2 - uz * bombe, cz = (z0 + z1) / 2 + ux * bombe; // un arc léger, le même vu des deux îles
+      const pt = t => [(1 - t) ** 2 * x0 + 2 * (1 - t) * t * cx + t * t * x1, (1 - t) ** 2 * z0 + 2 * (1 - t) * t * cz + t * t * z1];
+      const n = Math.max(5, Math.round(l / pas)), long = Math.min(trait, l / n * .6); // deux îles voisines : des traits plus courts, jamais moins de cinq
+      for (let i = 0; i < n; i++) {
+        const t = (i + .5) / n, [xa, za] = pt(Math.max(0, t - long / l / 2)), [xb, zb] = pt(Math.min(1, t + long / l / 2));
+        const e = Math.hypot(xb - xa, zb - za) || 1, nx = (zb - za) / e * large, nz = -(xb - xa) / e * large; // la largeur du trait, en travers
+        pos.push(xa - nx, y, za - nz, xb - nx, y, zb - nz, xb + nx, y, zb + nz, xa - nx, y, za - nz, xb + nx, y, zb + nz, xa + nx, y, za + nz);
+      }
+    }
+    if (!pos.length) return;
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    this.routes = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ color: '#fffaf0', transparent: true, opacity: .8, depthWrite: false, side: THREE.DoubleSide }));
+    this.routes.renderOrder = 2; this.scene.add(this.routes);
   }
   vague(x, z, T0) { // une île arrive : un anneau s’ouvre sur l’eau
     const m = new THREE.Mesh(new THREE.RingGeometry(.9, 1, 40).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: .8, depthWrite: false })); m.position.set(x, .02, z); this.scene.add(m);

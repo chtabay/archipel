@@ -111,10 +111,23 @@ L’archipel vit dans la base du projet Supabase de Pyramides, dans un espace à
 - **La base se protège.** Chaque forme est vérifiée, clé par clé, valeur par valeur. Les places restent dans la mer. Au plus trente nouvelles îles par minute, pour tout l’archipel ; au plus douze routes par île, et soixante nouvelles routes par minute. Pas de date : un simple rang dit l’ordre des arrivées.
 - **Sans réseau**, l’archipel le dit, et les îles restent sur le téléphone. Une île quittée hors ligne part à la prochaine ouverture.
 
+## Les routes entre les îles
+
+Une île de l’archipel peut se relier à d’autres, par des routes sur l’eau. Une route ne porte rien : ni mots, ni nom, ni date. Elle n’est jamais définitive : chacune des deux îles peut la couper, seule, à tout moment, sans rien demander à l’autre.
+
+- **Partager.** Depuis une île qui est dans l’archipel, « la partager ». La feuille prévient d’abord : qui a le lien reconnaîtra l’île dans l’archipel, et la verra grandir après chaque dépôt ; à ne donner qu’à quelqu’un de confiance. Puis « Créer le lien » : un lien à envoyer ou à copier, et son code QR à montrer, dessiné sur le téléphone. Le code du lien est tiré au hasard ici ; la base n’en garde que l’empreinte.
+- **Recevoir.** Le lien ouvre « Une île t’est confiée » : l’île en 3D, telle qu’elle est dans l’archipel, et, avant tout geste, ce qu’une route veut dire. On peut la garder pour plus tard, tracer une route tout de suite, ou continuer. Le code quitte l’adresse aussitôt lu. Un lien vers sa propre île le dit, sans rien proposer.
+- **Tracer une route.** Depuis son île d’aujourd’hui, ou une île d’avant qui est dans l’archipel. Si l’île n’est pas encore dans l’archipel, la route l’attend, et part avec elle quand on l’y met ; la feuille pour l’y mettre le dit. Quitter une île sans la mettre dans l’archipel efface ses routes en attente ; la feuille le dit.
+- **Les îles confiées.** Gardées sur le téléphone, jamais sur le serveur, avec leur forme. Dans l’archipel, « les îles confiées » : pour chacune, sa route, ou son lien fermé ; tracer une route, la voir, l’oublier. Oublier une île ne coupe pas sa route.
+- **Couper.** Dans la vue de l’île, « ses routes » : les îles au bout, et « couper cette route ». L’autre île l’apprend à sa prochaine visite, avec ces mots : chacune des deux îles peut le faire, à tout moment. Une route arrivée se dit de même.
+- **Fermer le lien, tout couper.** Fermer le lien empêche d’autres routes ; celles déjà tracées restent. Tout couper, avec une seconde touche : le lien ne mène plus nulle part, toutes les routes disparaissent, et l’île revient dans l’archipel ailleurs, sous un autre nom pour la base et avec un autre jeton. Qui l’avait repérée ne la retrouve plus.
+- **Dans l’archipel**, chaque route est un sillage en pointillé sur l’eau, en arc léger, d’une rive à l’autre. Tout le monde voit les routes entre les îles ; personne ne sait à qui elles sont.
+
 ## Confidentialité
 
 - Site statique : pas de cookie, pas de traceur. La police et la bibliothèque 3D sont dans le dépôt. Le service worker ne garde que les fichiers du site.
-- La seule requête vers l’extérieur va au serveur de l’archipel : pour le lire quand on le regarde, et pour y mettre, faire grandir ou retirer son île. Sans cookie ni adresse d’origine. Comme tout serveur, il voit passer l’adresse IP de la requête dans ses journaux ; la base, elle, ne la garde pas.
+- La seule requête vers l’extérieur va au serveur de l’archipel : pour le lire quand on le regarde, pour y mettre, faire grandir ou retirer son île, et pour ses routes. Sans cookie ni adresse d’origine. Les routes d’une île ne se lisent que si elle a un lien ouvert ou des routes.
+- Le code d’un lien vit derrière un `#` : le serveur des pages ne le reçoit jamais. Son code QR est dessiné sur le téléphone, sans aucun service extérieur. Comme tout serveur, il voit passer l’adresse IP de la requête dans ses journaux ; la base, elle, ne la garde pas.
 - Ce qu’on dépose reste sur le téléphone, sans chiffrement. Le texte y est lu, pour y trouver des sujets, et n’en sort jamais.
 
 ## Sécurité et solidité
@@ -133,7 +146,7 @@ L’archipel vit dans la base du projet Supabase de Pyramides, dans un espace à
 | `index.html` | La page |
 | `style.css` | Le style |
 | `app.js` | Les écrans, les feuilles, les gestes, le stockage local, l’archipel partagé |
-| `serveur.js` | Les appels au serveur de l’archipel : lire, poser, faire grandir, retirer une île |
+| `serveur.js` | Les appels au serveur de l’archipel : lire, poser, faire grandir, retirer une île ; partager, voir, relier, couper, lire les routes |
 | `musique.js` | Les deux musiques, le feu de camp et la mer, calculées et jouées par le navigateur |
 | `sw.js` | Le service worker : les fichiers du site, gardés pour s’ouvrir sans réseau |
 | `manifest.webmanifest` | Le manifeste de l’app installable : nom, couleurs, icônes |
@@ -147,15 +160,15 @@ L’archipel vit dans la base du projet Supabase de Pyramides, dans un espace à
 | `modeles.js` | Les choses en 3D, leurs formes, leurs états, le petit décor |
 | `vie.js` | La vie qui ne dit rien : les bêtes du paysage et leurs allées et venues, les oiseaux du ciel et leur vol |
 | `outils.js` | Les nombres stables et le mélange des couleurs |
-| `vendor/` | three.js 0.186, réduit aux pièces utilisées (licence MIT) |
+| `vendor/` | three.js 0.186, réduit aux pièces utilisées, et qrcode-generator 2.0.4, pour le code du lien d’une île (licences MIT) |
 | `fonts/` | Nunito (licence SIL OFL 1.1) |
 | `404.html` | Page introuvable ; les anciennes adresses des maquettes et de `limbes/` mènent à l’accueil |
 | `base/archipel.sql` | La base de l’archipel partagé, telle qu’elle est dans le projet de Pyramides : les îles, puis les liens et les routes |
-| `tests/` | Les tests, dans Chromium avec une 3D logicielle : le parcours, l’intro, le retour, la stabilité, l’archipel partagé, l’installation, la musique, le menu Plus. Ils parlent à un faux serveur, en mémoire, jamais à la vraie base |
+| `tests/` | Les tests, dans Chromium avec une 3D logicielle : le parcours, l’intro, le retour, la stabilité, l’archipel partagé, les routes entre les îles, l’installation, la musique, le menu Plus. Ils parlent à un faux serveur, en mémoire, jamais à la vraie base |
 | `package.json` | Seulement pour les tests ; le site n’a besoin de rien |
 | `.nojekyll` | Sert les fichiers tels quels sur GitHub Pages |
 
-Le stockage local utilise le préfixe `archipel:`. Une île mise dans l’archipel y garde sa place et son jeton. Au premier passage, l’île gardée sous un ancien nom du projet est reprise, sans rien effacer. `archipel:intro` retient que l’intro a été vue ou passée.
+Le stockage local utilise le préfixe `archipel:`. Une île mise dans l’archipel y garde sa place et son jeton ; partagée, le code de son lien ; reliée, les îles au bout de ses routes. Une route qui attend l’île y garde le lien de l’autre. `archipel:gardees` garde les îles confiées. Au premier passage, l’île gardée sous un ancien nom du projet est reprise, sans rien effacer. `archipel:intro` retient que l’intro a été vue ou passée.
 
 Chaque fichier est appelé avec un numéro de version, comme `?v=1`. Après une modification, on augmente le numéro de ce fichier là où il est appelé, pour qu’un téléphone ne mélange pas deux versions en cache. Le service worker s’y fie aussi : en local, sans changer le numéro, il resservirait l’ancien fichier ; les outils de développement du navigateur permettent de le contourner.
 
