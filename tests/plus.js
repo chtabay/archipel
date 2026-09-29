@@ -74,11 +74,10 @@ const sonore = p => p.evaluate(() => window.archipel.musique.etat());
     await p.screenshot({ path: path.join(OUT, '320.png') });
     const o = await p.evaluate(() => { // les outils de l’île : une action principale sur toute la largeur, puis des lignes qui tiennent dans leur carte
       const nav = document.querySelector('#app .actions.empilees'), btn = nav.querySelector('.btn').getBoundingClientRect(), lignes = [...nav.querySelectorAll('.outil')];
-      return { deborde: document.documentElement.scrollWidth - innerWidth, pleine: btn.width >= nav.getBoundingClientRect().width - 1, textes: lignes.map(l => l.querySelector('.outil-texte').firstChild.textContent),
-        dedans: lignes.every(l => { const c = l.closest('.outils').getBoundingClientRect(), f = l.querySelector('.suite').getBoundingClientRect(); return f.right <= c.right - 4 && f.width > 0; }), hautes: lignes.every(l => l.getBoundingClientRect().height >= 44),
-        titre: nav.querySelector('.outils-titre')?.textContent };
+      return { deborde: document.documentElement.scrollWidth - innerWidth, pleine: btn.width >= nav.getBoundingClientRect().width - 1, textes: lignes.map(l => l.querySelector('.outil-texte').textContent), cartes: nav.querySelectorAll('.outils').length,
+        entiers: lignes.every(l => { const t = l.querySelector('.outil-texte'); return t.scrollWidth <= t.clientWidth + 1; }), hauteurs: lignes.map(l => Math.round(l.getBoundingClientRect().height)) };
     });
-    verifier(o.deborde <= 0 && o.pleine && o.dedans && o.hautes && o.textes.join(' · ') === 'La renommer · Changer d’île · La mettre dans l’archipel' && o.titre === 'L’archipel', `à 320 px, les outils de l’île tiennent : ${o.textes.join(' · ')} ; chaque ligne a sa flèche, et se touche du doigt`);
+    verifier(o.deborde <= 0 && o.pleine && o.entiers && o.hauteurs.every(h => h >= 44 && h <= 48) && o.cartes === 2 && o.textes.join(' · ') === 'Renommer · Changer d’île · Mettre dans l’archipel', `à 320 px, les outils de l’île tiennent, très compacts : ${o.textes.join(' · ')} ; une ligne chacun, entière, de ${o.hauteurs[0]} px, assez pour le doigt`);
     await p.evaluate(() => { const n = document.querySelector('#app .actions'); scrollTo(0, n.getBoundingClientRect().top + scrollY - 120); }); await p.waitForTimeout(200);
     await p.screenshot({ path: path.join(OUT, '320-outils.png') });
     await c.close(); }

@@ -259,8 +259,9 @@ function majIleArchipel() { // l’île vient d’entrer dans l’archipel : la 
   majRoutesIle(); // ses outils le disent ; les routes qui l’attendaient sont parties avec elle
 }
 
-// Sous la vue de l’île, après l’action principale : ses outils, une ligne chacun, avec une icône et ce qu’elle en dit ;
-// ce qui touche l’archipel, à part. Ils suivent l’état de l’île sans que la vue se redessine.
+// Sous la vue de l’île, après l’action principale : ses outils, très compacts, une ligne chacun, une icône et quelques mots,
+// un nombre à droite s’il sert ; ce qui touche l’archipel, dans une seconde carte. Ils suivent l’état de l’île sans que la
+// vue se redessine.
 const ICONES_OUTILS = {
   renommer: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19l1.1-4.4 9.5-9.5a2 2 0 0 1 2.8 0l.5.5a2 2 0 0 1 0 2.8l-9.5 9.5z"/><path d="M13.8 6.9l3.3 3.3"/></svg>',
   changer: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 18.5c2-1.2 4-1.2 6 0s4 1.2 6 0 4-1.2 6 0"/><path d="M5.5 15.5c1.3-2.8 3.6-4.4 6.1-4.5"/><path d="M17.5 4.5v7M14 8h7"/></svg>',
@@ -273,36 +274,33 @@ const ICONES_OUTILS = {
   confiees: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 18.5c1.2-.7 2.4-.7 3.6 0M17.9 18.5c1.2-.7 2.4-.7 3.6 0"/><path d="M3.2 16.2c.5-1.5 1.4-2.3 2.5-2.3s2 .8 2.5 2.3M15.8 16.2c.5-1.5 1.4-2.3 2.5-2.3s2 .8 2.5 2.3"/><path d="M6.5 10.5c3-4.5 8-4.5 11 0" stroke-dasharray="1.4 2.2"/></svg>',
   intro: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10-6.5z"/></svg>',
 };
-const CHEVRON = '<svg class="suite" viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 6l6 6-6 6"/></svg>';
-function outil(icone, texte, dit, fn, id = null) { // une ligne : son icône, ce qu’elle fait, et en petit ce qu’elle en dit
+function outil(icone, texte, dit, fn, id = null) { // une ligne : son icône, ce qu’elle fait ; à droite, un nombre s’il sert
   const b = el('button', { type: 'button', className: 'outil' });
-  b.innerHTML = `<span class="ico">${icone}</span>`;
-  b.append(el('span', { className: 'outil-texte' }, texte, ...(dit ? [el('small', { textContent: dit })] : [])));
-  b.insertAdjacentHTML('beforeend', CHEVRON);
+  b.innerHTML = icone;
+  b.append(el('span', { className: 'outil-texte', textContent: texte }), ...(dit ? [el('span', { className: 'outil-dit', textContent: dit })] : []));
   b.addEventListener('click', fn); if (id) b.id = id;
   return b;
 }
 const groupe = (nom, lignes) => { const g = el('div', { className: 'outils' }, ...lignes); g.setAttribute('role', 'group'); g.setAttribute('aria-label', nom); return g; };
 function outilsIle() { // ses outils à elle ; puis ceux de l’archipel, s’il y en a
   const x = regard || ile, mine = !regard, ici = [], la = [];
-  ici.push(outil(ICONES_OUTILS.renommer, 'La renommer', 'son nom reste ici', () => nomSheet(x)));
+  ici.push(outil(ICONES_OUTILS.renommer, 'Renommer', '', () => nomSheet(x)));
   if (mine) {
-    ici.push(ile.depots.length ? outil(ICONES_OUTILS.changer, 'Changer d’île', 'en commencer une nouvelle', changerSheet) : outil(ICONES_OUTILS.paysage, 'Choisir le paysage', 'tant qu’elle est vide', paysageSheet));
-    if (iles.length) ici.push(partenaire(ile) ? outil(ICONES_OUTILS.relier, 'Sa voisine', lieeDit(ile), relierSheet) : outil(ICONES_OUTILS.relier, 'La relier à une île d’avant', 'par un pont, ou collée à côté', relierSheet));
-    if (iles.length) ici.push(outil(ICONES_OUTILS.avant, 'Tes îles d’avant', iles.length > 1 ? `${iles.length} îles, gardées ici` : 'une île, gardée ici', ilesSheet));
+    ici.push(ile.depots.length ? outil(ICONES_OUTILS.changer, 'Changer d’île', '', changerSheet) : outil(ICONES_OUTILS.paysage, 'Choisir le paysage', '', paysageSheet));
+    if (iles.length) ici.push(outil(ICONES_OUTILS.avant, 'Tes îles d’avant', String(iles.length), ilesSheet), outil(ICONES_OUTILS.relier, partenaire(ile) ? 'Sa voisine' : 'Relier', '', relierSheet));
   }
-  if (mine && ile.depots.length && !ile.archipel && ile.proposer !== true) la.push(outil(ICONES_OUTILS.mettre, 'La mettre dans l’archipel', 'seulement sa forme', envoyerSheet, 'mettre-ici')); // la proposition est passée : l’archipel reste à portée
+  if (mine && ile.depots.length && !ile.archipel && ile.proposer !== true) la.push(outil(ICONES_OUTILS.mettre, 'Mettre dans l’archipel', '', envoyerSheet, 'mettre-ici')); // la proposition est passée : l’archipel reste à portée
   const n = x.archipel?.routes?.length || 0, att = x.routesEnAttente?.length || 0;
-  if (n || att || x.archipel?.code) la.push(outil(ICONES_OUTILS.routes, 'Ses routes', n ? (n > 1 ? `${n} routes` : 'une route') : att ? (att > 1 ? `${att} routes attendent` : 'une route attend') : 'un lien ouvert, pas encore de route', () => routesSheet(x), 'les-routes')); // un lien ouvert : ses routes, et de quoi tout couper
-  if (x.archipel?.id) la.push(outil(ICONES_OUTILS.retirer, 'La retirer de l’archipel', 'elle restera ici', () => retirerSheet(x)));
-  return [groupe('Ton île', ici), ...(la.length ? [el('p', { className: 'outils-titre', textContent: x.archipel?.id ? 'Dans l’archipel' : 'L’archipel' }), groupe('L’archipel', la)] : [])];
+  if (n || att || x.archipel?.code) la.push(outil(ICONES_OUTILS.routes, 'Ses routes', n ? String(n) : att ? `${att} en attente` : '', () => routesSheet(x), 'les-routes')); // un lien ouvert : ses routes, et de quoi tout couper
+  if (x.archipel?.id) la.push(outil(ICONES_OUTILS.retirer, 'Retirer de l’archipel', '', () => retirerSheet(x)));
+  return [groupe('Ton île', ici), ...(la.length ? [groupe('L’archipel', la)] : [])];
 }
 const cleOutils = l => l.map(n => n.textContent).join('|');
 function majOutils() { // l’île a changé : ses outils suivent, sans que la vue se redessine
   const nav = $('#app .actions.empilees'); if (ecran !== 'ile' || !nav) return;
   const neufs = outilsIle(), cle = cleOutils(neufs);
   if (nav.dataset.cle === cle) return;
-  nav.dataset.cle = cle; nav.querySelectorAll(':scope > .outils, :scope > .outils-titre').forEach(n => n.remove());
+  nav.dataset.cle = cle; nav.querySelectorAll(':scope > .outils').forEach(n => n.remove());
   nav.querySelector('.btn').after(...neufs);
 }
 
@@ -437,7 +435,7 @@ function renderArchipel() {
   const caption = el('p', { className: 'ile-caption', id: 'arch-caption', textContent: inviteArch() });
   const nav = el('nav', { className: 'actions empilees' }), lignes = []; // une action principale, s’il y en a une ; puis des lignes
   if (!ile.envoyee && ile.depots.length) { const b = bouton('Y mettre ton île', envoyerSheet); b.id = 'mettre-ile'; nav.append(b); }
-  if (gardees.length) lignes.push(outil(ICONES_OUTILS.confiees, 'Les îles qu’on t’a confiées', gardees.length > 1 ? `${gardees.length} îles, gardées ici` : 'une île, gardée ici', () => gardeesSheet()));
+  if (gardees.length) lignes.push(outil(ICONES_OUTILS.confiees, 'Îles confiées', String(gardees.length), () => gardeesSheet()));
   if (vue) lignes.push(outil(ICONES_OUTILS.intro, 'Revoir l’intro', '', () => { revue = true; go('intro'); }));
   if (lignes.length) nav.append(groupe('L’archipel', lignes));
   app.replaceChildren(
