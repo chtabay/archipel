@@ -172,18 +172,10 @@ function renderIle() {
   const caption = el('p', { className: 'ile-caption', id: 'ile-caption', textContent: invite });
   const excerpt = el('p', { className: 'excerpt', id: 'ile-excerpt', hidden: true });
   const line = el('p', { className: 'ile-line', id: 'ile-line' });
-  const nav = el('nav', { className: 'actions' }); // une action principale ; les autres, plus discrètes, à côté
-  if (mine) {
-    const brouillon = anyChecked() || state.text.trim();
-    nav.append(bouton(brouillon ? 'Reprendre ce que tu déposais' : 'Déposer autre chose', () => go('q:situ')));
-    if (ile.depots.length && !ile.archipel && ile.proposer !== true) nav.append(lienMettre()); // la proposition est passée : l’archipel reste à portée, discrètement
-    if (ile.depots.length) nav.append(quiet('changer d’île', changerSheet));
-    else nav.append(quiet('choisir le paysage', paysageSheet));
-    nav.append(quiet('la renommer', () => nomSheet(ile)));
-    if (iles.length) nav.append(quiet(ile.voisine ? 'sa voisine' : 'la relier à une île d’avant', relierSheet), quiet('tes îles d’avant', ilesSheet));
-    const inst = quiet('installer l’app', installerSheet); inst.id = 'installer'; inst.hidden = !installable(); nav.append(inst); // paraît quand le navigateur le permet
-  } else nav.append(bouton('Revenir à ton île', () => { regard = null; go('ile'); }), quiet('la renommer', () => nomSheet(regard)));
-  if ((regard || ile).archipel?.id) nav.append(quiet('la retirer de l’archipel', () => retirerSheet(regard || ile)));
+  const nav = el('nav', { className: 'actions empilees' }); // une action principale ; puis ses outils, rangés
+  nav.append(mine ? bouton(anyChecked() || state.text.trim() ? 'Reprendre ce que tu déposais' : 'Déposer autre chose', () => go('q:situ')) : bouton('Revenir à ton île', () => { regard = null; go('ile'); }));
+  const outils = outilsIle(); nav.append(...outils); nav.dataset.cle = cleOutils(outils);
+  if (mine) { const inst = quiet('installer l’app', installerSheet); inst.id = 'installer'; inst.hidden = !installable(); nav.append(inst); } // paraît quand le navigateur le permet
   if ((regard || ile).archipel?.id || (mine && ile.depots.length)) wrap.append(boutonPartager(regard || ile)); // le partage, sur l’image : un lien, pour qu’on trace une route jusqu’à elle
   const pousses = el('ul', {}, ...(d.assets.length ? d.assets.map(a => el('li', { textContent: ligneDe(a, d) })) : [el('li', { textContent: 'rien encore' })]));
   const what = titre && mine ? titre : null;
@@ -234,8 +226,8 @@ function ligneDe(a, d) {
 }
 
 // Après un dépôt, l’île propose de rejoindre l’archipel, sous la vue : ce que les autres verraient, et un seul geste pour l’y
-// mettre. Rien ne part sans ce geste. « Pas maintenant » est gardé pour cette île : la proposition ne revient pas, un lien
-// discret reste à côté des actions.
+// mettre. Rien ne part sans ce geste. « Pas maintenant » est gardé pour cette île : la proposition ne revient pas, et « la
+// mettre dans l’archipel » reste parmi ses outils.
 function propositionArchipel() {
   const rs = resume(courant), carte = el('section', { className: 'proposer' }), etat = el('p', { className: 'tiny' });
   carte.setAttribute('aria-label', 'Rejoindre l’archipel'); etat.setAttribute('role', 'status');
@@ -244,8 +236,7 @@ function propositionArchipel() {
   const oui = el('button', { type: 'button', className: 'btn second', textContent: 'La mettre dans l’archipel' });
   const non = quiet('pas maintenant', () => {
     ile.proposer = false; saveIle(); note('île : pas dans l’archipel, pas maintenant');
-    const nav = $('#app .actions'), m = lienMettre(); carte.remove();
-    if (nav) { nav.firstElementChild ? nav.firstElementChild.after(m) : nav.append(m); nav.querySelector('.btn')?.focus(); }
+    carte.remove(); majOutils(); $('#app .actions .btn')?.focus(); // l’archipel reste à portée, parmi ses outils
   });
   const gestes = el('p', { className: 'proposer-actions' }, oui, non);
   oui.addEventListener('click', async () => {
@@ -261,14 +252,58 @@ function propositionArchipel() {
   carte.append(dit, gestes, etat);
   return carte;
 }
-function lienMettre() { const m = quiet('la mettre dans l’archipel', envoyerSheet); m.id = 'mettre-ici'; return m; }
 const attendent = x => (x.routesEnAttente?.length ? (x.routesEnAttente.length > 1 ? ' Les routes qui l’attendent partiront avec elle.' : ' La route qui l’attend partira avec elle.') : ''); // rien ne part sans un geste : on le dit
 function majIleArchipel() { // l’île vient d’entrer dans l’archipel : la vue de l’île le dit, sans se redessiner
   if (ecran !== 'ile' || regard) return;
   const hint = $('#ile-hint'); if (hint?.textContent === DIT_ICI) hint.textContent = DIT_ARCHIPEL;
-  $('#mettre-ici')?.remove();
-  const nav = $('#app .actions'); if (nav && ile.archipel?.id) nav.append(quiet('la retirer de l’archipel', () => retirerSheet(ile)));
-  majRoutesIle(); // les routes qui l’attendaient sont parties avec elle
+  majRoutesIle(); // ses outils le disent ; les routes qui l’attendaient sont parties avec elle
+}
+
+// Sous la vue de l’île, après l’action principale : ses outils, une ligne chacun, avec une icône et ce qu’elle en dit ;
+// ce qui touche l’archipel, à part. Ils suivent l’état de l’île sans que la vue se redessine.
+const ICONES_OUTILS = {
+  renommer: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19l1.1-4.4 9.5-9.5a2 2 0 0 1 2.8 0l.5.5a2 2 0 0 1 0 2.8l-9.5 9.5z"/><path d="M13.8 6.9l3.3 3.3"/></svg>',
+  changer: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 18.5c2-1.2 4-1.2 6 0s4 1.2 6 0 4-1.2 6 0"/><path d="M5.5 15.5c1.3-2.8 3.6-4.4 6.1-4.5"/><path d="M17.5 4.5v7M14 8h7"/></svg>',
+  paysage: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 18.5l5.5-7.5 4 5 3-3.5 5.5 6z"/><circle cx="16.5" cy="6.5" r="1.8"/></svg>',
+  relier: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 17h4M18 17h4"/><path d="M6 17c2.3-4.8 9.7-4.8 12 0"/><path d="M6 11.5c2.3-4.8 9.7-4.8 12 0"/><path d="M6 11.5V17M12 7.9v5.5M18 11.5V17"/></svg>',
+  avant: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4.5l8 4-8 4-8-4z"/><path d="M4 12.5l8 4 8-4"/><path d="M4 16.5l8 4 8-4"/></svg>',
+  mettre: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5v9.5M8.5 9.5l3.5 3.5 3.5-3.5"/><path d="M3.5 17.5c2.8-1.4 5.7-1.4 8.5 0s5.7 1.4 8.5 0"/></svg>',
+  retirer: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 13V3.5M8.5 7L12 3.5 15.5 7"/><path d="M3.5 17.5c2.8-1.4 5.7-1.4 8.5 0s5.7 1.4 8.5 0"/></svg>',
+  routes: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="17.5" r="2"/><circle cx="19" cy="6.5" r="2"/><path d="M7 16.4c3.6-2.4 6.3-2.3 7.3-5.5.5-1.7 1.5-2.8 2.8-3.4" stroke-dasharray="2.2 2.4"/></svg>',
+  confiees: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 18.5c1.2-.7 2.4-.7 3.6 0M17.9 18.5c1.2-.7 2.4-.7 3.6 0"/><path d="M3.2 16.2c.5-1.5 1.4-2.3 2.5-2.3s2 .8 2.5 2.3M15.8 16.2c.5-1.5 1.4-2.3 2.5-2.3s2 .8 2.5 2.3"/><path d="M6.5 10.5c3-4.5 8-4.5 11 0" stroke-dasharray="1.4 2.2"/></svg>',
+  intro: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10-6.5z"/></svg>',
+};
+const CHEVRON = '<svg class="suite" viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 6l6 6-6 6"/></svg>';
+function outil(icone, texte, dit, fn, id = null) { // une ligne : son icône, ce qu’elle fait, et en petit ce qu’elle en dit
+  const b = el('button', { type: 'button', className: 'outil' });
+  b.innerHTML = `<span class="ico">${icone}</span>`;
+  b.append(el('span', { className: 'outil-texte' }, texte, ...(dit ? [el('small', { textContent: dit })] : [])));
+  b.insertAdjacentHTML('beforeend', CHEVRON);
+  b.addEventListener('click', fn); if (id) b.id = id;
+  return b;
+}
+const groupe = (nom, lignes) => { const g = el('div', { className: 'outils' }, ...lignes); g.setAttribute('role', 'group'); g.setAttribute('aria-label', nom); return g; };
+function outilsIle() { // ses outils à elle ; puis ceux de l’archipel, s’il y en a
+  const x = regard || ile, mine = !regard, ici = [], la = [];
+  ici.push(outil(ICONES_OUTILS.renommer, 'La renommer', 'son nom reste ici', () => nomSheet(x)));
+  if (mine) {
+    ici.push(ile.depots.length ? outil(ICONES_OUTILS.changer, 'Changer d’île', 'en commencer une nouvelle', changerSheet) : outil(ICONES_OUTILS.paysage, 'Choisir le paysage', 'tant qu’elle est vide', paysageSheet));
+    if (iles.length) ici.push(partenaire(ile) ? outil(ICONES_OUTILS.relier, 'Sa voisine', lieeDit(ile), relierSheet) : outil(ICONES_OUTILS.relier, 'La relier à une île d’avant', 'par un pont, ou collée à côté', relierSheet));
+    if (iles.length) ici.push(outil(ICONES_OUTILS.avant, 'Tes îles d’avant', iles.length > 1 ? `${iles.length} îles, gardées ici` : 'une île, gardée ici', ilesSheet));
+  }
+  if (mine && ile.depots.length && !ile.archipel && ile.proposer !== true) la.push(outil(ICONES_OUTILS.mettre, 'La mettre dans l’archipel', 'seulement sa forme', envoyerSheet, 'mettre-ici')); // la proposition est passée : l’archipel reste à portée
+  const n = x.archipel?.routes?.length || 0, att = x.routesEnAttente?.length || 0;
+  if (n || att || x.archipel?.code) la.push(outil(ICONES_OUTILS.routes, 'Ses routes', n ? (n > 1 ? `${n} routes` : 'une route') : att ? (att > 1 ? `${att} routes attendent` : 'une route attend') : 'un lien ouvert, pas encore de route', () => routesSheet(x), 'les-routes')); // un lien ouvert : ses routes, et de quoi tout couper
+  if (x.archipel?.id) la.push(outil(ICONES_OUTILS.retirer, 'La retirer de l’archipel', 'elle restera ici', () => retirerSheet(x)));
+  return [groupe('Ton île', ici), ...(la.length ? [el('p', { className: 'outils-titre', textContent: x.archipel?.id ? 'Dans l’archipel' : 'L’archipel' }), groupe('L’archipel', la)] : [])];
+}
+const cleOutils = l => l.map(n => n.textContent).join('|');
+function majOutils() { // l’île a changé : ses outils suivent, sans que la vue se redessine
+  const nav = $('#app .actions.empilees'); if (ecran !== 'ile' || !nav) return;
+  const neufs = outilsIle(), cle = cleOutils(neufs);
+  if (nav.dataset.cle === cle) return;
+  nav.dataset.cle = cle; nav.querySelectorAll(':scope > .outils, :scope > .outils-titre').forEach(n => n.remove());
+  nav.querySelector('.btn').after(...neufs);
 }
 
 function updateIleLine() {
@@ -400,10 +435,11 @@ function montrerArchipel(caption) {
 function renderArchipel() {
   const wrap = el('div', { className: 'ilewrap mer' });
   const caption = el('p', { className: 'ile-caption', id: 'arch-caption', textContent: inviteArch() });
-  const nav = el('nav', { className: 'actions' });
+  const nav = el('nav', { className: 'actions empilees' }), lignes = []; // une action principale, s’il y en a une ; puis des lignes
   if (!ile.envoyee && ile.depots.length) { const b = bouton('Y mettre ton île', envoyerSheet); b.id = 'mettre-ile'; nav.append(b); }
-  if (gardees.length) nav.append(quiet(`les îles confiées (${gardees.length})`, gardeesSheet));
-  if (vue) nav.append(quiet('revoir l’intro', () => { revue = true; go('intro'); }));
+  if (gardees.length) lignes.push(outil(ICONES_OUTILS.confiees, 'Les îles qu’on t’a confiées', gardees.length > 1 ? `${gardees.length} îles, gardées ici` : 'une île, gardée ici', () => gardeesSheet()));
+  if (vue) lignes.push(outil(ICONES_OUTILS.intro, 'Revoir l’intro', '', () => { revue = true; go('intro'); }));
+  if (lignes.length) nav.append(groupe('L’archipel', lignes));
   app.replaceChildren(
     el('p', { className: 'step', textContent: 'L’archipel' }),
     el('h1', { textContent: 'L’archipel, ce soir' }),
@@ -545,12 +581,9 @@ function pontonsDe(x) { // les routes de l’île, vues de chez elle : vers où 
 }
 function majRoutesIle() { // la vue de l’île dit ses routes, sans se redessiner ; et une fois, celles qui sont arrivées ou ont été coupées
   if (ecran !== 'ile') return;
-  const x = regard || ile, nav = $('#app .actions'), n = x.archipel?.routes?.length || 0, att = x.routesEnAttente?.length || 0;
+  const x = regard || ile;
   if (vue?.mode === 'ile') vue.montrerPontons(pontonsDe(x), (scene.voisines || []).map(v => v.angle)); // un ponton par route, tourné vers l’île au bout ; jamais face à une île voisine
-  let b = $('#les-routes');
-  if (nav && (n || att || x.archipel?.code)) { const t = n ? `ses routes (${n})` : att ? (att > 1 ? `${att} routes attendent` : 'une route attend') : 'ses routes'; if (!b) { b = quiet(t, () => routesSheet(x)); b.id = 'les-routes'; nav.append(b); } else b.textContent = t; } // un lien ouvert : ses routes, et de quoi tout couper
-  else b?.remove();
-  updateIleLine();
+  majOutils(); updateIleLine(); // ses routes, parmi ses outils
   const dit = $('#ile-routes'), k = nouvelles.get(x.archipel?.id);
   if (!dit || !k) return;
   nouvelles.delete(x.archipel.id);
