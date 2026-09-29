@@ -155,7 +155,7 @@ function renderIle() {
     const inst = quiet('installer l’app', installerSheet); inst.id = 'installer'; inst.hidden = !installable(); nav.append(inst); // paraît quand le navigateur le permet
   } else nav.append(bouton('Revenir à ton île', () => { regard = null; go('ile'); }));
   if ((regard || ile).archipel?.id) nav.append(quiet('la retirer de l’archipel', () => retirerSheet(regard || ile)));
-  if ((regard || ile).archipel?.id) { const x = regard || ile; nav.append(quiet('la partager', () => partagerSheet(x))); } // un lien, pour qu’on trace une route jusqu’à elle
+  if ((regard || ile).archipel?.id || (mine && ile.depots.length)) wrap.append(boutonPartager(regard || ile)); // le partage, sur l’image : un lien, pour qu’on trace une route jusqu’à elle
   const pousses = el('ul', {}, ...(d.assets.length ? d.assets.map(a => el('li', { textContent: ligneDe(a, d) })) : [el('li', { textContent: 'rien encore' })]));
   const what = titre && mine ? titre : null;
   const carte = mine && ile.proposer === true && !ile.archipel ? propositionArchipel() : null; // après un dépôt, rejoindre l’archipel est proposé
@@ -237,7 +237,7 @@ function majIleArchipel() { // l’île vient d’entrer dans l’archipel : la 
   if (ecran !== 'ile' || regard) return;
   const hint = $('#ile-hint'); if (hint?.textContent === DIT_ICI) hint.textContent = DIT_ARCHIPEL;
   $('#mettre-ici')?.remove();
-  const nav = $('#app .actions'); if (nav && ile.archipel?.id) nav.append(quiet('la retirer de l’archipel', () => retirerSheet(ile)), quiet('la partager', () => partagerSheet(ile)));
+  const nav = $('#app .actions'); if (nav && ile.archipel?.id) nav.append(quiet('la retirer de l’archipel', () => retirerSheet(ile)));
   majRoutesIle(); // les routes qui l’attendaient sont parties avec elle
 }
 
@@ -541,6 +541,45 @@ async function dessinerQR(c, texte) { // le code du lien, dessiné ici : aucun s
   c.width = c.height = cote; x.fillStyle = '#ffffff'; x.fillRect(0, 0, cote, cote); x.fillStyle = '#1d2624';
   for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) if (q.isDark(i, j)) x.fillRect((j + marge) * px, (i + marge) * px, px, px);
 }
+function zoneLien(lien, etat, { de, pour, titre = null }) { // un lien, son code QR dessiné ici, et les gestes pour l’envoyer ou le copier
+  const qr = el('canvas', { className: 'qr', width: 1, height: 1 }), champ = el('input', { className: 'lien', type: 'text', readOnly: true, value: lien });
+  qr.setAttribute('role', 'img'); qr.setAttribute('aria-label', `Le code ${de}, à montrer : il s’ouvre en le visant avec un téléphone`); champ.setAttribute('aria-label', `Le lien ${de}`);
+  champ.addEventListener('focus', () => champ.select());
+  dessinerQR(qr, lien).catch(e => { console.warn(e); qr.hidden = true; }); // sans le code à montrer, le lien suffit
+  const copier = async () => { try { await navigator.clipboard.writeText(lien); etat.textContent = 'Le lien est copié.'; note(`${pour} : lien copié`); } catch { champ.focus(); etat.textContent = 'Le lien est sélectionné : copie-le.'; } };
+  const gestes = el('p', { className: 'partage-gestes' });
+  if (navigator.share) gestes.append(bouton('Envoyer le lien', async () => { try { await navigator.share({ url: lien, ...(titre ? { title: titre } : {}) }); note(`${pour} : lien envoyé`); } catch { /* le partage a été fermé */ } }), quiet('copier le lien', copier));
+  else gestes.append(bouton('Copier le lien', copier));
+  return [qr, champ, gestes];
+}
+const ICONE_PARTAGER = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 14.5v-10M8.5 8L12 4.5 15.5 8"/><path d="M8.5 11H7a1.5 1.5 0 0 0-1.5 1.5v6A1.5 1.5 0 0 0 7 20h10a1.5 1.5 0 0 0 1.5-1.5v-6A1.5 1.5 0 0 0 17 11h-1.5"/></svg>';
+function boutonPartager(x) { // sur l’image de l’île : la partager ; si elle n’est pas encore dans l’archipel, d’abord l’y mettre
+  const b = el('button', { type: 'button', className: 'partager-vue', id: 'partager-ile', innerHTML: ICONE_PARTAGER });
+  b.setAttribute('aria-label', 'Partager ton île');
+  b.addEventListener('click', () => { note('geste : partager l’île'); if (x.archipel?.id) partagerSheet(x); else mettrePuisPartager(x); });
+  return b;
+}
+function mettrePuisPartager(x) { // pas encore dans l’archipel : ce qui partirait, et un seul geste pour l’y mettre ; puis le partage
+  const rs = resume(courant), etat = el('p', { className: 'tiny' }), b = el('button', { type: 'button', className: 'gesture', textContent: 'La mettre dans l’archipel, puis la partager' });
+  etat.setAttribute('role', 'status');
+  b.addEventListener('click', async () => {
+    b.disabled = true; etat.textContent = 'Elle part…';
+    if (!(await envoyer(x))) { b.disabled = false; etat.textContent = 'L’archipel ne répond pas pour l’instant. Ton île reste ici ; réessaie un peu plus tard.'; return; }
+    note(`île : mise dans l’archipel (${listeDe(rs.comptes)})`);
+    $('#app .proposer')?.remove(); majIleArchipel(); partagerSheet(x); // la proposition est faite ; place au partage
+  });
+  openSheet(el('div', {}, el('h2', { textContent: 'Partager ton île' }),
+    el('p', { className: 'intro', textContent: 'Pour la partager, ton île doit d’abord être dans l’archipel : qui aura le lien la verra là-bas.' }),
+    el('p', { className: 'intro', textContent: `Seule sa forme part, telle que les autres la verront${NB}: ${listeDe(rs.comptes)}${rs.phare ? ', et un phare' : ''}, dans son paysage. Ni tes mots, ni tes dates, ni ton nom. Tu pourras l’en retirer.${attendent(x)}` }),
+    b, etat, footRow(quiet('pas maintenant', closeSheet))));
+}
+function partagerAppSheet() { // l’app, à faire connaître : son adresse, à envoyer ou à montrer ; elle ne dit rien de toi, ni de ton île
+  const etat = el('p', { className: 'tiny' }); etat.setAttribute('role', 'status');
+  note('geste : partager l’app');
+  openSheet(el('div', {}, el('h2', { textContent: 'Partager l’app' }),
+    el('p', { className: 'intro', textContent: 'Pour que quelqu’un d’autre ait son île. Ce lien mène à l’app, pas à ton île : il ne dit rien de toi.' }),
+    el('div', { className: 'partage' }, ...zoneLien(new URL('./', location.href).href, etat, { de: 'de l’app', pour: 'app', titre: 'L’archipel' })), etat, footRow(quiet('revenir', closeSheet))));
+}
 function partagerSheet(x) { // un lien vers une de tes îles, à envoyer ou à montrer ; il se ferme quand tu veux
   const a = x.archipel, zone = el('div', { className: 'partage' }), etat = el('p', { className: 'tiny' });
   etat.setAttribute('role', 'status');
@@ -555,14 +594,7 @@ function partagerSheet(x) { // un lien vers une de tes îles, à envoyer ou à m
     zone.replaceChildren(b);
   };
   const montrer = () => {
-    const lien = lienDe(a.code), qr = el('canvas', { className: 'qr', width: 1, height: 1 }), champ = el('input', { className: 'lien', type: 'text', readOnly: true, value: lien });
-    qr.setAttribute('role', 'img'); qr.setAttribute('aria-label', 'Le code du lien, à montrer : il s’ouvre en le visant avec un téléphone'); champ.setAttribute('aria-label', 'Le lien de ton île');
-    champ.addEventListener('focus', () => champ.select());
-    dessinerQR(qr, lien).catch(e => { console.warn(e); qr.hidden = true; }); // sans le code à montrer, le lien suffit
-    const copier = async () => { try { await navigator.clipboard.writeText(lien); etat.textContent = 'Le lien est copié.'; note('route : lien copié'); } catch { champ.focus(); etat.textContent = 'Le lien est sélectionné : copie-le.'; } };
-    const gestes = el('p', { className: 'partage-gestes' });
-    if (navigator.share) gestes.append(bouton('Envoyer le lien', async () => { try { await navigator.share({ url: lien }); note('route : lien envoyé'); } catch { /* le partage a été fermé */ } }), quiet('copier le lien', copier));
-    else gestes.append(bouton('Copier le lien', copier));
+    const [qr, champ, gestes] = zoneLien(lienDe(a.code), etat, { de: 'de ton île', pour: 'route' });
     const fermer = quiet('fermer le lien', async () => {
       fermer.disabled = true; etat.textContent = 'Un instant…';
       try { await partagerIle(a.id, a.jeton, null); } catch (e) { signaler(e); oublieeSi(x, e); fermer.disabled = false; etat.textContent = pourquoi(e); return; }
@@ -1321,6 +1353,7 @@ function plusSheet() { // compact : une icône et quelques mots par ligne
     ligne(ICONES_MENU.quitter, 'Quitter vite ce site', () => quitter($('#exit').href)),
     ...(musique.disponible ? [ligneMusique()] : []),
     ligne(ICONES_MENU.installer, installee() ? 'L’app est installée' : 'Installer l’app', installerSheet),
+    ligne(ICONE_PARTAGER, 'Partager l’app', partagerAppSheet),
     ligne(ICONES_MENU.parler, 'Parler à quelqu’un', () => humansSheet()),
     ligne(ICONES_MENU.lien, 'J’ai reçu un lien', lienSheet),
     ...(gardees.length ? [ligne(ICONES_MENU.confiees, 'Les îles qu’on t’a confiées', () => gardeesSheet())] : []),

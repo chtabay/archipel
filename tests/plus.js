@@ -1,4 +1,5 @@
-// Le menu « Plus », dans la barre du bas : quitter vite, la musique, installer l’app, parler à quelqu’un, j’ai reçu un lien, revoir l’intro.
+// Le menu « Plus », dans la barre du bas : quitter vite, la musique, installer l’app, la partager, parler à quelqu’un, j’ai reçu un lien,
+// revoir l’intro.
 const { chromium } = require('playwright');
 const path = require('path'), fs = require('fs');
 const { BASE, OUT: CAPTURES, GL, verifier, bilan, surveiller, contexte } = require('./commun');
@@ -20,7 +21,7 @@ const sonore = p => p.evaluate(() => window.archipel.musique.etat());
     verifier((await p.$$('.onglets button')).length === 4 && (await p.textContent('[data-onglet="plus"]')).trim() === 'Plus', 'la barre du bas a quatre boutons, le dernier est « Plus »');
     await ouvrirMenu(p);
     const l = await lignes(p);
-    verifier(l.join(' · ') === 'Quitter vite ce site · Allumer la musique · Installer l’app · Parler à quelqu’un · J’ai reçu un lien · Revoir l’intro' && (await p.$eval('.onglets [aria-current="page"]', b => b.dataset.onglet)) === 'ile', `le menu : ${l.join(' · ')} ; l’onglet allumé reste Ton île`);
+    verifier(l.join(' · ') === 'Quitter vite ce site · Allumer la musique · Installer l’app · Partager l’app · Parler à quelqu’un · J’ai reçu un lien · Revoir l’intro' && (await p.$eval('.onglets [aria-current="page"]', b => b.dataset.onglet)) === 'ile', `le menu : ${l.join(' · ')} ; l’onglet allumé reste Ton île`);
     await p.waitForTimeout(500); await p.screenshot({ path: path.join(OUT, 'menu.png') });
 
     // 2. la musique, depuis le menu : allumée sur l’île, le feu de camp joue ; le bouton de la vue et la ligne le disent
@@ -39,6 +40,14 @@ const sonore = p => p.evaluate(() => window.archipel.musique.etat());
     await ouvrirMenu(p); await p.click('.sheet .row:has-text("Installer l’app")'); await p.waitForSelector('.sheet h2:has-text("L’installer comme une app")');
     verifier(/ne le propose pas/.test(await p.textContent('.sheet')), 'installer l’app : la feuille s’ouvre, et dit que ce navigateur ne le propose pas');
     await p.click('.sheet .quiet:has-text("pas maintenant")'); await p.waitForSelector('.sheet', { state: 'detached' });
+
+    // 4 bis. partager l’app : son adresse, à envoyer ou à copier, et son code QR dessiné ici ; rien sur l’île ni sur toi
+    await ouvrirMenu(p); await p.click('.sheet .row:has-text("Partager l’app")'); await p.waitForSelector('.sheet input.lien');
+    await attendre(p, () => p.evaluate(() => document.querySelector('.sheet canvas.qr')?.width > 100));
+    const app = await p.evaluate(() => { const c = document.querySelector('.sheet canvas.qr'), d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let n = 0; for (let i = 0; i < d.length; i += 4) if (d[i] < 80) n++; return { lien: document.querySelector('.sheet input.lien').value, noirs: n, texte: document.querySelector('.sheet').textContent, gestes: [...document.querySelectorAll('.sheet .partage-gestes button')].map(b => b.textContent) }; });
+    verifier(app.lien === BASE && app.noirs > 2000 && /ne dit rien de toi/.test(app.texte) && app.gestes.some(t => /copier le lien/i.test(t)), `partager l’app : son adresse seule (${app.lien}), son code QR dessiné ici, et de quoi la copier ; rien sur l’île`);
+    await p.screenshot({ path: path.join(OUT, 'partager-app.png') });
+    await p.click('.sheet .quiet:has-text("revenir")'); await p.waitForSelector('.sheet', { state: 'detached' });
 
     // 5. revoir l’intro, puis la passer : on revient où l’on était
     await ouvrirMenu(p); await p.click('.sheet .row:has-text("Revoir l’intro")'); await p.waitForSelector('.intro-nav .quiet:has-text("passer")', { timeout: 20000 });
@@ -83,7 +92,7 @@ const sonore = p => p.evaluate(() => window.archipel.musique.etat());
     await p.goto(BASE); await semer(p); await p.reload(); await p.waitForTimeout(800);
     await ouvrirMenu(p);
     const l = await lignes(p);
-    verifier(l.length === 5 && !l.includes('Revoir l’intro') && !e.length, `sans 3D : le menu a ${l.length} lignes, sans l’intro`);
+    verifier(l.length === 6 && !l.includes('Revoir l’intro') && !e.length, `sans 3D : le menu a ${l.length} lignes, sans l’intro`);
     await sans.close(); }
 
   await b.close();

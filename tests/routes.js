@@ -26,14 +26,19 @@ const fermerFeuille = async p => { await p.click('.sheet .foot-row .quiet'); awa
   const telephone = async () => { const c = await b.newContext(TELEPHONE); await a.installer(c); const p = await c.newPage(), e = [], x = []; surveiller(p, e, x); return { c, p, e, x }; };
   const A = await telephone(), B = await telephone();
 
-  // 1. A met son île dans l’archipel, puis la partage : la feuille prévient d’abord ; rien ne part avant le geste
+  // 1. A partage son île, du bouton posé sur l’image ; pas encore dans l’archipel, la feuille le dit, et ce qui partirait ;
+  //    un geste l’y met, puis la feuille du partage prévient d’abord ; rien ne part avant chaque geste
   await A.p.goto(BASE);
   await A.p.evaluate(i => { localStorage.clear(); localStorage.setItem('archipel:intro', '1'); localStorage.setItem('archipel:ile', i); }, JSON.stringify(ile(1, [depot(1, ['s4']), depot(2, ['s7'], { texte: true, contenu: SECRET })])));
   await A.p.reload(); await A.p.waitForTimeout(1200);
-  verifier(!(await A.p.$('.actions .quiet:has-text("la partager")')), 'une île qui n’est pas dans l’archipel ne se partage pas');
-  await A.p.click('#mettre-ici'); await A.p.waitForSelector('.sheet'); await A.p.click('.sheet .gesture:has-text("Y mettre ton île")'); await A.p.waitForSelector('.sheet', { state: 'detached', timeout: 10000 }); await A.p.waitForTimeout(400);
+  verifier(await A.p.evaluate(() => !!document.querySelector('.ilewrap #partager-ile') && !document.querySelector('.actions .quiet')?.textContent.includes('partager')), 'le bouton de partage est sur l’image de l’île');
+  const mettre = await feuille(A.p, '#partager-ile');
+  verifier(/doit d’abord être dans l’archipel/.test(mettre) && /Seule sa forme part/.test(mettre) && /Tu pourras l’en retirer/.test(mettre) && !appels().length, 'pas encore dans l’archipel : la feuille le dit, et ce qui partirait ; rien ne part');
+  await A.p.click('.sheet .gesture:has-text("La mettre dans l’archipel, puis la partager")');
+  await attendre(A.p, () => A.p.evaluate(() => !!document.querySelector('.sheet .avertir')), 10000);
   const idA = (await stockee(A.p)).archipel.id;
-  const dit = await feuille(A.p, '.actions .quiet:has-text("la partager")');
+  verifier(!!idA && appels('archipel_poser').length === 1 && !appels('archipel_partager').length, 'un geste la met dans l’archipel, sa forme seulement ; la feuille du partage suit');
+  const dit = await lire(A.p, '.sheet');
   verifier(/reconnaîtra ton île dans l’archipel/.test(dit) && /la verra grandir après chaque dépôt/.test(dit) && /quelqu’un de confiance/.test(dit), 'partager : la feuille prévient que le lien fait reconnaître l’île, et la voir grandir');
   verifier(/Une route n’est jamais définitive : chacune des deux îles peut la couper, seule, à tout moment\./.test(dit), 'et qu’une route n’est jamais définitive');
   verifier(!appels('archipel_partager').length, 'rien ne part avant « Créer le lien »');
@@ -116,7 +121,7 @@ const fermerFeuille = async p => { await p.click('.sheet .foot-row .quiet'); awa
 
   // 7. A ferme le lien : il ne mène plus nulle part, pour B aussi, et l’île gardée le dit
   const avant7 = appels('archipel_partager').length;
-  await feuille(A.p, '.actions .quiet:has-text("la partager")');
+  await feuille(A.p, '#partager-ile');
   await A.p.click('.sheet .quiet:has-text("fermer le lien")'); await attendre(A.p, () => A.p.evaluate(() => /Le lien est fermé/.test(document.querySelector('.sheet [role=status]')?.textContent || '')));
   verifier(appels('archipel_partager').length === avant7 + 1 && appels('archipel_partager').at(-1).c.p_code === null && !a.etat.partages.size && !(await stockee(A.p)).archipel.code, 'fermer le lien : la base l’oublie, le téléphone aussi');
   await fermerFeuille(A.p);
@@ -130,7 +135,7 @@ const fermerFeuille = async p => { await p.click('.sheet .foot-row .quiet'); awa
   await fermerFeuille(B.p);
 
   // 8. un lien neuf ; B trace une route depuis une île déjà dans l’archipel ; puis A coupe tout : son île change de place
-  await feuille(A.p, '.actions .quiet:has-text("la partager")');
+  await feuille(A.p, '#partager-ile');
   await A.p.click('.sheet .gesture:has-text("Créer le lien")'); await attendre(A.p, () => A.p.$('.sheet input.lien'));
   const lien2 = await A.p.$eval('.sheet input.lien', i => i.value), code2 = lien2.split('#ile=')[1];
   await fermerFeuille(A.p);
@@ -161,7 +166,7 @@ const fermerFeuille = async p => { await p.click('.sheet .foot-row .quiet'); awa
   verifier(appels().every(y => !!y.entetes.apikey && !y.entetes.authorization && !y.entetes.referer), 'la clé publique seule, sans adresse d’origine');
 
   // 10. sans réseau : le lien le dit, et « Réessayer » marche au retour du réseau
-  await feuille(A.p, '.actions .quiet:has-text("la partager")');
+  await feuille(A.p, '#partager-ile');
   await A.p.click('.sheet .gesture:has-text("Créer le lien")'); await attendre(A.p, () => A.p.$('.sheet input.lien'));
   const lien3 = await A.p.$eval('.sheet input.lien', i => i.value); await fermerFeuille(A.p);
   const n0 = B.e.length; a.etat.panne = true;
