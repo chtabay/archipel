@@ -4,8 +4,8 @@
 import { SUBJECTS, QUESTIONS, KEYS, BASE, LEX, HUMANS } from './contenu.js?v=2';
 import { graines, quadDe, nomDe, phrasesDe, casesDe, sujetLabel, listeDe, listeGraines, FAMILLES, ESPECES, NOMS } from './grammaire.js?v=5';
 import { nouvelleIle, deriver, resume, forme, depuisForme, archipelInvente, ileInventee, BIOMES, BIOME_IDS, biomeDe } from './ile.js?v=13';
-import { Vue3D, Ilot3D, apercu, disponible, ECH_ARCH, ILE_INTRO } from './monde.js?v=22';
-import { lireArchipel, poserIle, retirerIle, nouveauJeton } from './serveur.js?v=1';
+import { Vue3D, Ilot3D, apercu, disponible, ECH_ARCH, ILE_INTRO } from './monde.js?v=23';
+import { lireArchipel, poserIle, retirerIle, nouveauJeton, partagerIle, voirIle, relierIle, couperRoute, lireRoutes, voisines, nouveauCode } from './serveur.js?v=2';
 import { musique } from './musique.js?v=2';
 import { lire } from './lexique.js?v=2';
 
@@ -44,6 +44,7 @@ const store = {
   set(k, v) { try { localStorage.setItem(PREFIXE + k, JSON.stringify(v)); } catch { /* stockage indisponible */ } },
   del(k) { try { localStorage.removeItem(PREFIXE + k); } catch { /* rien à effacer */ } },
 };
+const CODE = /^[A-Za-z0-9_-]{22}$/, UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/; // le code d’un lien vers une île ; l’identifiant d’une île dans l’archipel
 (function reprendre() { // une seule fois : l’île, les îles d’avant et le brouillon gardés sous les noms d’avant, du plus récent au plus ancien
   try {
     if (localStorage.getItem(`${PREFIXE}ile`) !== null) return;
@@ -76,12 +77,25 @@ function saine(x) { // une île relue sur ce téléphone : sa forme est vérifi�
   });
   const a = x.archipel && typeof x.archipel === 'object' ? x.archipel : null; // sa place dans l’archipel partagé, ou une place qui l’attend
   const archipel = a && ((typeof a.id === 'string' && /^[0-9a-f]{64}$/.test(a.jeton) && Number.isFinite(a.x) && Number.isFinite(a.z)) || (!a.id && a.attente)) ? a : undefined;
-  return { ...x, id: x.id ?? Date.now(), seed: Number.isFinite(x.seed) ? x.seed : 1, biome: BIOMES[x.biome] ? x.biome : 'prairie', depots, archipel, envoyee: !!archipel?.id }; // « envoyée » d’avant le serveur : elle n’avait rien quitté
+  if (archipel) { // ses routes : le code de son lien, les îles au bout de ses routes ; déplacée, la place qu’elle a quittée
+    if (!CODE.test(archipel.code ?? '')) delete archipel.code;
+    if (Array.isArray(archipel.routes)) archipel.routes = archipel.routes.filter(r => typeof r === 'string' && UUID.test(r)).slice(0, 12); else delete archipel.routes;
+    if (!(Array.isArray(archipel.loin) && archipel.loin.length === 2 && archipel.loin.every(Number.isFinite))) delete archipel.loin;
+  }
+  const r = { ...x, id: x.id ?? Date.now(), seed: Number.isFinite(x.seed) ? x.seed : 1, biome: BIOMES[x.biome] ? x.biome : 'prairie', depots, archipel, envoyee: !!archipel?.id }; // « envoyée » d’avant le serveur : elle n’avait rien quitté
+  const attente = (Array.isArray(x.routesEnAttente) ? x.routesEnAttente : []).filter(c => typeof c === 'string' && CODE.test(c)); // des routes qui partiront avec elle
+  if (attente.length) r.routesEnAttente = [...new Set(attente)].slice(0, 12); else delete r.routesEnAttente;
+  return r;
 }
 let ile = saine(store.get('ile', null)) || nouvelleIle(); // celle qui pousse
 let iles = [].concat(store.get('iles', [])).map(saine).filter(Boolean); // celles d’avant, gardées ici
 const saveIle = () => store.set('ile', ile);
 const saveIles = () => store.set('iles', iles);
+// les îles qu’on t’a confiées, par un lien : gardées ici, jamais sur le serveur, avec leur forme pour les montrer sans réseau
+const confiee = g => (g && typeof g === 'object' && CODE.test(g.code ?? '') && UUID.test(g.id ?? '') && g.forme && typeof g.forme === 'object' && Array.isArray(g.forme.choses) && Number.isFinite(g.x) && Number.isFinite(g.z)
+  ? { code: g.code, id: g.id, forme: g.forme, x: g.x, z: g.z, ...(g.fermee ? { fermee: true } : {}) } : null);
+let gardees = [].concat(store.get('gardees', [])).map(confiee).filter(Boolean).slice(-40);
+const saveGardees = () => store.set('gardees', gardees);
 const vie = new Map(); // clé → instant d’apparition, pour le petit rebond
 let courant; // ce que l’île montre
 try { courant = deriver(ile); } catch (e) { console.error(e); ile = nouvelleIle(); courant = deriver(ile); } // une île illisible : on repart d’une île vide plutôt que de ne rien montrer
@@ -141,6 +155,7 @@ function renderIle() {
     const inst = quiet('installer l’app', installerSheet); inst.id = 'installer'; inst.hidden = !installable(); nav.append(inst); // paraît quand le navigateur le permet
   } else nav.append(bouton('Revenir à ton île', () => { regard = null; go('ile'); }));
   if ((regard || ile).archipel?.id) nav.append(quiet('la retirer de l’archipel', () => retirerSheet(regard || ile)));
+  if ((regard || ile).archipel?.id) { const x = regard || ile; nav.append(quiet('la partager', () => partagerSheet(x))); } // un lien, pour qu’on trace une route jusqu’à elle
   const pousses = el('ul', {}, ...(d.assets.length ? d.assets.map(a => el('li', { textContent: ligneDe(a, d) })) : [el('li', { textContent: 'rien encore' })]));
   const what = titre && mine ? titre : null;
   const carte = mine && ile.proposer === true && !ile.archipel ? propositionArchipel() : null; // après un dépôt, rejoindre l’archipel est proposé
@@ -148,7 +163,7 @@ function renderIle() {
     el('p', { className: 'step', textContent: mine ? (what ? 'Ton île' : 'Ton île, aujourd’hui') : `Une île d’avant · ${mois(regard.nee)}` }),
     el('h1', { textContent: what ? what.h1 : mine ? 'Ton île' : 'Elle ne pousse plus' }),
     el('p', { className: 'hint', id: 'ile-hint', textContent: what ? what.line : mine ? (ile.envoyee ? DIT_ARCHIPEL : DIT_ICI) : 'Elle reste ici, telle que tu l’as laissée.' }),
-    wrap, caption, excerpt, line,
+    wrap, caption, excerpt, line, el('p', { className: 'tiny', id: 'ile-routes' }),
     ...(carte ? [carte] : []),
     nav,
     el('details', {}, el('summary', { textContent: 'Ce qui a poussé' }), pousses),
@@ -158,7 +173,7 @@ function renderIle() {
   );
   titre = null;
   scene.d = d;
-  if (!vue) { wrap.classList.add('sans'); caption.hidden = true; wrap.append(el('p', { className: 'sans3d', textContent: 'Cet appareil n’affiche pas la 3D. Ton île est bien là : ce qui a poussé est écrit plus bas.' })); updateIleLine(); return; }
+  if (!vue) { wrap.classList.add('sans'); caption.hidden = true; wrap.append(el('p', { className: 'sans3d', textContent: 'Cet appareil n’affiche pas la 3D. Ton île est bien là : ce qui a poussé est écrit plus bas.' })); updateIleLine(); suivreRoutes(regard || ile); return; }
   vue.attacher(wrap);
   vue.canvas.setAttribute('aria-label', mine ? 'Ton île, en 3D, et ce qui y a poussé' : 'Une de tes îles d’avant, en 3D');
   const tourner = el('button', { type: 'button', className: 'tourner', innerHTML: ICONE_TOURNER }); // tourner, sur la vue elle-même
@@ -176,7 +191,7 @@ function renderIle() {
     const texte = (d.ile.depots.filter(x => a.depots.includes(x.id) && x.contenu).pop() || {}).contenu;
     if (texte) { excerpt.textContent = `« ${texte.trim().replace(/\s+/g, ' ').slice(0, 140)}${texte.trim().length > 140 ? '…' : ''} »`; excerpt.hidden = false; }
   };
-  updateIleLine();
+  updateIleLine(); suivreRoutes(regard || ile);
 }
 
 function ligneDe(a, d) {
@@ -194,7 +209,7 @@ function ligneDe(a, d) {
 function propositionArchipel() {
   const rs = resume(courant), carte = el('section', { className: 'proposer' }), etat = el('p', { className: 'tiny' });
   carte.setAttribute('aria-label', 'Rejoindre l’archipel'); etat.setAttribute('role', 'status');
-  const dit = el('p', {}, el('b', { textContent: 'Ton île peut rejoindre l’archipel.' }), ` Les autres y verraient une île avec ${listeDe(rs.comptes)}${rs.phare ? ', et un phare' : ''}, dans son paysage, sans tes mots ni ton nom. Tu pourras l’en retirer.`);
+  const dit = el('p', {}, el('b', { textContent: 'Ton île peut rejoindre l’archipel.' }), ` Les autres y verraient une île avec ${listeDe(rs.comptes)}${rs.phare ? ', et un phare' : ''}, dans son paysage, sans tes mots ni ton nom. Tu pourras l’en retirer.${attendent(ile)}`);
   dit.setAttribute('aria-live', 'polite');
   const oui = el('button', { type: 'button', className: 'btn second', textContent: 'La mettre dans l’archipel' });
   const non = quiet('pas maintenant', () => {
@@ -217,18 +232,20 @@ function propositionArchipel() {
   return carte;
 }
 function lienMettre() { const m = quiet('la mettre dans l’archipel', envoyerSheet); m.id = 'mettre-ici'; return m; }
+const attendent = x => (x.routesEnAttente?.length ? (x.routesEnAttente.length > 1 ? ' Les routes qui l’attendent partiront avec elle.' : ' La route qui l’attend partira avec elle.') : ''); // rien ne part sans un geste : on le dit
 function majIleArchipel() { // l’île vient d’entrer dans l’archipel : la vue de l’île le dit, sans se redessiner
   if (ecran !== 'ile' || regard) return;
   const hint = $('#ile-hint'); if (hint?.textContent === DIT_ICI) hint.textContent = DIT_ARCHIPEL;
   $('#mettre-ici')?.remove();
-  const nav = $('#app .actions'); if (nav && ile.archipel?.id) nav.append(quiet('la retirer de l’archipel', () => retirerSheet(ile)));
+  const nav = $('#app .actions'); if (nav && ile.archipel?.id) nav.append(quiet('la retirer de l’archipel', () => retirerSheet(ile)), quiet('la partager', () => partagerSheet(ile)));
+  majRoutesIle(); // les routes qui l’attendaient sont parties avec elle
 }
 
 function updateIleLine() {
   const line = $('#ile-line');
   if (!line) return;
-  const d = scene.d || courant, n = d.assets.length, k = d.ile.depots.length;
-  line.textContent = `${cap(biomeDe(d.ile.biome).nom)} · ` + (n ? `${n} chose${n > 1 ? 's' : ''} · ${k} dépôt${k > 1 ? 's' : ''}${d.ile.nee ? ` · depuis le ${jour(d.ile.nee)}` : ''}${d.ile.envoyee ? ' · dans l’archipel' : ''}` : `Rien encore${d.ile.nee ? ` · île commencée le ${jour(d.ile.nee)}` : ''}`);
+  const d = scene.d || courant, n = d.assets.length, k = d.ile.depots.length, nr = d.ile.archipel?.routes?.length || 0;
+  line.textContent = `${cap(biomeDe(d.ile.biome).nom)} · ` + (n ? `${n} chose${n > 1 ? 's' : ''} · ${k} dépôt${k > 1 ? 's' : ''}${d.ile.nee ? ` · depuis le ${jour(d.ile.nee)}` : ''}${d.ile.envoyee ? ' · dans l’archipel' : ''}${nr ? ` · ${nr} route${nr > 1 ? 's' : ''}` : ''}` : `Rien encore${d.ile.nee ? ` · île commencée le ${jour(d.ile.nee)}` : ''}`);
 }
 
 function legende() {
@@ -247,7 +264,7 @@ function legende() {
 /* ───────── L’archipel ───────── */
 // Les îles réelles, lues sur le serveur de l’archipel : seulement leur forme. Les tiennes se dessinent depuis ce téléphone.
 
-const arch = { reelles: [], items: [], arrivals: 0, rang: 0, total: 0, lu: false, panne: false };
+const arch = { reelles: [], items: [], arrivals: 0, rang: 0, total: 0, lu: false, panne: false, routes: [], sondes: 0 }; // routes : [{ a, b }], entre deux îles
 const miennes = () => [...iles.filter(x => x.envoyee), ...(ile.envoyee ? [ile] : [])];
 const LARG = 18, PROF = 36; // la place d’une île suit sa sensation : supportable à droite, agité au loin
 if (vue) vue.dimsArch = [LARG, PROF];
@@ -317,6 +334,7 @@ async function sonder() { // les îles arrivées ou grandies depuis la dernière
     else { arch.arrivals++; if (vue) vue.arriver(nouvelle); else arch.items.push(nouvelle); } // elle arrive
   }
   updateArchLine();
+  if (++arch.sondes % 3 === 0) { await chargerRoutes(); if (ecran === 'archipel' && vue) vue.montrerRoutes(pairesRoutes()); } // les routes, une fois sur trois
 }
 
 function updateArchLine() {
@@ -328,20 +346,22 @@ function updateArchLine() {
 
 const INVITE_ARCH = 'Touche une île pour t’en approcher. Fais tourner l’archipel du doigt.';
 let voirLaTienne = false; // venue de l’île juste après l’y avoir mise : l’archipel s’approche d’elle
+let voirConfiee = null; // venue des îles confiées : l’archipel s’approche de celle-ci
 function viserLaTienne(cap) { // elle vient d’y être mise : on s’en approche, et un anneau s’ouvre sur l’eau
   const moi = arch.items.find(it => it.ile === ile);
   if (vue && moi) { vue.viser(moi); vue.vague(moi.x, moi.z, (performance.now() - vue.t0) / 1000); }
   if (moi) cap.textContent = 'Elle est là, parmi les autres. Elle y grandira avec toi.';
 }
 function legendeArch(it) {
-  const rs = resume(it.d || deriver(it.ile));
-  return it.mine ? `La tienne${it.ile === ile ? ', celle d’aujourd’hui' : `, celle de ${mois(it.ile.nee)}`}${NB}: ${listeDe(rs.comptes)}.` : `Une île avec ${listeDe(rs.comptes)}${rs.phare ? ', et un phare' : ''}. ${it.born ? 'Arrivée à l’instant.' : 'Là depuis un moment.'}`;
+  const rs = resume(it.d || deriver(it.ile)), nr = it.mine ? it.ile.archipel?.routes?.length || 0 : 0;
+  const routes = it.mine ? (nr ? ` ${nr > 1 ? `${nr} routes la relient` : 'Une route la relie'} à d’autres îles.` : '') : reliees().has(it.id) ? ' Une route la relie à ton île.' : gardees.some(g => g.id === it.id) ? ' On te l’a confiée.' : '';
+  return (it.mine ? `La tienne${it.ile === ile ? ', celle d’aujourd’hui' : `, celle de ${mois(it.ile.nee)}`}${NB}: ${listeDe(rs.comptes)}.` : `Une île avec ${listeDe(rs.comptes)}${rs.phare ? ', et un phare' : ''}. ${it.born ? 'Arrivée à l’instant.' : 'Là depuis un moment.'}`) + routes;
 }
 const inviteArch = () => (arch.panne ? 'L’archipel ne répond pas pour l’instant. Tes îles sont bien là, sur ce téléphone.' : !arch.lu ? 'L’archipel se charge…' : arch.items.length ? INVITE_ARCH : 'L’archipel attend sa première île.');
 function montrerArchipel(caption) {
   if (!vue) return;
   const { dims, centre } = cadrer();
-  vue.dimsArch = dims; vue.montrerArchipel(arch.items, { centre });
+  vue.dimsArch = dims; vue.montrerArchipel(arch.items, { centre }); vue.montrerRoutes(pairesRoutes());
   vue.onTouche = it => {
     if (!it) { caption.textContent = inviteArch(); return; }
     caption.replaceChildren(`${legendeArch(it)} `, quiet('revenir à l’archipel', () => { vue.viser(null); caption.textContent = inviteArch(); }));
@@ -352,6 +372,7 @@ function renderArchipel() {
   const caption = el('p', { className: 'ile-caption', id: 'arch-caption', textContent: inviteArch() });
   const nav = el('nav', { className: 'actions' });
   if (!ile.envoyee && ile.depots.length) { const b = bouton('Y mettre ton île', envoyerSheet); b.id = 'mettre-ile'; nav.append(b); }
+  if (gardees.length) nav.append(quiet(`les îles confiées (${gardees.length})`, gardeesSheet));
   if (vue) nav.append(quiet('revoir l’intro', () => { revue = true; go('intro'); }));
   app.replaceChildren(
     el('p', { className: 'step', textContent: 'L’archipel' }),
@@ -365,10 +386,13 @@ function renderArchipel() {
   if (!vue) { wrap.classList.add('sans'); wrap.append(el('p', { className: 'sans3d', textContent: 'Cet appareil n’affiche pas la 3D : l’archipel ne peut pas se montrer ici. Ton île y est quand même, si tu l’y as mise.' })); }
   else { vue.attacher(wrap); vue.canvas.setAttribute('aria-label', 'L’archipel en 3D : les îles des autres, et les tiennes'); if (musique.disponible) wrap.append(boutonSon('archipel')); }
   placerArchipel(); montrerArchipel(caption); updateArchLine(); // les tiennes d’abord, tout de suite
-  chargerArchipel().then(() => { // puis celles des autres
+  chargerArchipel().then(async () => { // puis celles des autres, et les routes
+    if (ecran !== 'archipel') return;
+    if (!arch.panne) await chargerRoutes();
     if (ecran !== 'archipel') return;
     placerArchipel(); montrerArchipel(caption); updateArchLine(); caption.textContent = inviteArch();
     if (voirLaTienne) { voirLaTienne = false; viserLaTienne(caption); }
+    else if (voirConfiee) { const g = voirConfiee; voirConfiee = null; viserConfiee(g, caption); }
     clearInterval(sondage); if (!arch.panne) sondage = setInterval(sonder, 20000);
   });
 }
@@ -380,10 +404,12 @@ async function envoyer(x) {
     if (arch.panne) return false;
     const d = deriver(x), rs = resume(d), it = { d }, jeton = x.archipel?.jeton || nouveauJeton();
     const autres = [...arch.reelles, ...miennes().filter(m => m !== x && m.archipel?.id).map(m => ({ d: deriver(m), x: m.archipel.x, z: m.archipel.z }))];
+    if (x.archipel?.loin) autres.push({ d: { m: { rayon: 12 } }, x: x.archipel.loin[0], z: x.archipel.loin[1] }); // déplacée : loin de la place qu’elle a quittée
     placeLibre(it, autres, posArch(rs.a, rs.v));
     const r = await poserIle(jeton, forme(d), { x: it.x, z: it.z });
     x.archipel = { id: r.ile, jeton, x: it.x, z: it.z }; x.envoyee = true; delete x.proposer; sauver(x);
     arch.total++;
+    await relierEnAttente(x); // les routes qui l’attendaient partent avec elle
     return true;
   } catch (e) { console.warn(e); return false; }
 }
@@ -400,10 +426,294 @@ async function envoyerTout() {
     const a = x.archipel;
     if (!a) continue;
     if (!a.id) { if (!(await envoyer(x))) return; continue; }
-    if (!a.enRetard) continue;
-    try { await poserIle(a.jeton, forme(deriver(x)), { ile: a.id }); delete a.enRetard; sauver(x); }
-    catch (e) { if (/inconnue/.test(e.message)) { delete x.archipel; x.envoyee = false; sauver(x); } else return; } // retirée de l’archipel : elle n’y est plus
+    if (a.enRetard) {
+      try { await poserIle(a.jeton, forme(deriver(x)), { ile: a.id }); delete a.enRetard; sauver(x); }
+      catch (e) { if (/inconnue/.test(e.message)) { delete x.archipel; x.envoyee = false; sauver(x); continue; } return; } // retirée de l’archipel : elle n’y est plus
+    }
+    if (x.routesEnAttente?.length) await relierEnAttente(x); // des routes qui n’avaient pas pu partir
   }
+}
+
+/* ───────── Les routes entre les îles ───────── */
+// Une île de l’archipel se partage par un lien : un code tiré ici, dont la base ne garde que l’empreinte. Qui l’ouvre voit
+// l’île, peut la garder sur son téléphone, et tracer une route entre elle et une des siennes, tout de suite ou plus tard.
+// Si son île n’est pas encore dans l’archipel, la route l’attend, et part avec elle. Une route ne porte rien. Elle n’est
+// jamais définitive : chacune des deux îles peut la couper, seule, à tout moment. Tout couper déplace aussi l’île.
+
+const DEFINITIVE = 'Une route n’est jamais définitive : chacune des deux îles peut la couper, seule, à tout moment.';
+const lienDe = code => `${new URL('./', location.href).href}#ile=${code}`;
+const direIle = d => { try { const rs = resume(d); return `une île avec ${listeDe(rs.comptes)}${rs.phare ? ', et un phare' : ''}`; } catch { return 'une île'; } };
+const ileAvec = g => { try { return direIle(depuisForme(g.forme, g.id)); } catch { return 'une île'; } };
+const reliees = () => new Set([ile, ...iles].flatMap(x => x.archipel?.routes || [])); // les îles au bout de tes routes
+const attendues = () => new Set([ile, ...iles].flatMap(x => x.routesEnAttente || [])); // les liens des routes qui attendent une de tes îles
+const nomTienne = x => (x === ile ? 'ton île d’aujourd’hui' : `ton île de ${mois(x.nee)}`);
+const pourquoi = e => (/lien fermé/.test(e?.message) ? 'Ce lien ne mène plus nulle part : son île l’a fermé.'
+  : /même île/.test(e?.message) ? 'C’est la même île.'
+  : /trop de routes/.test(e?.message) ? 'Une des deux îles porte déjà douze routes : c’est le plus.'
+  : /inconnue/.test(e?.message) ? 'Ton île n’est plus dans l’archipel.'
+  : 'L’archipel ne répond pas pour l’instant. Réessaie un peu plus tard.');
+const signaler = e => { if (!e?.statut) console.warn(e); }; // un refus de la base se dit à l’écran ; une panne, aussi dans la console
+const oublieeSi = (x, e) => { if (/inconnue/.test(e?.message) && x.archipel) { delete x.archipel; x.envoyee = false; sauver(x); } }; // retirée ailleurs : le téléphone l’oublie aussi
+const pairesRoutes = () => { const par = new Map(arch.items.map(it => [it.id, it])); return arch.routes.map(r => [par.get(r.a), par.get(r.b)]).filter(([p, q]) => p && q); };
+
+function garder(g) { // une île confiée, gardée ici ; venue par un lien plus récent, elle garde le dernier
+  const n = confiee(g); if (!n) return;
+  gardees = [...gardees.filter(y => y.id !== n.id && y.code !== n.code), n].slice(-40); saveGardees();
+}
+
+const voisinage = new Map(), lues = new Map(), nouvelles = new Map(); // île → les îles au bout de ses routes ; l’instant où on les a lues ; ce qui a changé, pas encore dit
+async function lireVoisines(x) { // les îles au bout de ses routes, et ce qui a changé depuis : des routes arrivées, des routes coupées
+  const a = x.archipel;
+  let v; try { v = (await voisines(a.id, a.jeton)).map(lisible).filter(Boolean); } catch (e) { oublieeSi(x, e); throw e; }
+  const avant = new Set(a.routes || []), ids = v.map(r => r.id), n = nouvelles.get(a.id) || { arrivees: 0, coupees: 0 };
+  n.arrivees += ids.filter(id => !avant.has(id)).length; n.coupees += [...avant].filter(id => !ids.includes(id)).length;
+  if (n.arrivees || n.coupees) nouvelles.set(a.id, n); // gardé jusqu’à ce que la vue de l’île le dise, même lu depuis l’archipel
+  a.routes = ids; sauver(x); voisinage.set(a.id, v); lues.set(a.id, Date.now());
+  return v;
+}
+async function chargerRoutes() { // les routes entre les îles de l’archipel ; les tiennes, même vers une île qu’il ne montre pas
+  for (const x of miennes().filter(m => m.archipel?.id && (m.archipel.code || m.archipel.routes?.length))) {
+    try { for (const r of await lireVoisines(x)) if (!arch.reelles.some(y => y.id === r.id)) arch.reelles.push(r); } catch { /* sans ses routes, pour cette fois */ }
+  }
+  const ids = [...new Set([...arch.reelles.map(r => r.id), ...miennes().map(m => m.archipel?.id).filter(Boolean)])].slice(0, 200);
+  try { arch.routes = ids.length ? (await lireRoutes(ids)).filter(r => UUID.test(r.a) && UUID.test(r.b)) : []; } catch { /* les dernières lues restent */ }
+}
+
+async function tracer(g, x) { // une route depuis une de tes îles ; si elle n’est pas encore dans l’archipel, la route l’attend
+  garder(g);
+  if (!x.archipel?.id) { x.routesEnAttente = [...new Set([...(x.routesEnAttente || []), g.code])].slice(0, 12); sauver(x); note('route : attend que ton île rejoigne l’archipel'); return 'attend'; }
+  let autre; try { autre = await relierIle(g.code, x.archipel.id, x.archipel.jeton); } catch (e) { oublieeSi(x, e); throw e; }
+  x.archipel.routes = [...new Set([...(x.archipel.routes || []), autre])]; sauver(x); note('route : tracée');
+  return 'tracee';
+}
+async function relierEnAttente(x) { // l’île est dans l’archipel : les routes qui l’attendaient partent avec elle
+  for (const code of [...(x.routesEnAttente || [])]) {
+    try { const autre = await relierIle(code, x.archipel.id, x.archipel.jeton); x.archipel.routes = [...new Set([...(x.archipel.routes || []), autre])]; note('route : partie avec l’île'); }
+    catch (e) { if (!/lien fermé|même île|trop de routes/.test(e.message)) return; } // sans réseau, elle attend encore ; refusée, elle s’efface
+    x.routesEnAttente = (x.routesEnAttente || []).filter(c => c !== code); if (!x.routesEnAttente.length) delete x.routesEnAttente; sauver(x);
+  }
+}
+async function toutCouper(x) { // le lien et les routes s’effacent avec l’île ; puis elle revient ailleurs, sous un autre nom pour la base
+  const a = x.archipel;
+  await retirerIle(a.id, a.jeton); // sans réseau, rien n’a changé
+  arch.reelles = arch.reelles.filter(r => r.id !== a.id); arch.total = Math.max(0, arch.total - 1); voisinage.delete(a.id);
+  x.archipel = { attente: true, loin: [a.x, a.z] }; x.envoyee = false; delete x.routesEnAttente; sauver(x); note('route : tout coupé, l’île déplacée');
+  return (await envoyer(x)) || (synchroniser(), false); // sans réseau, elle reviendra dès que possible
+}
+
+function majRoutesIle() { // la vue de l’île dit ses routes, sans se redessiner ; et une fois, celles qui sont arrivées ou ont été coupées
+  if (ecran !== 'ile') return;
+  const x = regard || ile, nav = $('#app .actions'), n = x.archipel?.routes?.length || 0, att = x.routesEnAttente?.length || 0;
+  let b = $('#les-routes');
+  if (nav && (n || att || x.archipel?.code)) { const t = n ? `ses routes (${n})` : att ? (att > 1 ? `${att} routes attendent` : 'une route attend') : 'ses routes'; if (!b) { b = quiet(t, () => routesSheet(x)); b.id = 'les-routes'; nav.append(b); } else b.textContent = t; } // un lien ouvert : ses routes, et de quoi tout couper
+  else b?.remove();
+  updateIleLine();
+  const dit = $('#ile-routes'), k = nouvelles.get(x.archipel?.id);
+  if (!dit || !k) return;
+  nouvelles.delete(x.archipel.id);
+  dit.textContent = [k.arrivees ? (k.arrivees > 1 ? `${k.arrivees} routes sont arrivées jusqu’à ton île.` : 'Une route est arrivée jusqu’à ton île.') : '',
+    k.coupees ? `${k.coupees > 1 ? `${k.coupees} routes ont été coupées.` : 'Une route a été coupée.'} Chacune des deux îles peut le faire, à tout moment.` : ''].filter(Boolean).join(' ');
+}
+function suivreRoutes(x) { // les routes de l’île, lues au plus une fois par demi-minute, et seulement si elle a un lien ou des routes
+  majRoutesIle();
+  const a = x.archipel;
+  if (!a?.id || !(a.code || a.routes?.length) || Date.now() - (lues.get(a.id) || 0) < 30000) return;
+  lues.set(a.id, Date.now());
+  lireVoisines(x).then(() => { if ((regard || ile) === x) majRoutesIle(); })
+    .catch(() => { if (!x.archipel && ecran === 'ile' && (regard || ile) === x) render('ile'); }); // retirée ailleurs : la vue le dit
+}
+
+async function dessinerQR(c, texte) { // le code du lien, dessiné ici : aucun service extérieur ne voit le lien
+  const { default: qrcode } = await import('./vendor/qrcode.min.js?v=1');
+  const q = qrcode(0, 'M'); q.addData(texte); q.make();
+  const n = q.getModuleCount(), marge = 4, px = 8, cote = (n + 2 * marge) * px, x = c.getContext('2d');
+  c.width = c.height = cote; x.fillStyle = '#ffffff'; x.fillRect(0, 0, cote, cote); x.fillStyle = '#1d2624';
+  for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) if (q.isDark(i, j)) x.fillRect((j + marge) * px, (i + marge) * px, px, px);
+}
+function partagerSheet(x) { // un lien vers une de tes îles, à envoyer ou à montrer ; il se ferme quand tu veux
+  const a = x.archipel, zone = el('div', { className: 'partage' }), etat = el('p', { className: 'tiny' });
+  etat.setAttribute('role', 'status');
+  const creer = () => {
+    const b = el('button', { type: 'button', className: 'gesture', textContent: 'Créer le lien' });
+    b.addEventListener('click', async () => {
+      b.disabled = true; etat.textContent = 'Un instant…';
+      const code = nouveauCode();
+      try { await partagerIle(a.id, a.jeton, code); } catch (e) { signaler(e); oublieeSi(x, e); b.disabled = false; etat.textContent = pourquoi(e); return; }
+      a.code = code; sauver(x); note('route : lien créé'); etat.textContent = ''; montrer(); majRoutesIle();
+    });
+    zone.replaceChildren(b);
+  };
+  const montrer = () => {
+    const lien = lienDe(a.code), qr = el('canvas', { className: 'qr', width: 1, height: 1 }), champ = el('input', { className: 'lien', type: 'text', readOnly: true, value: lien });
+    qr.setAttribute('role', 'img'); qr.setAttribute('aria-label', 'Le code du lien, à montrer : il s’ouvre en le visant avec un téléphone'); champ.setAttribute('aria-label', 'Le lien de ton île');
+    champ.addEventListener('focus', () => champ.select());
+    dessinerQR(qr, lien).catch(e => { console.warn(e); qr.hidden = true; }); // sans le code à montrer, le lien suffit
+    const copier = async () => { try { await navigator.clipboard.writeText(lien); etat.textContent = 'Le lien est copié.'; note('route : lien copié'); } catch { champ.focus(); etat.textContent = 'Le lien est sélectionné : copie-le.'; } };
+    const gestes = el('p', { className: 'partage-gestes' });
+    if (navigator.share) gestes.append(bouton('Envoyer le lien', async () => { try { await navigator.share({ url: lien }); note('route : lien envoyé'); } catch { /* le partage a été fermé */ } }), quiet('copier le lien', copier));
+    else gestes.append(bouton('Copier le lien', copier));
+    const fermer = quiet('fermer le lien', async () => {
+      fermer.disabled = true; etat.textContent = 'Un instant…';
+      try { await partagerIle(a.id, a.jeton, null); } catch (e) { signaler(e); oublieeSi(x, e); fermer.disabled = false; etat.textContent = pourquoi(e); return; }
+      delete a.code; sauver(x); note('route : lien fermé'); majRoutesIle();
+      creer(); etat.textContent = 'Le lien est fermé : il ne mène plus nulle part. Les routes déjà tracées restent ; tu peux les couper depuis ton île.';
+    });
+    zone.replaceChildren(qr, champ, gestes, el('p', { className: 'partage-fermer' }, fermer));
+  };
+  if (a.code) montrer(); else creer();
+  openSheet(el('div', {},
+    el('h2', { textContent: 'Partager ton île' }),
+    el('p', { className: 'intro', textContent: 'Un lien à envoyer, ou un code à montrer. Qui l’ouvre voit ton île telle qu’elle est dans l’archipel, et peut tracer une route jusqu’à elle.' }),
+    el('p', { className: 'avertir', textContent: 'Qui a ce lien reconnaîtra ton île dans l’archipel, et la verra grandir après chaque dépôt. Donne-le seulement à quelqu’un de confiance.' }),
+    el('p', { className: 'intro', textContent: `${DEFINITIVE} Tu pourras aussi fermer le lien, ou tout couper.` }),
+    zone, etat, footRow(quiet('revenir', closeSheet))), () => { if (!x.archipel?.id && ecran === 'ile') render('ile'); }); // retirée ailleurs entre-temps : la vue le dit
+}
+
+function routesSheet(x) { // les routes d’une de tes îles : les couper une à une, seule, ou tout couper
+  const a = x.archipel, liste = el('div', { className: 'list' }), etat = el('p', { className: 'tiny' }), body = el('div', {});
+  etat.setAttribute('role', 'status');
+  const ligne = (texte, statut, ...gestes) => el('div', { className: 'row route' }, texte, el('small', { textContent: statut }), el('span', { className: 'route-gestes' }, ...gestes));
+  for (const code of x.routesEnAttente || []) {
+    const g = gardees.find(y => y.code === code), row = ligne(cap(g ? ileAvec(g) : 'une île'), a?.id ? 'Cette route n’a pas encore pu partir : elle partira dès que possible.' : 'Cette route attend : elle partira avec ton île, quand tu la mettras dans l’archipel.',
+      quiet('ne pas la tracer', () => { x.routesEnAttente = (x.routesEnAttente || []).filter(c => c !== code); if (!x.routesEnAttente.length) delete x.routesEnAttente; sauver(x); note('route : oubliée avant de partir'); row.remove(); majRoutesIle(); }));
+    liste.append(row);
+  }
+  body.append(el('h2', { textContent: 'Les routes de ton île' }), el('p', { className: 'intro', textContent: `Chaque route relie ton île à une autre, sans rien porter : ni mots, ni nom. ${DEFINITIVE}` }), liste, etat);
+  if (a?.id) {
+    const lecture = el('p', { className: 'tiny', textContent: 'Les routes arrivent…' }); liste.append(lecture);
+    lireVoisines(x).then(v => {
+      lecture.remove(); majRoutesIle();
+      for (const r of v) {
+        const c = quiet('couper cette route', async () => {
+          c.disabled = true; etat.textContent = 'Un instant…';
+          try { await couperRoute(a.id, a.jeton, r.id); } catch (e) { signaler(e); c.disabled = false; etat.textContent = pourquoi(e); return; }
+          a.routes = (a.routes || []).filter(id => id !== r.id); sauver(x); voisinage.set(a.id, (voisinage.get(a.id) || []).filter(y => y.id !== r.id)); note('route : coupée');
+          etat.textContent = 'La route est coupée. L’autre île le verra.'; row.remove(); majRoutesIle();
+        });
+        const row = ligne(cap(direIle(r.d)), gardees.some(g => g.id === r.id) ? 'une île qu’on t’a confiée' : 'reliée à ton île', c); liste.append(row);
+      }
+      if (!liste.children.length) liste.append(el('p', { className: 'tiny', textContent: 'Aucune route pour l’instant.' }));
+    }).catch(e => { lecture.textContent = pourquoi(e); });
+    const effacer = el('p', { className: 'effacer' }), lien = quiet('tout couper, et déplacer ton île', () => effacer.replaceChildren(
+      'Le lien ne mènera plus nulle part, toutes les routes disparaîtront, et ton île changera de place dans l’archipel : qui l’avait repérée ne la retrouvera plus. ',
+      quiet('tout couper', async () => {
+        etat.textContent = 'Un instant…';
+        let revenue; try { revenue = await toutCouper(x); } catch (e) { signaler(e); etat.textContent = pourquoi(e); effacer.replaceChildren(lien); return; }
+        closeSheet(); if (x === ile) titre = { h1: 'Tout est coupé', line: revenue ? 'Le lien ne mène plus nulle part, les routes ont disparu, et ton île a changé de place dans l’archipel.' : 'Le lien ne mène plus nulle part, et les routes ont disparu. Ton île reviendra dans l’archipel, à une autre place, dès que le réseau le permettra.' };
+        render(ecran);
+      }), ' · ', quiet('non', () => effacer.replaceChildren(lien))));
+    effacer.append(lien); body.append(el('h3', { textContent: 'Tout couper' }), effacer);
+  }
+  body.append(footRow(quiet('revenir', closeSheet)));
+  openSheet(body);
+}
+
+function routeSheet(g, apres = null) { // tracer une route : depuis laquelle de tes îles ; celle d’aujourd’hui d’abord
+  const tiennes = [ile, ...iles.filter(x => x.archipel?.id)], etat = el('p', { className: 'tiny' }), dit = el('p', { className: 'intro' });
+  etat.setAttribute('role', 'status');
+  let choisie = ile;
+  const maj = () => { dit.textContent = choisie.archipel?.id ? `La route reliera ${nomTienne(choisie)} à cette île.` : `${cap(nomTienne(choisie))} n’est pas encore dans l’archipel : la route l’attendra, et partira avec elle quand tu l’y mettras.`; };
+  const choix = tiennes.length > 1 ? el('div', { className: 'list choix' }, ...tiennes.map(x => {
+    const b = el('button', { type: 'button', className: 'row' }, cap(nomTienne(x)), el('small', { textContent: x.archipel?.id ? 'dans l’archipel' : 'pas encore dans l’archipel' }));
+    b.setAttribute('aria-pressed', String(x === choisie));
+    b.addEventListener('click', () => { choisie = x; for (const y of choix.children) y.setAttribute('aria-pressed', String(y === b)); maj(); });
+    return b;
+  })) : null;
+  maj();
+  const b = el('button', { type: 'button', className: 'gesture', textContent: 'Tracer la route' });
+  b.addEventListener('click', async () => {
+    b.disabled = true; etat.textContent = 'Un instant…';
+    let r; try { r = await tracer(g, choisie); } catch (e) { signaler(e); b.disabled = false; etat.textContent = pourquoi(e); return; }
+    const dite = r === 'attend' ? 'La route attend ton île : elle partira avec elle, quand tu la mettras dans l’archipel.' : 'La route est tracée. Tu la verras dans l’archipel.';
+    closeSheet();
+    if (apres) apres(dite); else if (ecran === 'lien' && recu) { recu.dit = dite; render('lien'); }
+  });
+  openSheet(el('div', {}, el('h2', { textContent: 'Tracer une route' }),
+    el('p', { className: 'intro', textContent: 'Entre cette île et une des tiennes. La route ne porte rien : ni tes mots, ni ton nom.' }),
+    el('p', { className: 'intro', textContent: DEFINITIVE }),
+    ...(choix ? [el('h3', { textContent: 'Depuis' }), choix] : []), dit, b, etat, footRow(quiet('pas maintenant', closeSheet))));
+}
+
+function gardeesSheet(dit = '') { // les îles qu’on t’a confiées : où en est chacune, et ce qu’on peut en faire
+  const liste = el('div', { className: 'list' }), etat = el('p', { className: 'tiny', textContent: dit });
+  etat.setAttribute('role', 'status');
+  const ligne = g => {
+    const reliee = reliees().has(g.id), attend = attendues().has(g.code), gestes = [];
+    if (!reliee && !attend && !g.fermee) gestes.push(quiet('tracer une route', () => routeSheet(g, gardeesSheet)));
+    gestes.push(quiet('la voir', () => { closeSheet(); voirConfiee = g; if (ecran === 'archipel') { voirConfiee = null; viserConfiee(g, $('#arch-caption')); } else ONGLETS.archipel(); }));
+    gestes.push(quiet('l’oublier', () => { gardees = gardees.filter(y => y !== g); saveGardees(); note('route : une île confiée, oubliée'); remplir(); }));
+    return el('div', { className: 'row route' }, cap(ileAvec(g)), el('small', { textContent: reliee ? 'Une route la relie à ton île.' : attend ? 'Une route attend ton île.' : g.fermee ? 'Son lien est fermé.' : 'Pas encore de route.' }), el('span', { className: 'route-gestes' }, ...gestes));
+  };
+  const remplir = () => liste.replaceChildren(...(gardees.length ? gardees.map(ligne) : [el('p', { className: 'tiny', textContent: 'Aucune île gardée ici.' })]));
+  remplir();
+  openSheet(el('div', {}, el('h2', { textContent: 'Les îles qu’on t’a confiées' }),
+    el('p', { className: 'intro', textContent: `Elles restent sur ce téléphone, jamais ailleurs. Oublier une île ne coupe pas sa route. ${DEFINITIVE}` }),
+    liste, etat, footRow(quiet('revenir', closeSheet))));
+  (async () => { // leur état d’aujourd’hui : un lien a pu se fermer, une île grandir
+    for (const g of [...gardees]) { let l; try { [l] = await voirIle(g.code); } catch { return; } if (l) { Object.assign(g, { forme: l.forme, x: l.x, z: l.z }); delete g.fermee; } else g.fermee = true; }
+    saveGardees(); if (liste.isConnected) remplir();
+  })();
+}
+function viserConfiee(g, cap_) { // une île confiée, dans l’archipel ; s’il ne la montre pas, elle vient de sa forme gardée
+  if (!cap_) return;
+  let it = arch.items.find(i => i.id === g.id);
+  if (!it && !g.fermee) { const l = lisible({ ile: g.id, forme: g.forme, x: g.x, z: g.z }); if (l) { arch.reelles.push(l); placerArchipel(); montrerArchipel(cap_); it = arch.items.find(i => i.id === g.id); } }
+  if (!it) { cap_.textContent = 'Elle n’est plus dans l’archipel, ou elle a changé de place.'; return; }
+  if (!vue) { cap_.textContent = `${legendeArch(it)}`; return; }
+  vue.viser(it); cap_.replaceChildren(`${legendeArch(it)} `, quiet('revenir à l’archipel', () => { vue.viser(null); cap_.textContent = inviteArch(); }));
+}
+
+// Un lien reçu : on voit l’île, on peut la garder, tracer une route, ou continuer. Le code est effacé de l’adresse aussitôt lu.
+let recu = null; // { code, statut, g, dit } ; statut : lecture, ouverte, fermee, panne, tienne
+const CODE_DU_LIEN = /^#ile=([A-Za-z0-9_-]{22})$/;
+function lienDeLAdresse() { const m = location.hash.match(CODE_DU_LIEN); if (location.hash.startsWith('#ile=')) history.replaceState(history.state, '', location.pathname + location.search); return m ? m[1] : null; }
+async function lireLien(r) { // l’île du lien, lue une fois ; un lien vers une de tes îles, c’est dit
+  try {
+    const [l] = await voirIle(r.code);
+    if (!l) { r.statut = 'fermee'; const k = gardees.find(y => y.code === r.code); if (k) { k.fermee = true; saveGardees(); } }
+    else { r.g = { code: r.code, id: l.ile, forme: l.forme, x: l.x, z: l.z }; r.statut = miennes().some(m => m.archipel?.id === l.ile) ? 'tienne' : 'ouverte'; if (r.statut === 'ouverte' && gardees.some(y => y.id === l.ile)) garder(r.g); } // déjà gardée : sa forme d’aujourd’hui, et son dernier lien
+  } catch (e) { console.warn(e); r.statut = 'panne'; }
+  if (ecran === 'lien' && recu === r) render('lien');
+}
+function continuer() { // après le lien : là où l’on serait arrivé sans lui
+  recu = null;
+  const vers = premiere && !store.get('intro', false) ? 'intro' : ile.depots.length || iles.length ? 'ile' : 'q:situ';
+  history.replaceState({ screen: vers, n: history.state?.n || 0 }, '', ''); render(vers);
+}
+function renderLien() {
+  const r = recu;
+  if (!r.statut) { r.statut = 'lecture'; lireLien(r); }
+  const g = r.g, wrap = el('div', { className: 'ilewrap' }), caption = el('p', { className: 'ile-caption' }), etat = el('p', { className: 'tiny lien-etat', textContent: r.dit || '' }), nav = el('nav', { className: 'actions' });
+  etat.setAttribute('role', 'status'); r.dit = '';
+  const [h1, hint] = {
+    lecture: ['Une île t’est confiée', 'Elle arrive…'],
+    ouverte: ['Une île t’est confiée', 'Quelqu’un t’a envoyé ce lien. C’est son île, telle qu’elle est dans l’archipel : une forme, sans ses mots ni son nom.'],
+    fermee: ['Ce lien ne mène plus nulle part', 'Son île l’a fermé, ou elle a quitté l’archipel. Une île peut toujours se refermer.'],
+    panne: ['Une île t’est confiée', 'L’archipel ne répond pas pour l’instant. Le lien reste bon : réessaie un peu plus tard.'],
+    tienne: ['C’est ton île', 'Ce lien mène à une de tes îles. Qui l’ouvre la voit ainsi, et peut tracer une route jusqu’à elle.'],
+  }[r.statut];
+  const montre = g && (r.statut === 'ouverte' || r.statut === 'tienne');
+  if (r.statut === 'ouverte') {
+    const reliee = reliees().has(g.id) || attendues().has(g.code), gardee = gardees.some(y => y.id === g.id);
+    if (!reliee) nav.append(bouton('Tracer une route', () => routeSheet(g)));
+    if (!gardee) { const k = quiet('la garder pour plus tard', () => { garder(g); note('route : une île confiée, gardée ici'); etat.textContent = 'Elle est gardée ici. Tu la retrouves dans l’archipel, parmi les îles qu’on t’a confiées.'; k.remove(); }); nav.append(k); }
+    if (!etat.textContent) etat.textContent = reliee ? 'Une route la relie déjà à ton île.' : gardee ? 'Elle est déjà parmi les îles qu’on t’a confiées.' : '';
+    nav.append(quiet('continuer', continuer));
+  } else if (r.statut === 'panne') nav.append(bouton('Réessayer', () => { r.statut = null; render('lien'); }), quiet('continuer', continuer));
+  else if (r.statut === 'tienne') nav.append(bouton('Voir ton île', () => { const x = miennes().find(m => m.archipel?.id === g.id); regard = x && x !== ile ? x : null; recu = null; history.replaceState({ screen: 'ile', n: history.state?.n || 0 }, '', ''); render('ile'); }));
+  else if (r.statut === 'fermee') nav.append(bouton('Continuer', continuer));
+  app.replaceChildren(
+    el('p', { className: 'step', textContent: 'Un lien vers une île' }),
+    el('h1', { textContent: h1 }), el('p', { className: 'hint', textContent: hint }),
+    ...(montre ? [wrap, caption] : []),
+    ...(r.statut === 'ouverte' ? [el('p', { className: 'lien-dit', textContent: `Tu peux la garder ici, et tracer une route entre elle et ton île, maintenant ou plus tard. ${DEFINITIVE}` })] : []),
+    etat, nav);
+  if (!montre) return;
+  let d = null; try { d = depuisForme(g.forme, g.id); } catch (e) { console.warn(e); }
+  if (d) caption.textContent = `${cap(direIle(d))}.`;
+  if (!vue || !d) { wrap.classList.add('sans'); wrap.append(el('p', { className: 'sans3d', textContent: 'Cet appareil n’affiche pas la 3D : l’île se dit en mots, juste en dessous.' })); return; }
+  vue.attacher(wrap); vue.canvas.setAttribute('aria-label', 'L’île confiée, en 3D');
+  vue.montrerIle(d, { vie }); vue.choisir(null); vue.onTouche = () => {};
 }
 
 /* ───────── L’intro, au premier passage ───────── */
@@ -486,7 +796,7 @@ const quiet = (text, fn) => { const b = el('button', { type: 'button', className
 function go(screen) { history.pushState({ screen, n: (history.state?.n || 0) + 1 }, '', ''); render(screen); } // n : combien d’écrans de l’app le précèdent
 
 let ecran = 'q:situ';
-const ongletDe = screen => (screen === 'ile' || screen === 'archipel' ? screen : 'deposer');
+const ongletDe = screen => (screen === 'ile' || screen === 'archipel' ? screen : screen === 'lien' ? 'archipel' : 'deposer'); // un lien vers une île : l’archipel
 const ONGLETS = { deposer: () => go('q:situ'), ile: () => { regard = null; go('ile'); }, archipel: () => go('archipel'), plus: () => plusSheet() }; // Plus : un menu, pas un écran
 function updateOnglets() {
   const actif = ongletDe(ecran), n = courant.assets.length, c = $('.onglets .compte');
@@ -499,7 +809,7 @@ function render(screen) {
   suivi?.disconnect(); suivi = null; clearInterval(sondage); sondage = null;
   document.body.classList.toggle('short', state.short && screen === 'page');
   document.body.classList.toggle('en-intro', screen === 'intro');
-  companion.hidden = ['ile', 'archipel', 'intro'].includes(screen);
+  companion.hidden = ['ile', 'archipel', 'intro', 'lien'].includes(screen);
   if (!companion.hidden) ilot?.redim();
   try {
     if (screen === 'orient') renderOrient();
@@ -507,6 +817,7 @@ function render(screen) {
     else if (screen === 'ile') renderIle();
     else if (screen === 'archipel') renderArchipel();
     else if (screen === 'intro') renderIntro();
+    else if (screen === 'lien' && recu) renderLien();
     else renderQ(QUESTIONS[screen.slice(2)] ? screen.slice(2) : 'situ');
   } catch (e) { console.error(e); secours(screen); } // un écran qui échoue laisse place au secours, jamais à une page vide
   scrollTo(0, 0);
@@ -784,13 +1095,14 @@ function changerSheet() {
     el('h2', { textContent: 'Changer d’île' }),
     el('p', { className: 'intro', textContent: `Celle-ci restera sur ce téléphone, telle qu’elle est${NB}: ${listeDe(rs.comptes)}. Une île vide t’attend.` }));
   if (ile.envoyee) body.append(el('p', { className: 'intro', textContent: 'Elle est déjà dans l’archipel, et y restera.' }));
-  else body.append(row, el('p', { className: 'tiny', textContent: `Les autres verraient une île avec ${listeDe(rs.comptes)}${rs.phare ? ', et un phare' : ''}, dans son paysage. Rien d’autre${NB}: ni mots, ni dates, ni nom.` }));
+  else body.append(row, el('p', { className: 'tiny', textContent: `Les autres verraient une île avec ${listeDe(rs.comptes)}${rs.phare ? ', et un phare' : ''}, dans son paysage. Rien d’autre${NB}: ni mots, ni dates, ni nom.${ile.routesEnAttente?.length ? ' Sans l’archipel, la route qui l’attend ne partira pas.' : ''}` }));
   let paysage = BIOME_IDS[(BIOME_IDS.indexOf(ile.biome || 'prairie') + 1) % BIOME_IDS.length];
   body.append(el('h3', { textContent: 'Le paysage de la prochaine' }), choixPaysage(paysage, id => { paysage = id; }));
   const b = el('button', { type: 'button', className: 'gesture', textContent: 'Commencer une nouvelle île' });
   b.addEventListener('click', () => {
     closeSheet();
     if (!ile.envoyee && send.checked) { ile.archipel = { attente: true }; note(`île : mise dans l’archipel (${listeDe(rs.comptes)})`); } // elle partira dès que possible
+    else if (!ile.archipel) delete ile.routesEnAttente; // elle reste ici : ses routes ne partiront pas
     ile.quittee = new Date().toISOString();
     iles = [...iles, ile]; saveIles();
     ile = nouvelleIle(paysage); saveIle();
@@ -822,7 +1134,7 @@ function envoyerSheet() {
   openSheet(el('div', {},
     el('h2', { textContent: 'Y mettre ton île' }),
     el('p', { className: 'intro', textContent: `Seule sa forme part, telle que les autres la verront${NB}: ${listeDe(rs.comptes)}${rs.phare ? ', et un phare' : ''}, dans son paysage. Ni tes mots, ni tes dates, ni ton nom.` }),
-    el('p', { className: 'intro', textContent: 'Elle continuera de pousser ici, et là-bas avec elle. Tu pourras l’en retirer quand tu veux.' }),
+    el('p', { className: 'intro', textContent: `Elle continuera de pousser ici, et là-bas avec elle. Tu pourras l’en retirer quand tu veux.${attendent(ile)}` }),
     b, etat, footRow(quiet('pas maintenant', closeSheet))));
 }
 
@@ -968,6 +1280,7 @@ const ICONES_MENU = {
   installer: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4.5v10M8.5 11l3.5 3.5 3.5-3.5"/><path d="M5 16.5v2A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5v-2"/></svg>',
   parler: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 4.5h3l1.5 4-2 1.5a10 10 0 0 0 5 5l1.5-2 4 1.5v3a1.5 1.5 0 0 1-1.5 1.5A14 14 0 0 1 5 6a1.5 1.5 0 0 1 1.5-1.5z"/></svg>',
   intro: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10-6.5z"/></svg>',
+  confiees: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 18.5c1.2-.7 2.4-.7 3.6 0M17.9 18.5c1.2-.7 2.4-.7 3.6 0"/><path d="M3.2 16.2c.5-1.5 1.4-2.3 2.5-2.3s2 .8 2.5 2.3M15.8 16.2c.5-1.5 1.4-2.3 2.5-2.3s2 .8 2.5 2.3"/><path d="M6.5 10.5c3-4.5 8-4.5 11 0" stroke-dasharray="1.4 2.2"/></svg>',
 };
 function plusSheet() { // compact : une icône et quelques mots par ligne
   note('geste : menu plus');
@@ -978,6 +1291,7 @@ function plusSheet() { // compact : une icône et quelques mots par ligne
     ...(musique.disponible ? [ligneMusique()] : []),
     ligne(ICONES_MENU.installer, installee() ? 'L’app est installée' : 'Installer l’app', installerSheet),
     ligne(ICONES_MENU.parler, 'Parler à quelqu’un', () => humansSheet()),
+    ...(gardees.length ? [ligne(ICONES_MENU.confiees, 'Les îles qu’on t’a confiées', () => gardeesSheet())] : []),
     ...(vue ? [ligne(ICONES_MENU.intro, 'Revoir l’intro', () => { closeSheet(); revue = true; go('intro'); })] : []));
   openSheet(el('div', {}, el('h2', { textContent: 'Plus' }), liste, footRow(quiet('revenir', closeSheet))));
 }
@@ -989,16 +1303,18 @@ function quitter(url) { // partir vite : l’écran se vide, on remonte l’hist
 }
 $('#exit').addEventListener('click', e => { e.preventDefault(); quitter(e.currentTarget.href); });
 addEventListener('popstate', e => { if (fuite) { location.replace($('#exit').href); return; } closeSheet(); render(e.state?.screen || 'q:situ'); });
+addEventListener('hashchange', () => { const code = lienDeLAdresse(); if (!code || fuite) return; closeSheet(); recu = { code }; go('lien'); }); // un autre lien, l’app déjà ouverte
 const premiere = !store.get('intro', false) && !ile.depots.length && !iles.length && !anyChecked() && !state.text.trim(); // la toute première fois : rien encore sur ce téléphone
-const depart = premiere ? 'intro' : ile.depots.length || iles.length ? 'ile' : 'q:situ'; // au retour, une île déjà commencée : on la retrouve d’abord
+const lienRecu = lienDeLAdresse(); if (lienRecu) recu = { code: lienRecu }; // un lien vers une île : on commence par elle
+const depart = recu ? 'lien' : premiere ? 'intro' : ile.depots.length || iles.length ? 'ile' : 'q:situ'; // au retour, une île déjà commencée : on la retrouve d’abord
 history.replaceState({ screen: depart, n: history.state?.n || 0 }, '', ''); // après un rechargement, les écrans d’avant sont toujours là
 render(depart);
 requestAnimationFrame(frame);
-if ([ile, ...iles].some(x => x.archipel && (!x.archipel.id || x.archipel.enRetard))) setTimeout(synchroniser, 1500); // sans rien en attente, aucune requête
+if ([ile, ...iles].some(x => x.archipel && (!x.archipel.id || x.archipel.enRetard || x.routesEnAttente?.length))) setTimeout(synchroniser, 1500); // sans rien en attente, aucune requête
 function garderHorsLigne() { // le service worker garde les fichiers que la page a chargés : installée, l’app s’ouvre sans réseau
   navigator.serviceWorker.register('sw.js').then(() => navigator.serviceWorker.ready)
     .then(r => r.active?.postMessage({ type: 'garder', urls: performance.getEntriesByType('resource').map(e => e.name) }))
     .catch(() => {}); // sans service worker, l’app marche pareil, en ligne
 }
 if ('serviceWorker' in navigator) { if (document.readyState === 'complete') garderHorsLigne(); else addEventListener('load', garderHorsLigne); }
-window.archipel = { state, get ile() { return ile; }, get iles() { return iles; }, get courant() { return courant; }, get preview() { return preview; }, arch, vie, vue, ilot, sonder, synchroniser, placeLibre, posArch, musique }; // pour les tests
+window.archipel = { state, get ile() { return ile; }, get iles() { return iles; }, get gardees() { return gardees; }, get courant() { return courant; }, get preview() { return preview; }, arch, vie, vue, ilot, sonder, synchroniser, placeLibre, posArch, musique }; // pour les tests

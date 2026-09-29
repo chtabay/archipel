@@ -51,8 +51,12 @@ function formeValide(f) { // les mêmes règles que la base : seulement ce que l
     && ['arbre', 'pierre', 'maison', 'culture', 'meteo', 'caillou', 'animal', 'buisson'].includes(c.famille) && ESPECES.includes(c.espece) && entier(c.stade, 0, 3) && entier(c.textes, 0, 3)
     && typeof c.v === 'number' && c.v >= 0 && c.v <= 1 && laCase(c.case) && Array.isArray(c.etats) && c.etats.length <= 10 && c.etats.every(e => ETATS.includes(e)));
 }
+const CODE = /^[A-Za-z0-9_-]{22}$/;
 function archipelFactice() {
-  const etat = { iles: [], rang: 0, appels: [], panne: false, refus: [] };
+  const etat = { iles: [], rang: 0, appels: [], panne: false, refus: [], partages: new Map(), routes: new Set() }; // partages : code → île ; routes : « a|b », a < b
+  const aMoi = (ile, jeton) => /^[0-9a-f]{64}$/.test(jeton || '') && etat.iles.find(x => x.ile === ile && x.jeton === jeton);
+  const cle = (a, b) => (a < b ? `${a}|${b}` : `${b}|${a}`), routesDe = id => [...etat.routes].map(r => r.split('|')).filter(([a, b]) => a === id || b === id);
+  const fermer = id => { for (const [k, v] of etat.partages) if (v === id) etat.partages.delete(k); };
   const ajouter = (forme, x, z, jeton = null) => { const i = { ile: `${String(++etat.rang).padStart(8, '0')}-0000-4000-8000-000000000000`, ordre: etat.rang, forme, x, z, jeton }; etat.iles.push(i); return i; };
   const repondre = async route => {
     const req = route.request();
@@ -69,10 +73,38 @@ function archipelFactice() {
       if (typeof c.p_x !== 'number' || typeof c.p_z !== 'number') return json({ message: 'place invalide' }, 400);
       const i = ajouter(c.p_forme, c.p_x, c.p_z, c.p_jeton); return json([{ ile: i.ile, ordre: i.ordre }]);
     }
-    if (f === 'archipel_retirer') { const n = etat.iles.length; etat.iles = etat.iles.filter(x => !(x.ile === c.p_ile && x.jeton === c.p_jeton)); return json(etat.iles.length < n); }
+    if (f === 'archipel_retirer') { // son lien et ses routes s’en vont avec elle
+      const n = etat.iles.length; etat.iles = etat.iles.filter(x => !(x.ile === c.p_ile && x.jeton === c.p_jeton));
+      if (etat.iles.length < n) { fermer(c.p_ile); for (const [a, b] of routesDe(c.p_ile)) etat.routes.delete(cle(a, b)); }
+      return json(etat.iles.length < n);
+    }
+    if (f === 'archipel_partager') {
+      if (!aMoi(c.p_ile, c.p_jeton)) return json({ message: 'île inconnue' }, 400);
+      if (c.p_code === null || c.p_code === undefined) { fermer(c.p_ile); return json(true); }
+      if (!CODE.test(c.p_code)) return json({ message: 'code invalide' }, 400);
+      fermer(c.p_ile); etat.partages.set(c.p_code, c.p_ile); return json(true);
+    }
+    if (f === 'archipel_voir') { const id = CODE.test(c.p_code || '') && etat.partages.get(c.p_code), i = id && etat.iles.find(x => x.ile === id); return json(i ? [{ ile: i.ile, ordre: i.ordre, forme: i.forme, x: i.x, z: i.z }] : []); }
+    if (f === 'archipel_relier') {
+      if (!aMoi(c.p_ile, c.p_jeton)) return json({ message: 'île inconnue' }, 400);
+      const autre = CODE.test(c.p_code || '') && etat.partages.get(c.p_code);
+      if (!autre) return json({ message: 'lien fermé' }, 400);
+      if (autre === c.p_ile) return json({ message: 'la même île' }, 400);
+      if (!etat.routes.has(cle(c.p_ile, autre))) {
+        if (routesDe(c.p_ile).length >= 12 || routesDe(autre).length >= 12) return json({ message: 'trop de routes' }, 400);
+        etat.routes.add(cle(c.p_ile, autre));
+      }
+      return json(autre);
+    }
+    if (f === 'archipel_couper') return json(!!c.p_autre && !!aMoi(c.p_ile, c.p_jeton) && etat.routes.delete(cle(c.p_ile, c.p_autre)));
+    if (f === 'archipel_routes') { const ids = new Set(Array.isArray(c.p_iles) ? c.p_iles : []); return json([...etat.routes].map(r => r.split('|')).filter(([a, b]) => ids.has(a) || ids.has(b)).map(([a, b]) => ({ a, b }))); }
+    if (f === 'archipel_voisines') {
+      if (!aMoi(c.p_ile, c.p_jeton)) return json({ message: 'île inconnue' }, 400);
+      return json(routesDe(c.p_ile).map(([a, b]) => (a === c.p_ile ? b : a)).map(id => etat.iles.find(x => x.ile === id)).filter(Boolean).map(({ jeton, ...i }) => i));
+    }
     return json({ message: 'fonction inconnue' }, 404);
   };
-  return { etat, ajouter, installer: cible => cible.route(ARCHIPEL, repondre) };
+  return { etat, ajouter, installer: cible => cible.route(ARCHIPEL, repondre), relier: (a, b) => etat.routes.add(cle(a, b)) }; // relier : une route posée d’ailleurs, pour les tests
 }
 // un contexte de navigateur, toujours avec son faux archipel
 async function contexte(navigateur, options = TELEPHONE) { const c = await navigateur.newContext(options), a = archipelFactice(); await a.installer(c); c.archipel = a; return c; }

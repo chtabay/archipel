@@ -148,7 +148,7 @@ const depot = (id, answers) => ({ id, date: new Date().toISOString(), quad: 'N',
   { const { c, p } = await nouvelle();
     await p.goto(BASE);
     const parts = await p.evaluate(async () => {
-      const { relief } = await import('./monde.js?v=22'), { etape, tuilesPleines, N, BIOMES } = await import('./ile.js?v=13'), out = {};
+      const { relief } = await import('./monde.js?v=23'), { etape, tuilesPleines, N, BIOMES } = await import('./ile.js?v=13'), out = {};
       for (const [id, B] of Object.entries(BIOMES)) {
         let f = 0, t = 0, pire = 0;
         for (let k = 0; k < 40; k++) for (const taille of [.3, 1]) {

@@ -1,2 +1,4 @@
 three.js 0.186.1, réduit aux pièces utilisées par L’archipel (esbuild, minifié).
 Source : https://github.com/mrdoob/three.js — licence MIT, voir LICENSE-three.txt.
+qrcode-generator 2.0.4, pour dessiner sur le téléphone le QR code du lien d’une île (esbuild, minifié).
+Source : https://github.com/kazuhikoarase/qrcode-generator — licence MIT, voir LICENSE-qrcode.txt.
