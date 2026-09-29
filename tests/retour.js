@@ -12,11 +12,11 @@ const brouillon = JSON.stringify({ answers: { situ: ['regret'], mots: [], sujets
   p.on('console', m => { if (m.type() === 'error') errors.push(m.text()); }); p.on('pageerror', e => errors.push(e.message));
   await p.goto(L);
   const ouvrir = async stock => { await p.evaluate(s => { localStorage.clear(); for (const [k, v] of Object.entries(s)) localStorage.setItem(k, v); }, stock); await p.reload(); await p.waitForTimeout(1800); };
-  const etat = () => p.evaluate(() => ({ onglet: document.querySelector('.onglets [aria-current="page"]')?.dataset.onglet, h1: document.querySelector('#app h1')?.textContent, action: document.querySelector('#app .actions .btn')?.textContent, cases: document.querySelectorAll('.opt input:checked').length, objets: window.archipel.vue?.objets.size || 0, intro: document.body.classList.contains('en-intro') }));
+  const etat = () => p.evaluate(() => ({ onglet: document.querySelector('.onglets [aria-current="page"]')?.dataset.onglet, h1: document.querySelector('#app h1')?.textContent, step: document.querySelector('#app .step')?.textContent, nom: window.archipel.ile.nom, garde: JSON.parse(localStorage.getItem('archipel:ile') || 'null')?.nom, action: document.querySelector('#app .actions .btn')?.textContent, cases: document.querySelectorAll('.opt input:checked').length, objets: window.archipel.vue?.objets.size || 0, intro: document.body.classList.contains('en-intro') }));
 
   await ouvrir({ 'archipel:ile': ile(1, [depot(1, ['s4']), depot(2, ['s11'])]) });
   let e = await etat();
-  verifier(e.onglet === 'ile' && e.h1 === 'Ton île' && e.objets > 0 && e.action === 'Déposer autre chose' && !e.intro, `une île commencée : on arrive sur Ton île (${e.objets} choses en 3D), l’action principale est « ${e.action} »`);
+  verifier(e.onglet === 'ile' && e.step === 'Ton île, aujourd’hui' && !!e.nom && e.h1 === e.nom && e.garde === e.nom && e.objets > 0 && e.action === 'Déposer autre chose' && !e.intro, `une île commencée : on arrive sur Ton île, titrée par son nom (${e.h1}, ${e.objets} choses en 3D), l’action principale est « ${e.action} »`);
   await p.screenshot({ path: path.join(OUT, 'retour.png') });
   await p.click('#app .actions .btn'); await p.waitForTimeout(500);
   verifier(await p.evaluate(() => !!document.querySelector('.opts') && document.querySelector('.onglets [aria-current="page"]').dataset.onglet === 'deposer'), 'de là, « Déposer autre chose » mène aux premières cases');

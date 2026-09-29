@@ -318,12 +318,13 @@ function ileRiche(d, fond) { // l’île qu’on approche dans l’archipel : co
   if (d.phareTile) { const p = modelePhare(), [x, y, z] = posTuile(h, d.phareTile); p.objet.position.set(x, y, z); p.objet.scale.setScalar(ECH); grp.add(p.objet); anims.push(...p.anims); }
   return { grp, anims };
 }
-function etiquette(texte) {
-  const c = document.createElement('canvas'); c.width = 256; c.height = 64;
-  const x = c.getContext('2d'); x.font = '800 30px Nunito, system-ui, sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle';
-  x.shadowColor = 'rgba(0,40,60,.6)'; x.shadowBlur = 8; x.fillStyle = '#ffffff'; x.fillText(texte, 128, 32);
+function etiquette(texte) { // un mot ou un nom, blanc sur l’eau : aussi large que lui
+  const c = document.createElement('canvas'), x = c.getContext('2d'), police = '800 30px Nunito, system-ui, sans-serif';
+  x.font = police; c.width = Math.min(1024, Math.max(256, Math.ceil(x.measureText(texte).width) + 40)); c.height = 64;
+  x.font = police; x.textAlign = 'center'; x.textBaseline = 'middle'; // changer la taille du canevas a tout remis à zéro
+  x.shadowColor = 'rgba(0,40,60,.6)'; x.shadowBlur = 8; x.fillStyle = '#ffffff'; x.fillText(texte, c.width / 2, 32, c.width - 24);
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
-  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, transparent: true, depthWrite: false, depthTest: false, fog: false, sizeAttenuation: false })); s.scale.set(.15, .0375, 1); s.renderOrder = 5; // taille fixe à l’écran
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, transparent: true, depthWrite: false, depthTest: false, fog: false, sizeAttenuation: false })); s.scale.set(.0375 * c.width / 64, .0375, 1); s.renderOrder = 5; // taille fixe à l’écran
   return s;
 }
 function voilier() {
