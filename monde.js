@@ -363,7 +363,7 @@ export class Vue3D {
     this.camera = new THREE.PerspectiveCamera(30, 1, .1, 400);
     this.orbite = new Orbite(this.camera, this.canvas);
     this.orbite.onTap = e => this.toucher(e);
-    this.ray = new THREE.Raycaster(); this.mode = null; this.anims = []; this.cle = ''; this.vie = new Map(); this.objets = new Map();
+    this.ray = new THREE.Raycaster(); this.mode = null; this.anims = []; this.animsRoutes = []; this.cle = ''; this.vie = new Map(); this.objets = new Map();
     this.t0 = performance.now(); this.dernier = 0; this.dimsArch = [18, 36];
   }
   attacher(parent) { parent.append(this.canvas); this.redim(); }
@@ -377,7 +377,7 @@ export class Vue3D {
     this.distIle = fit(e, e * .62); this.distArch = fit(L * 1.2 + 4, (P * 1.24 + 4) * Math.sin(.72));
     if (this.mode === 'ile' && !this.zoomManuel) this.orbite.but.dist = this.distIle;
   }
-  vider() { if (this.scene) { liberer(this.scene); this.scene.background?.dispose?.(); } this.scene = new THREE.Scene(); this.anims = []; this.objets = new Map(); this.routes = null; }
+  vider() { if (this.scene) { liberer(this.scene); this.scene.background?.dispose?.(); } this.scene = new THREE.Scene(); this.anims = []; this.objets = new Map(); this.routes = this.pontons = this.clePontons = null; this.animsRoutes = []; }
 
   montrerIle(d, opts = {}) {
     const B = biomeDe(d.ile.biome), eau = eauDe(d.climat, B), cle = `${d.ile.id}:${d.ile.seed}:${d.ile.biome}:${d.climat}:${d.ile.depots.length}`;
@@ -452,9 +452,10 @@ export class Vue3D {
     if (it.mine) { const lab = etiquette(it.label || 'la tienne'); lab.position.set(it.x, 2.6, it.z); this.scene.add(lab); it.lab = lab; }
     if (depuis) { const t0 = (performance.now() - this.t0) / 1000, [x0, z0] = depuis, x1 = it.x, z1 = it.z; grp.position.set(x0, 0, z0); this.anims.push(T => { const p = Math.min(1, (T - t0) / 5), k = 1 - (1 - p) ** 3; grp.position.set(lerp(x0, x1, k), 0, lerp(z0, z1, k)); if (p >= 1 && !it.arrivee) { it.arrivee = true; this.vague(x1, z1, T); } }); }
   }
-  montrerRoutes(paires) { // les routes entre les îles : un sillage en pointillé sur l’eau, d’une rive à l’autre, en arc léger
+  montrerRoutes(paires) { // les routes entre les îles : un sillage en pointillé sur l’eau, en arc léger, et une barque qui fait l’aller-retour
     if (this.routes) { this.scene.remove(this.routes); liberer(this.routes); this.routes = null; }
-    const pos = [], y = .035, trait = .26, pas = .5, large = .035;
+    this.animsRoutes = [];
+    const pos = [], y = .035, trait = .26, pas = .5, large = .035, grp = new THREE.Group();
     for (const [p, q] of paires) {
       const R = it => (it.d || (it.d = deriver(it.ile))).m.rayon * ECH_ARCH + .12, dx = q.x - p.x, dz = q.z - p.z, L = Math.hypot(dx, dz);
       if (L < R(p) + R(q) + .3) continue; // deux îles qui se touchent presque : pas de route à dessiner
@@ -467,11 +468,75 @@ export class Vue3D {
         const e = Math.hypot(xb - xa, zb - za) || 1, nx = (zb - za) / e * large, nz = -(xb - xa) / e * large; // la largeur du trait, en travers
         pos.push(xa - nx, y, za - nz, xb - nx, y, zb - nz, xb + nx, y, zb + nz, xa - nx, y, za - nz, xb + nx, y, zb + nz, xa + nx, y, za + nz);
       }
+      const v = hash(`route:${p.id}:${q.id}`), bq = modeleChose({ famille: 'culture', espece: 'barque', stade: 1, etats: {} }, BIOMES.prairie, v, { leger: true }).objet, periode = 22 + l * 3, ph = v * periode;
+      bq.scale.setScalar(ECH_ARCH * ECH); bq.userData.barque = true; grp.add(bq);
+      const poser = T => { // d’une rive à l’autre : elle ralentit à chaque bout, puis repart dans l’autre sens
+        const w = 2 * Math.PI * (T + ph) / periode, t = .5 - .5 * Math.cos(w), va = Math.sin(w) >= 0 ? 1 : -1, [x, z] = pt(t), [xa, za] = pt(Math.max(0, t - .01)), [xb, zb] = pt(Math.min(1, t + .01));
+        bq.position.set(x, Math.sin(T * 1.3 + v * 9) * .01, z); bq.rotation.y = Math.atan2(-(zb - za) * va, (xb - xa) * va); bq.rotation.z = Math.sin(T * 1.1 + v * 5) * .05;
+      };
+      if (reduit) poser(periode / 4 - ph); else this.animsRoutes.push(poser); // sans mouvement : posée au milieu de sa route
     }
-    if (!pos.length) return;
-    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
-    this.routes = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ color: '#fffaf0', transparent: true, opacity: .8, depthWrite: false, side: THREE.DoubleSide }));
-    this.routes.renderOrder = 2; this.scene.add(this.routes);
+    if (pos.length) {
+      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+      const m = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ color: '#fffaf0', transparent: true, opacity: .8, depthWrite: false, side: THREE.DoubleSide }));
+      m.name = 'sillage'; m.renderOrder = 2; grp.add(m);
+    }
+    if (!grp.children.length) return;
+    this.routes = grp; this.scene.add(grp);
+  }
+  // Les routes, vues de l’île : un ponton par route, tourné vers l’île au bout, sa barque amarrée, et un sillage qui part au
+  // large. Le ponton cherche une plage, pas trop loin de sa direction, et jamais sur une chose ; sinon, le pied d’une falaise.
+  // Une route qui attend que l’île rejoigne l’archipel : sa barque est sous sa bâche, et aucun sillage ne part encore.
+  // liste : [{ angle, attente }], l’angle vers l’autre île, dans le plan de l’archipel
+  montrerPontons(liste) {
+    if (this.mode !== 'ile' || !this.d) return;
+    const cle = liste.map(p => `${p.angle.toFixed(2)}${p.attente ? '+' : ''}`).join('|');
+    if (cle === (this.clePontons ?? '')) return;
+    this.clePontons = cle;
+    if (this.pontons) { this.scene.remove(this.pontons); liberer(this.pontons); this.pontons = null; }
+    this.animsRoutes = [];
+    if (!liste.length) return;
+    const d = this.d, B = biomeDe(d.ile.biome), h = relief(d.m, B), occ = occupees(d), eau = eauDe(d.climat, B), grp = new THREE.Group(), k = { b: new Bati(12), s: 1 }, sillage = [], pris = [];
+    let cx = 0, cz = 0, n = 0; for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) if (d.m.land[i * N + j]) { cx += i + .5; cz += j + .5; n++; }
+    cx /= n || 1; cz /= n || 1; // le centre de l’île, en tuiles
+    const rive = a => { // le bord de l’île dans cette direction : là où le sol passe sous l’eau
+      const ux = Math.cos(a), uz = Math.sin(a);
+      for (let r = .4; r < N; r += .06) { const x = cx + ux * r, z = cz + uz * r; if (h(x, z) < .015) return { x, z, ux, uz, falaise: h.falaise(x - ux * .3, z - uz * .3) }; }
+      return null;
+    };
+    for (const p of liste) {
+      let place = null;
+      for (const da of [0, .2, -.2, .4, -.4, .6, -.6, .8, -.8, 1.05, -1.05]) {
+        const a = p.angle + da;
+        if (pris.some(b => Math.abs(Math.atan2(Math.sin(a - b), Math.cos(a - b))) < .38)) continue; // un ponton par côté
+        const c = rive(a); if (!c) continue;
+        if (occ.has(Math.floor(c.x - c.ux * .6) * N + Math.floor(c.z - c.uz * .6))) continue; // jamais sur une chose
+        if (c.falaise < .3) { place = { ...c, a }; break; } // une plage : le ponton y descend
+        place ||= { ...c, a }; // sinon, le pied d’une falaise, si rien de mieux
+      }
+      if (!place) continue;
+      pris.push(place.a);
+      const { x, z, ux, uz } = place, vx = -uz, vz = ux, ry = Math.atan2(-uz, ux), yp = .12, L = 1.45, ici = s => [x + ux * s - N / 2, z + uz * s - N / 2];
+      let s0 = 0; while (s0 > -.7 && h(x + ux * (s0 - .05), z + uz * (s0 - .05)) < yp - .025) s0 -= .05; // le ponton commence sur la terre, sous le niveau de ses planches
+      for (let s = s0, i = 0; s < L; s += .125, i++) { const [px, pz] = ici(s + .05); F(k, G.box, i % 3 ? '#a3784a' : '#b98c5a', { x: px, y: yp, z: pz, sx: .105, sy: .026, sz: .36, ry, ao: .15, varie: .08 }); } // les planches, en travers
+      for (const s of [L - .06, (L + s0) / 2, s0 + .2]) for (const c of [-.15, .15]) { const [px, pz] = ici(s); F(k, cyl(.024, .03, 6), '#6d4f36', { x: px + vx * c, y: (yp - .4) / 2, z: pz + vz * c, sy: yp + .42, ao: .2 }); } // les pieux
+      { const [px, pz] = ici(L - .1); F(k, cyl(.03, .034, 7), '#5b4330', { x: px + vx * .12, y: yp + .06, z: pz + vz * .12, sy: .1, ao: .1 }); } // la bitte d’amarrage
+      const v = (p.angle * 7.13 % 1 + 1) % 1, bq = modeleChose({ famille: 'culture', espece: 'barque', stade: 1, etats: p.attente ? { ferme: true } : {} }, B, v, { eauHex: eau }).objet, [bx, bz] = ici(L - .38);
+      bq.position.set(bx + vx * .34, 0, bz + vz * .34); bq.rotation.y = ry; bq.scale.setScalar(ECH * .8); bq.userData.barque = true; bq.userData.attente = !!p.attente; grp.add(bq);
+      if (!reduit) this.animsRoutes.push(T => { bq.position.y = Math.sin(T * 1.2 + v * 7) * .018; bq.rotation.z = Math.sin(T * 1.05 + v * 3) * .035; });
+      if (p.attente) continue;
+      for (let s = L + .45, i = 0; s < L + 13; s += .52, i++) { // le sillage : vers l’île au bout, il s’amincit au large
+        const [ax, az] = ici(s), [bx2, bz2] = ici(s + .26), w = .045 * (1 - i / 30), y = .03;
+        sillage.push(ax - vx * w, y, az - vz * w, bx2 - vx * w, y, bz2 - vz * w, bx2 + vx * w, y, bz2 + vz * w, ax - vx * w, y, az - vz * w, bx2 + vx * w, y, bz2 + vz * w, ax + vx * w, y, az + vz * w);
+      }
+    }
+    if (!k.b.vide()) { const m = k.b.maillage(); m.castShadow = true; grp.add(m); }
+    if (sillage.length) {
+      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(sillage, 3));
+      const m = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ color: '#fffaf0', transparent: true, opacity: .75, depthWrite: false, side: THREE.DoubleSide }));
+      m.name = 'sillage'; m.renderOrder = 2; grp.add(m);
+    }
+    this.pontons = grp; this.scene.add(grp);
   }
   vague(x, z, T0) { // une île arrive : un anneau s’ouvre sur l’eau
     const m = new THREE.Mesh(new THREE.RingGeometry(.9, 1, 40).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: .8, depthWrite: false })); m.position.set(x, .02, z); this.scene.add(m);
@@ -605,6 +670,7 @@ export class Vue3D {
     if (this.mode !== 'intro') this.orbite.maj(dt);
     if (this.eau) this.eau.position.y = Math.sin(T * .6) * .015; // la marée, à peine
     for (const f of this.anims) f(T);
+    for (const f of this.animsRoutes) f(T); // les barques des routes
     if (this.focus?.riche) for (const f of this.focus.riche.anims) f(T); // l’île qu’on approche vit
     if (this.mode === 'intro') this.introFrame(Math.min(.1, ecart || .016)); // le temps de l’intro s’arrête quand la page est cachée
     const Tv = this.vieT ? this.vieT() : T;

@@ -121,7 +121,8 @@ Une île de l’archipel peut se relier à d’autres, par des routes sur l’ea
 - **Les îles confiées.** Gardées sur le téléphone, jamais sur le serveur, avec leur forme. Dans l’archipel, « les îles confiées » : pour chacune, sa route, ou son lien fermé ; tracer une route, la voir, l’oublier. Oublier une île ne coupe pas sa route.
 - **Couper.** Dans la vue de l’île, « ses routes » : les îles au bout, et « couper cette route ». L’autre île l’apprend à sa prochaine visite, avec ces mots : chacune des deux îles peut le faire, à tout moment. Une route arrivée se dit de même.
 - **Fermer le lien, tout couper.** Fermer le lien empêche d’autres routes ; celles déjà tracées restent. Tout couper, avec une seconde touche : le lien ne mène plus nulle part, toutes les routes disparaissent, et l’île revient dans l’archipel ailleurs, sous un autre nom pour la base et avec un autre jeton. Qui l’avait repérée ne la retrouve plus.
-- **Dans l’archipel**, chaque route est un sillage en pointillé sur l’eau, en arc léger, d’une rive à l’autre. Tout le monde voit les routes entre les îles ; personne ne sait à qui elles sont.
+- **Dans l’archipel**, chaque route est un sillage en pointillé sur l’eau, en arc léger, d’une rive à l’autre, et une barque y fait l’aller-retour : elle ralentit à chaque rive, puis repart. Tout le monde voit les routes entre les îles ; personne ne sait à qui elles sont.
+- **Sur l’île**, chaque route a son ponton, tourné vers l’île au bout, sa barque amarrée, et un sillage qui part au large dans cette direction. Le ponton cherche une plage, jamais sur une chose ; sinon, le pied d’une falaise. Une route qui attend que l’île rejoigne l’archipel a déjà son ponton, et sa barque attend sous sa bâche, sans sillage.
 
 ## Confidentialité
 

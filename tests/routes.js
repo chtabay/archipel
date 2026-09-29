@@ -73,6 +73,9 @@ const fermerFeuille = async p => { await p.click('.sheet .foot-row .quiet'); awa
   // 4. B dépose, puis met son île dans l’archipel : la route part avec elle, et la feuille le disait
   await B.p.click('#app .quiet:has-text("continuer")'); await B.p.waitForTimeout(400);
   await cocherPuisPoser(B.p, 'On m’a fait du mal');
+  const bache = await attendre(B.p, () => B.p.evaluate(() => { const g = window.archipel.vue.pontons; return !!g && g.children.some(o => o.userData.barque && o.userData.attente) && !g.getObjectByName('sillage'); }));
+  verifier(bache, 'sur l’île de B, la route qui attend : un ponton, sa barque sous sa bâche, et aucun sillage encore');
+  await B.p.screenshot({ path: path.join(OUT, '4-attente.png') });
   const carte = await lire(B.p, '.proposer p');
   verifier(/La route qui l’attend partira avec elle\./.test(carte), `la proposition dit que la route partira avec l’île (« …${carte.slice(-44)} »)`);
   await B.p.click('.proposer .btn:has-text("La mettre dans l’archipel")');
@@ -83,12 +86,21 @@ const fermerFeuille = async p => { await p.click('.sheet .foot-row .quiet'); awa
 
   // 5. A : une route est arrivée ; l’archipel la dessine, et son île le dit ensuite, même lue d’abord depuis l’archipel
   await A.p.click('[data-onglet="archipel"]'); await attendre(A.p, () => A.p.evaluate(() => !!window.archipel.vue.routes && window.archipel.arch.items.length === 2), 10000); await A.p.waitForTimeout(1200);
-  const arch = await A.p.evaluate(() => ({ routes: window.archipel.arch.routes.length, trait: window.archipel.vue.routes?.geometry.attributes.position.count || 0 }));
+  const arch = await A.p.evaluate(async () => {
+    const r = window.archipel.vue.routes, bq = r?.children.find(o => o.userData.barque), avant = bq?.position.clone();
+    await new Promise(ok => setTimeout(ok, 1500));
+    return { routes: window.archipel.arch.routes.length, trait: r?.getObjectByName('sillage')?.geometry.attributes.position.count || 0, barques: r?.children.filter(o => o.userData.barque).length, bouge: avant ? bq.position.distanceTo(avant) : 0 };
+  });
   verifier(arch.routes === 1 && arch.trait >= 30, `l’archipel dessine la route entre les deux îles, en pointillé (${arch.trait / 6} traits)`);
+  verifier(arch.barques === 1 && arch.bouge > .005, `une barque fait l’aller-retour sur la route (${arch.bouge.toFixed(3)} en une seconde et demie)`);
   await A.p.screenshot({ path: path.join(OUT, '5-archipel.png') });
   await A.p.click('[data-onglet="ile"]'); await attendre(A.p, () => A.p.evaluate(() => !!document.querySelector('#ile-routes')?.textContent));
   const vueA = await A.p.evaluate(() => ({ dit: document.querySelector('#ile-routes')?.textContent, bouton: document.querySelector('#les-routes')?.textContent, ligne: document.querySelector('#ile-line')?.textContent }));
   verifier(vueA.dit === 'Une route est arrivée jusqu’à ton île.' && vueA.bouton === 'ses routes (1)' && /· 1 route$/.test(vueA.ligne), `l’île de A dit qu’une route est arrivée (« ${vueA.dit} »)`);
+  const [pa, pb] = [a.etat.iles.find(y => y.ile === idA), a.etat.iles.find(y => y.ile === idB)], vise = Math.atan2(pb.z - pa.z, pb.x - pa.x);
+  const ponton = await A.p.evaluate(() => { const g = window.archipel.vue.pontons, bq = g?.children.find(o => o.userData.barque); return bq ? { angle: Math.atan2(bq.position.z, bq.position.x), bache: bq.userData.attente, sillage: !!g.getObjectByName('sillage') } : null; });
+  const ecartAngle = ponton ? Math.abs(Math.atan2(Math.sin(ponton.angle - vise), Math.cos(ponton.angle - vise))) : 9;
+  verifier(!!ponton && !ponton.bache && ponton.sillage && ecartAngle < 1.3, `sur l’île de A, un ponton tourné vers l’île de B, sa barque, et le sillage qui part au large (${ecartAngle.toFixed(2)} radian d’écart)`);
   await A.p.screenshot({ path: path.join(OUT, '5-arrivee.png') });
 
   // 6. A coupe la route, seule, sans rien demander ; B le voit, et on lui dit que chacune peut le faire
@@ -100,6 +112,7 @@ const fermerFeuille = async p => { await p.click('.sheet .foot-row .quiet'); awa
   await B.p.click('[data-onglet="ile"]'); await attendre(B.p, () => B.p.evaluate(() => !!document.querySelector('#ile-routes')?.textContent));
   const coupeeB = await lire(B.p, '#ile-routes');
   verifier(coupeeB === 'Une route a été coupée. Chacune des deux îles peut le faire, à tout moment.' && !(await B.p.$('#les-routes')), `B l’apprend, avec des mots doux : « ${coupeeB} »`);
+  verifier(await B.p.evaluate(() => !window.archipel.vue.pontons), 'et son ponton s’en va avec la route');
 
   // 7. A ferme le lien : il ne mène plus nulle part, pour B aussi, et l’île gardée le dit
   const avant7 = appels('archipel_partager').length;
