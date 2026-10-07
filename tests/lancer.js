@@ -3,7 +3,7 @@
 const path = require('path'), { spawn } = require('child_process');
 const { servir } = require('./commun');
 const PORT = +(process.env.PORT || 0); // 0 : un port libre, au hasard
-const SUITES = ['parcours', 'intro', 'retour', 'stabilite', 'archipel', 'routes', 'noms', 'voisines', 'pwa', 'musique', 'plus'];
+const SUITES = ['parcours', 'intro', 'retour', 'stabilite', 'archipel', 'routes', 'noms', 'voisines', 'carte', 'pwa', 'musique', 'plus'];
 
 const suite = (s, base) => new Promise(ok => spawn(process.execPath, [path.join(__dirname, `${s}.js`)], { stdio: 'inherit', env: { ...process.env, BASE: base } }).on('exit', ok)); // sans bloquer le serveur
 (async () => {
