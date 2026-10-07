@@ -1,0 +1,9 @@
+Les objets du chemin : des modèles 3D de Kenney (www.kenney.nl), sous licence Creative Commons Zero (CC0 1.0),
+libres de droits, sans obligation de citer. Merci à lui.
+
+Collections : furniture-kit, nature-kit, city-kit-suburban, city-kit-commercial, food-kit, car-kit, watercraft-kit,
+holiday-kit, survival-kit, fantasy-town-kit, cube-pets, mini-characters, mini-market, pirate-kit, train-kit.
+
+Chaque modèle a été allégé (soudure, quantification, compression meshopt) par ../outils/alleger.mjs ; la palette de
+chaque collection reste à part, dans Textures/colormap.png. Le catalogue, ../catalogue.json, dit pour chacun ses mots,
+son rôle, ses lieux et sa taille réelle.

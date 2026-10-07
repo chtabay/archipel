@@ -3,6 +3,8 @@
 // la seconde pose le pigment sur le papier : plus sombre au bord des aplats, là où l’eau a séché ; inégal, et déposé dans
 // le creux du grain. Le lavis de la mer s’arrête en bord irrégulier, à quelque distance de l’île ; autour, le papier reste nu.
 // L’image ne quitte pas le téléphone : on la garde, ou on l’envoie soi-même.
+// Le chemin, l’autre app du site, s’en sert aussi pour peindre sa frise, tuile après tuile : le bruit y suit les coordonnées
+// de toute la frise, pour que deux tuiles voisines se raccordent sans couture.
 
 const SOMMET = 'attribute vec2 p; varying vec2 uv; void main() { uv = p * .5 + .5; gl_Position = vec4(p, 0., 1.); }';
 const BRUIT = `uniform sampler2D bruit;
@@ -12,10 +14,10 @@ const R = 5; // le rayon du pinceau, en pixels
 
 // Les aplats : huit secteurs autour de chaque point ; le plus uni l’emporte, et le bord reste net (Kyprianidis, 2010)
 const APLATS = `precision highp float;
-uniform sampler2D img; uniform vec2 taille; varying vec2 uv;
+uniform sampler2D img; uniform vec2 taille, decalage; varying vec2 uv;
 ${BRUIT}
 void main() {
-  vec2 px = uv * taille, c0 = px + (vec2(fbm(px / 40.), fbm(px / 40. + 41.7)) - .5) * 7.;
+  vec2 px = uv * taille, pg = px + decalage, c0 = px + (vec2(fbm(pg / 40.), fbm(pg / 40. + 41.7)) - .5) * 7.;
   vec4 m[8]; vec3 s[8]; float w[8];
   for (int k = 0; k < 8; k++) { m[k] = vec4(0.); s[k] = vec3(0.); }
   float zeta = .33, zc = .58, sz = sin(zc), eta = (zeta + cos(zc)) / (sz * sz);
@@ -80,6 +82,48 @@ void main() {
   vec3 fond = papier * (1. + (gx - gy) * .35);
   gl_FragColor = vec4(fond * mix(vec3(1.), p, lavis * dilue * (1. - .6 * eclat)), 1.);
 }`;
+// La frise du chemin : le lavis s’arrête en haut et en bas, jamais sur les côtés ; le ciel garde ses nuages, l’eau ses
+// reflets ; et le temps de chaque jour teinte la peinture, d’un jour à l’autre sans à-coup
+const FRISE = `precision highp float;
+uniform sampler2D aplat, halo; uniform vec2 taille, decalage; uniform vec3 papier, jours; uniform vec4 ta, tb, tc, sa, sb, sc; varying vec2 uv;
+${BRUIT}
+float grain(vec2 p) { return vb(p / 3.1) * .6 + vb(p / 7.3 + 13.) * .4; }
+float nuee(vec2 px) { vec2 q = vec2(px.x / 300., px.y / 95.); return fbm(q + 5.3) * .75 + vb(q * 3.1 + 9.) * .25; }
+vec4 suivre(vec4 a, vec4 b, vec4 c, float x) { return x < jours.y ? mix(a, b, clamp((x - jours.x) / (jours.y - jours.x), 0., 1.)) : mix(b, c, clamp((x - jours.y) / (jours.z - jours.y), 0., 1.)); }
+void main() {
+  vec2 px = uv * taille + decalage, e = 1. / taille;
+  float g = grain(px), gx = grain(px + vec2(1., 0.)) - g, gy = grain(px + vec2(0., 1.)) - g;
+  vec2 q = uv + vec2(gx, gy) * 2. * e;
+  vec3 c = texture2D(aplat, q).rgb;
+  vec3 dx = texture2D(aplat, q + vec2(1.5, 0.) * e).rgb - texture2D(aplat, q - vec2(1.5, 0.) * e).rgb;
+  vec3 dy = texture2D(aplat, q + vec2(0., 1.5) * e).rgb - texture2D(aplat, q - vec2(0., 1.5) * e).rgb;
+  float bord = smoothstep(.04, .28, length(dx) + length(dy));
+  vec2 h = texture2D(halo, uv).rg; // en rouge la terre et ce qui s’y pose, en vert l’eau
+  float champ = clamp(min(uv.y - .02, 1. - uv.y) / .16, 0., 1.), seuil = .42 + (fbm(px / 140. + 21.) - .5) * .4 + (vb(px / 7. + 3.) - .5) * .03;
+  float net = smoothstep(.3, .5, fbm(px / 300. + 31.)), large = mix(.05, .008, net);
+  float lavis = smoothstep(seuil - large, seuil + large, champ);
+  float lisere = lavis * (1. - smoothstep(seuil, seuil + .04, champ)) * net;
+  float sec = (1. - smoothstep(seuil, seuil + .08, champ)) * (1. - net);
+  lavis *= 1. - sec * smoothstep(.55, .75, g);
+  float dilue = mix(.5, 1., smoothstep(seuil, seuil + .3, champ));
+  float f = fbm(px / 90. + 51.), fleur = smoothstep(.04, 0., abs(f - .56)) * smoothstep(.4, .75, fbm(px / 400. + 7.));
+  vec4 t = suivre(ta, tb, tc, px.x), s = suivre(sa, sb, sc, px.x); // la teinte du jour : un filtre de couleur, une part de gris ; puis le ciel lourd, l’ombre
+  float ciel = (1. - h.r) * (1. - h.g) * smoothstep(.35, .55, uv.y), haut = smoothstep(.55, .9, uv.y);
+  float nuage = ciel * smoothstep(.57 - .07 * haut, .69 - .07 * haut, nuee(px)), dessus = smoothstep(.57, .69, nuee(px + vec2(0., 34.)));
+  float eau = h.g * (1. - h.r), pres = 1. - smoothstep(.05, .6, uv.y);
+  float trait = fbm(vec2(px.x / 110., px.y / mix(2.4, 6.5, pres)) + 3.7);
+  float d = 1. + 1.1 * bord + 1.1 * lisere + .22 * fleur + .8 * (fbm(px / 170. + 3.1) - .5) + .35 * (fbm(px / 40. + 9.7) - .5)
+    + .22 * (.5 - g) + .12 * (vb(px / 1.3 + 5.3) - .5) + .55 * eau * (trait - .5) + s.y;
+  vec3 p = 1. - (1. - c) * .88;
+  p *= 1. + (fbm(px / 230. + 77.) - .5) * vec3(.08, 0., -.08);
+  p = mix(p, vec3(dot(p, vec3(.3, .59, .11))), t.w) * t.rgb;
+  p = clamp(p - (p - p * p) * (d - 1.), 0., 1.);
+  p = mix(p, vec3(1.), nuage * .92 * (1. - s.z));
+  p = mix(p, mix(vec3(.8, .8, .86), vec3(.56, .57, .64), s.x) * t.rgb, nuage * dessus * .55 * (1. - .3 * g));
+  float eclat = eau * smoothstep(.74, .8, trait) * smoothstep(.5, .75, vb(px / 26.)) * (1. - .75 * pres);
+  vec3 fond = papier * (1. + (gx - gy) * .35);
+  gl_FragColor = vec4(fond * mix(vec3(1.), p, lavis * dilue * (1. - .6 * eclat)), 1.);
+}`;
 const PAPIER = [.957, .937, .894];
 
 function hasard(graine) { // le bruit : des valeurs tirées d’une graine, pour que la même île, vue du même côté, donne la même carte
@@ -103,6 +147,16 @@ function halo(sil) { // en rouge, la terre et son rivage ; en vert, loin autour 
   const c = document.createElement('canvas'); c.width = w; c.height = h;
   const x = c.getContext('2d'), im = x.createImageData(w, h);
   for (let i = 0; i < w * h; i++) { im.data[4 * i] = Math.min(255, pres[i] * 510); im.data[4 * i + 1] = max ? loin[i] / max * 255 : 0; im.data[4 * i + 3] = 255; }
+  x.putImageData(im, 0, 0);
+  return c;
+}
+
+function masques(sil) { // la frise : la terre en rouge, l’eau en vert, à peine fondues
+  const w = sil.width, h = sil.height, px = sil.getContext('2d').getImageData(0, 0, w, h).data, r = new Float32Array(w * h), v = new Float32Array(w * h);
+  for (let i = 0; i < w * h; i++) { r[i] = px[4 * i] / 255; v[i] = px[4 * i + 1] / 255; }
+  const R = flou(r, w, h, 1), V = flou(v, w, h, 1), c = document.createElement('canvas'); c.width = w; c.height = h;
+  const x = c.getContext('2d'), im = x.createImageData(w, h);
+  for (let i = 0; i < w * h; i++) { im.data[4 * i] = Math.min(255, R[i] * 300); im.data[4 * i + 1] = Math.min(255, V[i] * 300); im.data[4 * i + 3] = 255; }
   x.putImageData(im, 0, 0);
   return c;
 }
@@ -134,10 +188,8 @@ function lier(gl, p, textures, W, H) { // les textures du programme, chacune à 
 }
 const souffle = () => new Promise(r => setTimeout(r, 0));
 
-// vue : ce que rend la photo de l’île (monde.js) : image, l’île en couleurs ; silhouette, ce qui dépasse de l’eau, blanc sur
-// noir, en petit ; paysage, à hauteur d’île ; horizon, sa hauteur ; sombre, un ciel lourd. Rend un canevas de même taille.
-export async function peindre(vue, graine = 1) {
-  const { image: photo, silhouette, paysage = false, horizon = .66, sombre = false } = vue;
+// Les deux passes, sur un contexte WebGL à part, rendu aussitôt après : les aplats, par bandes, puis le pigment, avec ses réglages
+async function passer(photo, contour, graine, fs, regler, decalage = [0, 0]) {
   const W = photo.width, H = photo.height, toile = document.createElement('canvas'); toile.width = W; toile.height = H;
   const gl = toile.getContext('webgl', { preserveDrawingBuffer: true, antialias: false, alpha: false, depth: false, stencil: false });
   if (!gl) throw new Error('Pas de WebGL pour peindre');
@@ -145,23 +197,41 @@ export async function peindre(vue, graine = 1) {
     if ((gl.getShaderPrecisionFormat(gl.FRAGMENT_SHADER, gl.HIGH_FLOAT)?.precision || 0) < 16) throw new Error('Pas assez de précision pour peindre');
     gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer()); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
     gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
-    const bruit = texture(gl, hasard(graine), 256, 256, true), img = texture(gl, photo), aplat = texture(gl, null, W, H);
-    const contour = texture(gl, halo(silhouette));
+    const bruit = texture(gl, hasard(graine), 256, 256, true), img = texture(gl, photo), aplat = texture(gl, null, W, H), masque = texture(gl, contour);
     const fb = gl.createFramebuffer(); gl.bindFramebuffer(gl.FRAMEBUFFER, fb); gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, aplat, 0);
-    lier(gl, programme(gl, APLATS), { img, bruit }, W, H);
+    const pa = programme(gl, APLATS); lier(gl, pa, { img, bruit }, W, H); gl.uniform2f(gl.getUniformLocation(pa, 'decalage'), ...decalage);
     gl.viewport(0, 0, W, H); gl.enable(gl.SCISSOR_TEST);
     for (let k = 0, n = 8; k < n; k++) { // par bandes : le téléphone respire entre deux, et la vue continue de tourner
       const y0 = Math.floor(k * H / n), y1 = Math.floor((k + 1) * H / n);
       gl.scissor(0, y0, W, y1 - y0); gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4); gl.flush(); await souffle();
     }
     gl.disable(gl.SCISSOR_TEST); gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-    const p = programme(gl, PIGMENT); lier(gl, p, { aplat, halo: contour, bruit }, W, H); gl.uniform3f(gl.getUniformLocation(p, 'papier'), ...PAPIER);
-    for (const [nom, v] of [['paysage', +paysage], ['horizon', horizon], ['sombre', +sombre]]) gl.uniform1f(gl.getUniformLocation(p, nom), v);
+    const p = programme(gl, fs); lier(gl, p, { aplat, halo: masque, bruit }, W, H); gl.uniform3f(gl.getUniformLocation(p, 'papier'), ...PAPIER);
+    gl.uniform2f(gl.getUniformLocation(p, 'decalage'), ...decalage);
+    regler(gl, p);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     if (gl.isContextLost()) throw new Error('Le pinceau a été interrompu');
     const sortie = document.createElement('canvas'); sortie.width = W; sortie.height = H; sortie.getContext('2d').drawImage(toile, 0, 0);
     return sortie;
   } finally { gl.getExtension('WEBGL_lose_context')?.loseContext(); } // la mémoire de la carte graphique est rendue aussitôt
+}
+
+// vue : ce que rend la photo de l’île (monde.js) : image, l’île en couleurs ; silhouette, ce qui dépasse de l’eau, blanc sur
+// noir, en petit ; paysage, à hauteur d’île ; horizon, sa hauteur ; sombre, un ciel lourd. Rend un canevas de même taille.
+export async function peindre(vue, graine = 1) {
+  const { image: photo, silhouette, paysage = false, horizon = .66, sombre = false } = vue;
+  return passer(photo, halo(silhouette), graine, PIGMENT, (gl, p) => { for (const [nom, v] of [['paysage', +paysage], ['horizon', horizon], ['sombre', +sombre]]) gl.uniform1f(gl.getUniformLocation(p, nom), v); });
+}
+
+// Une tuile de la frise du chemin. vue : image, la tuile en couleurs ; silhouette, la terre en rouge et l’eau en vert, en
+// petit. decalage : la place de la tuile dans toute la frise, en pixels. jours : la teinte de trois jours, la veille, le jour,
+// le lendemain, à leur place : [{ x, teinte: [r, g, b, gris], ciel: [lourd, ombre, voile] }]
+export async function peindreFrise(vue, { graine = 1, decalage = [0, 0], jours }) {
+  return passer(vue.image, masques(vue.silhouette), graine, FRISE, (gl, p) => {
+    gl.uniform3f(gl.getUniformLocation(p, 'jours'), ...jours.map(j => j.x));
+    ['ta', 'tb', 'tc'].forEach((n, i) => gl.uniform4f(gl.getUniformLocation(p, n), ...jours[i].teinte));
+    ['sa', 'sb', 'sc'].forEach((n, i) => gl.uniform4f(gl.getUniformLocation(p, n), ...jours[i].ciel, 0));
+  }, decalage);
 }
 
 // La carte : la peinture, et « L’archipel » en bas à droite ; le nom de l’île en bas à gauche, seulement si on le veut

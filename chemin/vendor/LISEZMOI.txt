@@ -1,0 +1,2 @@
+three.js 0.186.1, réduit aux pièces utilisées par le chemin, avec GLTFLoader et le décodeur meshopt (esbuild, minifié).
+Source : https://github.com/mrdoob/three.js — licence MIT, voir ../../vendor/LICENSE-three.txt.
