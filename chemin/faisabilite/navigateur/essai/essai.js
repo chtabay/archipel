@@ -47,7 +47,7 @@ const JAMAIS = {
 
 (async () => {
   const { port, fermer } = await servir(), base = `http://127.0.0.1:${port}`;
-  const tmp = fs.mkdtempSync(path.join(process.env.TMPDIR || os.tmpdir(), 'glaneur-')), ext = path.join(tmp, 'extension'), profil = path.join(tmp, 'profil');
+  const tmp = fs.mkdtempSync(path.join(process.env.ESSAI_TMP || os.tmpdir(), 'glaneur-')), ext = path.join(tmp, 'extension'), profil = path.join(tmp, 'profil');
   fs.cpSync(EXT, ext, { recursive: true });
   const CHEMIN = `${base}/archipel/chemin/`;
   const remplacer = (f, a, b) => { const p = path.join(ext, f); fs.writeFileSync(p, fs.readFileSync(p, 'utf8').split(a).join(b)); };
@@ -67,14 +67,15 @@ const JAMAIS = {
     noter('la page d’accord s’ouvre à l’installation', !!accord);
     const page = await ctx.newPage();
     await page.goto(`${base}/ecrire.html`);
-    await page.locator('#journal').click(); await page.keyboard.type('Avant l’accord, ces mots ne doivent pas partir au chemin.'); await page.locator('body').click({ position: { x: 5, y: 5 } });
+    // on tape sans quitter la zone, on dit oui dans l’autre onglet, puis la page se recharge : ce qui précède le oui ne part pas
+    await page.locator('#journal').click(); await page.keyboard.type('Avant l’accord, ces mots ne doivent pas partir au chemin.');
     const a = accord || await ctx.newPage(); if (!accord) await a.goto(`chrome-extension://${id}/accord.html`);
     await a.locator('#oui').click(); await a.waitForTimeout(200);
     noter('le oui est gardé', (await sw.evaluate(() => chrome.storage.local.get('actif'))).actif === true);
 
     // 2. Écrire partout
     await page.reload();
-    const ecrire = async (loc, t) => { await loc.click(); await page.keyboard.type(t, { delay: 2 }); await page.locator('body').click({ position: { x: 5, y: 5 } }); };
+    const ecrire = async (loc, t) => { await loc.click(); await page.keyboard.type(t, { delay: 2 }); await page.locator('#ailleurs').click(); };
     await ecrire(page.locator('#journal'), GARDER.journal);
     await ecrire(page.locator('#mdp'), JAMAIS.mdp);
     await ecrire(page.locator('#carte'), JAMAIS.carte);
@@ -87,21 +88,21 @@ const JAMAIS = {
     noter('l’éditeur riche n’émet aucun événement input (un glaneur naïf, à l’écoute de input, ne verrait rien)', (await page.evaluate(() => window.__inputs)) === 0, `input : ${await page.evaluate(() => window.__inputs)}`);
     await ecrire(page.locator('#mail-corps'), GARDER.mail);
     await ecrire(page.locator('#ombre-ouverte textarea'), GARDER.ombreOuverte);
-    await page.evaluate(() => window.__fermee.querySelector('textarea').focus()); await page.keyboard.type(GARDER.ombreFermee, { delay: 2 }); await page.locator('body').click({ position: { x: 5, y: 5 } });
+    await page.evaluate(() => window.__fermee.querySelector('textarea').focus()); await page.keyboard.type(GARDER.ombreFermee, { delay: 2 }); await page.locator('#ailleurs').click();
     await page.locator('#chat').click(); await page.keyboard.type(GARDER.chat, { delay: 2 }); await page.keyboard.press('Enter'); await page.waitForTimeout(150);
     noter('la page du fil a bien vidé la zone à l’envoi', (await page.locator('#chat').inputValue()) === '');
-    await page.locator('body').click({ position: { x: 5, y: 5 } });
+    await page.locator('#ailleurs').click();
     // coller, puis taper : seul ce qui est tapé compte
     await ctx.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: base });
     await page.evaluate(t => navigator.clipboard.writeText(t), JAMAIS.colle);
     await page.locator('#colle').click(); await page.keyboard.press('Control+V'); await page.keyboard.type(` ${GARDER.colleTape}`, { delay: 2 });
     const colle = await page.locator('#colle').inputValue(); noter('le collage a bien eu lieu dans la page', colle.includes(JAMAIS.colle), colle.slice(0, 40));
-    await page.locator('body').click({ position: { x: 5, y: 5 } });
-    await page.locator('#prerempli').click(); await page.keyboard.press('End'); await page.keyboard.type(` ${GARDER.prerempli}`, { delay: 2 }); await page.locator('body').click({ position: { x: 5, y: 5 } });
+    await page.locator('#ailleurs').click();
+    await page.locator('#prerempli').click(); await page.keyboard.press('End'); await page.keyboard.type(` ${GARDER.prerempli}`, { delay: 2 }); await page.locator('#ailleurs').click();
     for (const [cadre, t] of [['#cadre-meme', GARDER.cadreMeme], ['#cadre-autre', GARDER.cadreAutre]]) {
-      const z = page.frameLocator(cadre).locator('textarea'); await z.click(); await page.keyboard.type(t, { delay: 2 }); await page.locator('body').click({ position: { x: 5, y: 5 } });
+      const z = page.frameLocator(cadre).locator('textarea'); await z.click(); await page.keyboard.type(t, { delay: 2 }); await page.locator('#ailleurs').click();
     }
-    await page.frameLocator('#cadre-vide').locator('body').click(); await page.keyboard.type(GARDER.cadreVide, { delay: 2 }); await page.locator('body').click({ position: { x: 5, y: 5 } });
+    await page.frameLocator('#cadre-vide').locator('body').click(); await page.keyboard.type(GARDER.cadreVide, { delay: 2 }); await page.locator('#ailleurs').click();
     await page.waitForTimeout(400);
 
     // 3. Ce que le fond a gardé

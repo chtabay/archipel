@@ -16,8 +16,11 @@
   const BLOC = /^(div|p|li|h[1-6]|blockquote|pre|tr|section|article|ul|ol)$/;
 
   let reglages = { actif: false, exclus: [] }; // rien tant qu’on n’a pas dit oui
-  const lire = () => ext.storage.local.get(['actif', 'exclus']).then(r => { reglages = { actif: r.actif === true, exclus: Array.isArray(r.exclus) ? r.exclus : [] }; }).catch(() => {});
-  lire(); ext.storage.onChanged.addListener(lire);
+  const lire = () => ext.storage.local.get(['actif', 'exclus']).then(r => {
+    const avant = reglages.actif;
+    reglages = { actif: r.actif === true, exclus: Array.isArray(r.exclus) ? r.exclus : [] };
+    if (reglages.actif && !avant && courante) sessions.get(courante).avant = texte(courante); // le oui vaut pour la suite, pas pour ce qui est déjà tapé
+  }).catch(() => {});
   const permis = () => reglages.actif && !ext.extension?.inIncognitoContext && !reglages.exclus.some(h => location.hostname === h || location.hostname.endsWith(`.${h}`));
 
   // la zone où l’on écrit vraiment, à travers les ombres, même fermées
@@ -51,7 +54,7 @@
     }
     return s;
   }
-  const texte = z => (z.localName === 'textarea' || z.localName === 'input' ? z.value : lignes(z)).replace(/ /g, ' ');
+  const texte = z => (z.localName === 'textarea' || z.localName === 'input' ? z.value : lignes(z)).replace(/\u00a0/g, ' ');
   // ce qui a été ajouté entre deux états : on retire le début et la fin communs
   function ajout(avant, apres) {
     let i = 0; while (i < avant.length && i < apres.length && avant[i] === apres[i]) i++;
@@ -61,6 +64,7 @@
   const mots = s => s.split(/\s+/).filter(m => /\p{L}/u.test(m)).length;
 
   const sessions = new WeakMap(); let courante = null;
+  lire(); ext.storage.onChanged.addListener(lire);
   const nouveauFil = () => globalThis.crypto?.randomUUID?.() ?? `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`; // randomUUID manque hors https
   const session = z => { let s = sessions.get(z); if (!s) { s = { fil: nouveauFil(), avant: texte(z), colle: [] }; sessions.set(z, s); } return s; };
   function cueillir(z, etat = z && texte(z)) {
@@ -72,18 +76,26 @@
     ext.runtime.sendMessage({ type: 'glane', fil: s.fil, site: location.hostname, texte: t }).catch(() => {});
   }
 
-  addEventListener('focusin', () => { const z = zone(profond()); if (z) { session(z); courante = z; } }, true);
-  addEventListener('focusout', () => { const z = courante; courante = null; cueillir(z); }, true);
-  // ce qu’on colle ou dépose n’est pas de soi
-  addEventListener('paste', e => { const s = courante && sessions.get(courante), t = e.clipboardData?.getData('text/plain'); if (s && t) s.colle.push(t.replace(/\r\n?/g, '\n')); }, true);
-  addEventListener('drop', e => { const s = courante && sessions.get(courante), t = e.dataTransfer?.getData('text/plain'); if (s && t) s.colle.push(t); }, true);
-  // Entrée envoie souvent le message, et la page vide la zone aussitôt : on regarde juste avant, et juste après
-  addEventListener('keydown', e => {
-    if (e.key !== 'Enter' || e.shiftKey || e.isComposing || !courante) return;
-    const z = courante, avant = texte(z);
-    setTimeout(() => { if (texte(z).trim().length < avant.trim().length / 2) cueillir(z, avant); }, 60);
-  }, true);
-  addEventListener('submit', () => cueillir(courante), true);
-  addEventListener('pagehide', () => cueillir(courante), true);
-  document.addEventListener('visibilitychange', () => { if (document.hidden) cueillir(courante); });
+  const ecoute = {
+    focusin() { const z = zone(profond()); if (z) { session(z); courante = z; } },
+    focusout() { const z = courante; courante = null; cueillir(z); },
+    // ce qu’on colle ou dépose n’est pas de soi
+    paste(e) { const s = courante && sessions.get(courante), t = e.clipboardData?.getData('text/plain'); if (s && t) s.colle.push(t.replace(/\r\n?/g, '\n')); },
+    drop(e) { const s = courante && sessions.get(courante), t = e.dataTransfer?.getData('text/plain'); if (s && t) s.colle.push(t); },
+    // Entrée envoie souvent le message, et la page vide la zone aussitôt : on regarde juste avant, et juste après
+    keydown(e) {
+      if (e.key !== 'Enter' || e.shiftKey || e.isComposing || !courante) return;
+      const z = courante, avant = texte(z);
+      setTimeout(() => { if (texte(z).trim().length < avant.trim().length / 2) cueillir(z, avant); }, 60);
+    },
+    submit() { cueillir(courante); },
+    pagehide() { cueillir(courante); },
+  };
+  const cache = () => { if (document.hidden) cueillir(courante); };
+  // Un même écouteur ajouté deux fois ne compte qu’une fois : rebrancher est sans risque. Une page qui écrit son cadre vide
+  // avec document.open() efface tous les écouteurs de sa fenêtre, ceux de l’extension compris : on les remet.
+  const brancher = () => { for (const [nom, f] of Object.entries(ecoute)) addEventListener(nom, f, true); document.addEventListener('visibilitychange', cache); };
+  brancher();
+  let racine = document.documentElement;
+  new MutationObserver(() => { if (document.documentElement !== racine) { racine = document.documentElement; brancher(); } }).observe(document, { childList: true });
 })();
