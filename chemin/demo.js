@@ -1,4 +1,4 @@
-// Le chemin : un journal d’exemple, pour voir la frise avant d’avoir écrit. Trente pages, une tous les douze jours environ,
+// Le chemin : un journal d’exemple, pour voir la frise avant d’avoir écrit. Trente-deux pages, une tous les douze jours environ,
 // pour traverser les saisons.
 const PAGES = [
   'Premier jour de neige ! Bonhomme de neige avec les enfants, chocolat chaud et sapin de Noël.',
@@ -14,6 +14,8 @@ const PAGES = [
   'Matin calme. Café sur le balcon, les oiseaux, personne dans la rue.',
   'Pique-nique au bord de la mer, les enfants ont construit un château de sable. Un bateau passait au loin.',
   'Baignade, sable chaud, un voilier à l’horizon. Je voudrais que ça dure.',
+  'Voyage dans le désert : les dunes, un chameau près de l’oasis, le soleil brûlant.',
+  'Safari dans la savane : des zèbres, une girafe sous un acacia, un baobab immense.',
   'Camping au bord du lac. Feu de camp, tente, les étoiles. Nuit froide mais belle.',
   'Retour au travail. Ordinateur, mails, encore des mails. Je suis épuisé.',
   'J’ai cuisiné une soupe de légumes pour toute la famille. Mon fils a fait la vaisselle.',

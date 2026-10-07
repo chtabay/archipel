@@ -6,16 +6,16 @@
 import * as THREE from './vendor/three-chemin.min.js?v=1';
 import { rng, hash, melange, nuance } from '../outils.js?v=1';
 
-export const MOTEUR = 1; // la version du peintre, ici et dans l’aquarelle : on l’augmente quand une même page se peindrait autrement
+export const MOTEUR = 2; // la version du peintre, ici et dans l’aquarelle : on l’augmente quand une même page se peindrait autrement
 export const L = 14, V = 11, ELEV = 8 * Math.PI / 180, HAUT = 1000, LARGE = Math.round(HAUT * L / V), MARGE = 40; // un jour : 14 m de long, une tuile de 1273 × 1000 points, et une marge pour le pinceau
-const BAS = -2.2; // le bas de l’image, en mètres, sous le chemin
+const BAS = -2.2, CIBLE = (V / 2 + BAS) / Math.cos(ELEV); // le bas de l’image, en mètres, sous le chemin ; la hauteur que vise la caméra
 const PLANS = { avant: [1.4, 3], bord: [-2.2, -1.1], milieu: [-3.4, -11], fond: [-15, -26] };
 const recul = z => (z >= -1 ? 1 : 1 / (1 + (-z - 1) / 16)); // la fausse perspective : plus loin, plus petit
 // Le sol monte vers le fond, comme une scène de théâtre, ou un rouleau peint : vues presque de côté, les choses restent
 // debout, et le sol se voit, du premier plan jusqu’à l’horizon
 const RAMPE = 1.7, rampe = z => (z < 0 ? RAMPE * (1 - Math.exp(z / 10)) : -.32 * z);
 // les tailles, par plan : la plus petite et la plus grande hauteur, la plus grande largeur
-const TAILLES = { avant: [.25, 1, 2.4], bord: [.3, 3, 5], chemin: [.2, 1.9, 3], milieu: [.5, 8, 12], fond: [1, 14, 16] };
+const TAILLES = { avant: [.25, 1, 2.4], bord: [.3, 3, 5], chemin: [.2, 1.9, 3], milieu: [.5, 8, 12], fond: [1, 14, 16], ciel: [.4, 2, 5], eau: [.2, 2, 12] };
 
 /* ───────── Le catalogue, par familles ───────── */
 
@@ -30,6 +30,15 @@ const FAMILLES = {
   meubles: /^furniture-kit\/(bookcaseOpen|bookcaseClosed|lampRoundFloor|lampSquareFloor|pottedPlant|plantSmall\d|loungeChair|sideTable|cabinetTelevision|coatRackStanding)$/,
   tapis: /^furniture-kit\/rug(Rectangle|Round|Rounded|Square)$/, tables: /^furniture-kit\/(table|tableRound|tableCloth)$/, chaises: /^furniture-kit\/(chair|chairCushion|chairRounded)$/,
   haies: /^fantasy-town-kit\/hedge(-large)?$/, portails: /^fantasy-town-kit\/(hedge-gate|hedge-large-gate|fence-gate)$/, rails: /^train-kit\/track$/,
+  // le désert, la savane, les tropiques, la montagne
+  cactus: /^(q-desert\/Cactus\d?$|q-nature\/Cactus_1$|nature-kit\/cactus_)/, palmiersOasis: /^q-desert\/(Big|Small)PalmTree$/, arbresMorts: /^q-desert\/DeadTree$|^savane\/af_deadTree/,
+  rochersRouges: /^savane\/africaRock_0[56]$/, pyramides: /^q-desert\/Pyramid$/, maisonsTerre: /^mali\/mali_(house_[1-4]|storehouse|farmstead)$/,
+  acacias: /^savane\/(acacciaTree|umbrellaAcacia|umbreallAcacia)/, baobabs: /^savane\/AfricanBoabab/, arbresSavane: /^savane\/(AfricaTree|africanMahogany_0[12]|genericTree)/,
+  buissonsSavane: /^savane\/(africaBush|yellowBush|africanThorn)/, herbesSavane: /^savane\/(africaGrass_0[12]|AfricanWheatGrass)/, cases: /^savane\/Shack/,
+  palmiersTropiques: /^tropiques\/(Palm0\d|QueensPalm01)$/, bananiers: /^tropiques\/Banana/, bambous: /^tropiques\/Bamboo/,
+  fougeres: /^tropiques\/(TropicFern|ElephantEar|Phila|BirdNestPlant)/, arbresJungle: /^tropiques\/(CecropiaTree|CiabaTree|CopalTree)/, paillotes: /^tropiques\/JungleHut/,
+  montagnes: /^kaykit-medieval\/(mountain_|hills_A_trees)/, pinsNeige: /^(q-nature\/PineTree_Snow|platformer-kit\/tree-pine-snow)/,
+  rochersMontagne: /^(q-nature\/Rock_(Moss|Snow)_1|nature-kit\/rock_(large|tall)\w*)$/, chalets: /^archipel\/maison-neige$/,
 };
 export function familles(catalogue) {
   const out = Object.fromEntries(Object.keys(FAMILLES).map(k => [k, []])), parId = new Map();
@@ -50,8 +59,15 @@ export function climatDe(lecture) {
   if (v < -.15 && e <= .15) { haut = melange(haut, '#a9b3bd', -v); bas = melange(bas, '#dde1e4', -v); teinte = [.96, .97, 1.02, .4 * -v]; ciel = [.7, .06 * -v, .45]; } // le gris
   if (h === 'soir') { haut = melange(haut, '#e3a98c', .55); bas = melange(bas, '#fbd6a8', .6); teinte = teinte.map((x, i) => i === 3 ? x : x * [1.06, .99, .9][i]); }
   if (h === 'matin') { bas = melange(bas, '#fff3dd', .5); }
+  // le temps qu’il fait, dit par les mots : la pluie, l’orage, la neige, la brume, le soleil
+  const M = lecture.meteo || {}, pluie = Math.max(M.pluie || 0, M.orage || 0), orage = M.orage || 0, neige = M.neige || 0, brume = M.brume || 0, soleil = h === 'nuit' ? 0 : M.soleil || 0;
+  if (pluie) { haut = melange(haut, orage ? '#4f5a72' : '#8995a5', pluie); bas = melange(bas, '#cdd3d8', pluie); teinte = [teinte[0] * (1 - .05 * pluie), teinte[1] * (1 - .03 * pluie), teinte[2], Math.max(teinte[3], .3 * pluie + .15 * orage)]; ciel = [Math.max(ciel[0], .85 * pluie), Math.max(ciel[1], .06 * pluie + .08 * orage), Math.max(ciel[2], .4 * pluie)]; }
+  if (neige) { haut = melange(haut, '#c4cfd9', .7 * neige); bas = melange(bas, '#f2f4f5', neige); teinte = [teinte[0] * (1 - .03 * neige), teinte[1], teinte[2] * (1 + .03 * neige), Math.max(teinte[3], .15 * neige)]; }
+  if (brume) { haut = melange(haut, '#d6dce1', .8 * brume); bas = melange(bas, '#eef0f1', brume); ciel = [ciel[0], ciel[1], Math.max(ciel[2], .5 * brume)]; }
+  if (soleil) { haut = melange(haut, '#6db3ea', .5 * soleil); bas = melange(bas, '#fff1d0', .6 * soleil); teinte = [teinte[0] * (1 + .04 * soleil), teinte[1] * (1 + .01 * soleil), teinte[2] * (1 - .05 * soleil), teinte[3] * (1 - .5 * soleil)]; }
   if (h === 'nuit') { haut = '#1d2a4c'; bas = '#4b5b82'; teinte = [.62, .68, .92, .25]; ciel = [1, .22, .6]; }
-  return { haut, bas, teinte, ciel };
+  const r2 = x => Math.round(x * 100) / 100; // la météo, pour le pinceau : la pluie, la neige, la brume, la nuit ; puis le soleil, l’orage
+  return { haut, bas, teinte, ciel, meteo: [pluie, neige, brume, h === 'nuit' ? 1 : 0].map(r2), astres: [soleil, orage, 0, 0].map(r2) };
 }
 const pareil = (a, b) => a === b;
 
@@ -59,7 +75,7 @@ const pareil = (a, b) => a === b;
 
 // jour : { i, date, lieu, objets: [{ objet }], climat } ; veille : le jour d’avant, déjà planifié ; recents : id → dernier jour vu
 export function planifier(jour, veille, F, recents) {
-  const r = rng(1 + Math.floor(hash(`${jour.date}:${jour.i}`) * 1e6)), x0 = jour.i * L, saison = saisonDe(jour.date), items = [], occupe = { avant: [], bord: [], chemin: [], milieu: [], fond: [] };
+  const r = rng(1 + Math.floor(hash(`${jour.date}:${jour.i}`) * 1e6)), x0 = jour.i * L, saison = (jour.climat?.meteo?.[1] || 0) >= .5 ? 'hiver' : saisonDe(jour.date), items = [], occupe = { avant: [], bord: [], chemin: [], milieu: [], fond: [], ciel: [], eau: [] };
   const tirer = (liste, k = 1) => { // un objet de la famille, moins probable s’il a été vu récemment
     if (!liste?.length) return null;
     const p = liste.map(o => { const v = recents.get(o.id); return v == null ? 1 : 1 - .9 * Math.exp(-(jour.i - v) / (2 + k)); }), t = p.reduce((a, b) => a + b, 0);
@@ -82,11 +98,46 @@ export function planifier(jour, veille, F, recents) {
     const long = o.taille[2] > o.taille[0] * 1.3, ry = (profil ?? long ? Math.PI / 2 * (r() < .5 ? 1 : -1) : 0) + (r() - .5) * .5;
     const it = { id: o.id, x: xx, z: zz, y, ry, s: k, plan }; items.push(it); return it;
   };
+  const taille = (o, [hmin, hmax, wmax]) => { const haut = Math.max(o.taille[1], .02), large = Math.max(o.taille[0], o.taille[2], .02); return [Math.min(Math.max(1, hmin / haut), hmax / haut, wmax / large), haut, large]; };
+  const poserCiel = (o, h = TAILLES.ciel) => { // dans le ciel, au-dessus de l’horizon, sans toucher le haut de l’image
+    const [s0, haut, large] = taille(o, h), z = -8 - r() * 8, s = s0 * Math.sqrt(recul(z)), v = 3.3 + r() * 1.3; // v : la hauteur dans l’image, depuis son milieu ; au loin, un peu plus petit
+    const x = place('ciel', large * s); if (x == null) return null;
+    const y = CIBLE + (v + z * Math.sin(ELEV)) / Math.cos(ELEV) - haut * s / 2;
+    const it = { id: o.id, x, z, y, ry: (r() < .5 ? 1 : -1) * Math.PI / 2 + (r() - .5) * .5, s, plan: 'ciel', vol: true }; items.push(it); return it;
+  };
+  const poserEau = o => { // dans l’eau, au bord de l’eau seulement : le dos d’une baleine, un nageur, un poisson qui saute
+    if (lieu !== 'rivage') return null;
+    const [s0, haut, large] = taille(o, TAILLES.eau), z = -4.5 - r() * 4.5, s = s0 * recul(z);
+    const x = place('eau', large * s); if (x == null) return null;
+    const saute = /nage-(fish|piranha)/.test(o.id), enfonce = saute ? -.6 : /nage-(homme|femme)/.test(o.id) ? .25 : .5;
+    const it = { id: o.id, x, z, y: -enfonce * haut * s, ry: (r() < .5 ? 1 : -1) * Math.PI / 2 + (r() - .5) * .4, s, plan: 'eau', eau: true }; items.push(it); return it;
+  };
   const lieu = jour.lieu, arbres = saison === 'automne' ? F.arbresAutomne : saison === 'hiver' ? [...F.sapinsNeige, ...F.pins] : F.arbres;
   let piece = null;
 
-  // le décor du lieu
   const ARBRE = [4.5, 7.5, 6], CULTURE = [.9, 1.6, 2], MAISON = [5.5, 8.5, 14], BATEAU = [1, 5.5, 7], GENS = [1.6, 1.8, 1.5];
+  if (lieu === 'interieur') piece = { de: x0 + 2.4, a: x0 + L - 2.4, fond: -2.9, haut: 2.6, mur: melange('#efe3cf', '#dcc9ab', r()), sol: melange('#b98a5e', '#a8764c', r()), toit: melange('#a85b45', '#7d6a5f', r()) };
+
+  // ce que la page appelle, d’abord : il a sa place avant le décor ; au bord du chemin, sur le chemin, devant, dans le ciel ou sur l’eau
+  for (const { objet: o } of jour.objets) {
+    const role = o.role;
+    if (/^watercraft|^pirate-kit\/(boat|ship)|^q-ships\/|^q-survival\/Raft/.test(o.id)) { if (lieu === 'rivage') poser(o, 'milieu', { z: -5 - r() * 4, profil: true, h: BATEAU }); } // loin de l’eau, pas de bateau
+    else if (role === 'batiment') poser(o, 'milieu', { z: -5, profil: false, h: MAISON });
+    else if (/^train-kit|^holiday-kit\/train/.test(o.id)) { const z = lieu === 'rivage' ? -1.3 : -1.8, it = poser(o, 'bord', { z, profil: true, s: 1 }); if (it) poser(F.rails[0], 'bord', { x: it.x, z, profil: true, s: 1.2 }); } // au bord de l’eau, sur la plage
+    else if (role === 'personne') poser(o, 'chemin', { z: (r() - .5) * .5, h: /character/.test(o.id) ? GENS : [.3, 1.5, 1.5] });
+    else if (role === 'ciel') poserCiel(o, /^kaykit-medieval\/cloud|^archipel\/nuage/.test(o.id) ? [1.5, 3, 7] : /avion-ligne/.test(o.id) ? [1.5, 3, 9] : TAILLES.ciel);
+    else if (role === 'eau') poserEau(o);
+    else if (role === 'animal' && o.taille[1] > 2.6) poser(o, 'milieu', { z: -4 - r() * 3, h: [2.6, 6, 12] }); // un éléphant, un dinosaure : un peu en retrait
+    else if (role === 'animal') poser(o, 'chemin', { z: (r() - .5) * .5, h: [.45, 1.8, 2.4] });
+    else if (role === 'petit') { // une petite chose : en grand, au premier plan, comme une nature morte ; dans une maison, sur une table
+      const h = Math.max(o.taille[1], .05), s = Math.max(1, .6 / h);
+      if (piece) { const t = poser(tirer(F.tables), 'chemin', { z: .6, profil: false }); if (t) poser(o, 'chemin', { x: t.x, z: .6, y: .62, s: Math.max(1, .25 / h) }); else poser(o, 'avant', { s }); }
+      else poser(o, 'avant', { s, z: 1.5 + r() * .8 });
+    } else if (role === 'decor') { for (let n = 0; n < 3; n++) poser(o, n ? 'milieu' : 'bord', { h: /tree|palm|pine/.test(o.id) ? ARBRE : null }); }
+    else poser(o, piece ? 'bord' : r() < .6 ? 'bord' : 'avant', { z: piece ? -2 : undefined });
+  }
+
+  // le décor du lieu, autour
   if (lieu === 'foret') {
     for (let n = 0; n < 12; n++) poser(tirer(r() < .4 ? F.pins : arbres), 'milieu', { s: 1.1 + r() * .5, h: ARBRE });
     for (let n = 0; n < 16; n++) poser(tirer(r() < .5 ? F.pins : arbres), 'fond', { s: 1.4 + r() * .6, h: ARBRE });
@@ -113,36 +164,47 @@ export function planifier(jour, veille, F, recents) {
     for (let n = 0; n < 3; n++) poser(tirer(F.rochersSable), 'avant', { s: 1.2 });
     for (let n = 0; n < 3; n++) poser(tirer(F.herbes), 'avant', { s: 1.2 });
   } else if (lieu === 'interieur') { // une maison ouverte, comme une maison de poupée : le chemin y entre par une porte et ressort par l’autre
-    piece = { de: x0 + 2.4, a: x0 + L - 2.4, fond: -2.9, haut: 2.6, mur: melange('#efe3cf', '#dcc9ab', r()), sol: melange('#b98a5e', '#a8764c', r()), toit: melange('#a85b45', '#7d6a5f', r()) };
     poser(tirer(F.tapis), 'chemin', { z: -.2, profil: false, x: x0 + L / 2, h: [.01, .05, 3.2] });
     for (let n = 0; n < 5; n++) poser(tirer(F.meubles, 2), 'bord', { z: -2.3, profil: false, h: [1, 2.2, 2.4], de: piece.de + .5, a: piece.a - .5 });
     for (let n = 0; n < 6; n++) poser(tirer(arbres), 'fond', { h: ARBRE }); // derrière la maison, le pays continue
-  }
-
-  // ce que la page appelle : au bord du chemin, sur le chemin, devant, ou sur l’eau
-  for (const { objet: o } of jour.objets) {
-    const role = o.role;
-    if (/^watercraft|^pirate-kit\/(boat|ship)/.test(o.id)) { if (lieu === 'rivage') poser(o, 'milieu', { z: -5 - r() * 4, profil: true, h: BATEAU }); } // loin de l’eau, pas de bateau
-    else if (role === 'batiment') poser(o, 'milieu', { z: -5, profil: false, h: MAISON });
-    else if (/^train-kit|^holiday-kit\/train/.test(o.id)) { const z = lieu === 'rivage' ? -1.3 : -1.8, it = poser(o, 'bord', { z, profil: true, s: 1 }); if (it) poser(F.rails[0], 'bord', { x: it.x, z, profil: true, s: 1.2 }); } // au bord de l’eau, sur la plage
-    else if (role === 'personne') poser(o, 'chemin', { z: (r() - .5) * .5, h: /character/.test(o.id) ? GENS : [.3, 1.5, 1.5] });
-    else if (role === 'animal') poser(o, 'chemin', { z: (r() - .5) * .5, h: [.45, 1.8, 2.4] });
-    else if (role === 'petit') { // une petite chose : en grand, au premier plan, comme une nature morte ; dans une maison, sur une table
-      const h = Math.max(o.taille[1], .05), s = Math.max(1, .6 / h);
-      if (piece) { const t = poser(tirer(F.tables), 'chemin', { z: .6, profil: false }); if (t) poser(o, 'chemin', { x: t.x, z: .6, y: .62, s: Math.max(1, .25 / h) }); else poser(o, 'avant', { s }); }
-      else poser(o, 'avant', { s, z: 1.5 + r() * .8 });
-    } else if (role === 'decor') { for (let n = 0; n < 3; n++) poser(o, n ? 'milieu' : 'bord', { h: /tree|palm|pine/.test(o.id) ? ARBRE : null }); }
-    else poser(o, piece ? 'bord' : r() < .6 ? 'bord' : 'avant', { z: piece ? -2 : undefined });
+  } else if (lieu === 'desert') { // le sable, des cactus, une oasis ; au loin, parfois, une pyramide ou un village de terre
+    for (let n = 0; n < 2; n++) poser(tirer(F.palmiersOasis), 'milieu', { z: -5 - r() * 4, h: ARBRE });
+    for (let n = 0; n < 5; n++) poser(tirer(r() < .65 ? F.cactus : F.arbresMorts), 'milieu', { h: [1.2, 3, 4] });
+    if (r() < .35) poser(tirer(F.pyramides), 'fond', { z: -24, profil: false, h: [8, 13, 16] });
+    else if (r() < .5) for (let n = 0; n < 2; n++) poser(tirer(F.maisonsTerre, 3), 'fond', { z: -16 - r() * 6, profil: false, h: [5, 8, 12] });
+    for (let n = 0; n < 4; n++) poser(tirer(F.rochersRouges), 'fond', { h: [2, 5, 8] });
+    for (let n = 0; n < 3; n++) poser(tirer(F.cactus), 'bord', { h: [.6, 1.6, 1.5] });
+    for (let n = 0; n < 2; n++) poser(tirer(F.rochersRouges), 'avant', { h: [.3, .8, 1.5] });
+  } else if (lieu === 'savane') { // l’herbe sèche, les acacias, un baobab
+    for (let n = 0; n < 4; n++) poser(tirer(r() < .2 ? F.baobabs : r() < .75 ? F.acacias : F.arbresSavane), 'milieu', { z: -5 - r() * 6, h: ARBRE });
+    for (let n = 0; n < 7; n++) poser(tirer(r() < .85 ? F.acacias : F.baobabs), 'fond', { h: ARBRE });
+    for (let n = 0; n < 5; n++) poser(tirer(F.buissonsSavane), 'bord', { h: [.8, 1.8, 3] });
+    for (let n = 0; n < 9; n++) poser(tirer(F.herbesSavane), 'avant', { h: [.5, 1.1, 1.5] });
+    if (r() < .3) poser(tirer(F.cases), 'milieu', { z: -9, profil: false, h: [3, 4.5, 6] });
+  } else if (lieu === 'tropiques') { // la jungle : palmiers, bananiers, bambous, de grandes feuilles
+    for (let n = 0; n < 5; n++) poser(tirer(r() < .5 ? F.palmiersTropiques : r() < .6 ? F.bananiers : F.bambous), 'milieu', { h: ARBRE });
+    for (let n = 0; n < 10; n++) poser(tirer(r() < .55 ? F.arbresJungle : F.palmiersTropiques), 'fond', { h: [6, 12, 12] });
+    for (let n = 0; n < 6; n++) poser(tirer(F.fougeres), 'bord', { h: [.8, 1.6, 2.5] });
+    for (let n = 0; n < 3; n++) poser(tirer(F.fougeres), 'avant', { z: 2.3, h: [.6, 1.2, 2] });
+    if (r() < .3) poser(tirer(F.paillotes), 'milieu', { z: -8, profil: false, h: [4, 6, 9] });
+  } else if (lieu === 'montagne') { // les sommets au loin, les sapins, les rochers ; l’hiver, la neige
+    for (let n = 0; n < 3; n++) poser(tirer(F.montagnes), 'fond', { z: -25 - r() * 4, profil: false, h: [9, 15, 30] });
+    const pins = saison === 'hiver' && F.pinsNeige.length ? [...F.pinsNeige, ...F.sapinsNeige] : F.pins;
+    for (let n = 0; n < 8; n++) poser(tirer(pins), 'milieu', { h: ARBRE });
+    for (let n = 0; n < 4; n++) poser(tirer(F.rochersMontagne), 'bord', { h: [.5, 1.6, 3] });
+    for (let n = 0; n < 6; n++) poser(tirer(saison === 'hiver' ? F.rochersMontagne : F.fleurs), 'avant', { s: 1.2 });
+    if (r() < .3) poser(tirer(F.chalets), 'milieu', { z: -7, profil: false, h: MAISON });
   }
 
   // à la jointure avec la veille : un objet de raccord, au premier plan, qui couvre le passage d’un lieu à l’autre
   let raccord = null;
   if (veille) {
-    const avant = veille.lieu, apres = lieu, choix = pareil(avant, apres)
-      ? { foret: F.pins, champs: F.clotures, village: F.lanternes, rivage: F.rochers, interieur: null }[apres]
-      : apres === 'interieur' || avant === 'interieur' ? null : [...F.portails, ...F.haies];
+    const avant = veille.lieu, apres = lieu, PROPRES = { foret: F.pins, champs: F.clotures, village: F.lanternes, rivage: F.rochers, interieur: null,
+      desert: F.cactus, savane: F.acacias, tropiques: F.palmiersTropiques, montagne: F.pins }, AILLEURS = ['desert', 'savane', 'tropiques', 'montagne'];
+    const choix = pareil(avant, apres) ? PROPRES[apres]
+      : apres === 'interieur' || avant === 'interieur' ? null : AILLEURS.includes(apres) ? PROPRES[apres] : AILLEURS.includes(avant) ? PROPRES[avant] : [...F.portails, ...F.haies];
     const o = choix && tirer(choix);
-    if (o) { const h = /tree|pine/.test(o.id) ? 8 : /lantern/.test(o.id) ? 3 : /gate|hedge/.test(o.id) ? 2.2 : 1.3; raccord = { id: o.id, x: x0, z: 1.9, y: 0, ry: /gate/.test(o.id) ? 0 : (r() - .5) * .6, s: h / Math.max(o.taille[1], .05), plan: 'avant' }; items.push(raccord); }
+    if (o) { const h = /tree|pine|palm|acacia/i.test(o.id) ? 8 : /lantern/.test(o.id) ? 3 : /gate|hedge/.test(o.id) ? 2.2 : 1.3; raccord = { id: o.id, x: x0, z: 1.9, y: 0, ry: /gate/.test(o.id) ? 0 : (r() - .5) * .6, s: h / Math.max(o.taille[1], .05), plan: 'avant' }; items.push(raccord); }
   }
   return { i: jour.i, x0, date: jour.date, lieu, saison, climat: jour.climat, items, piece, sol: solDe(lieu, saison, r) };
 }
@@ -154,8 +216,12 @@ function solDe(lieu, saison, r) { // la couleur du sol, et celle du chemin
     village: { sol: melange(herbe, '#b9b3a6', .45), chemin: '#d3cbbb' },
     rivage: { sol: '#e2cf9d', chemin: '#efe2bd' },
     interieur: { sol: herbe, chemin: '#d2b98c' },
+    desert: { sol: '#e3cb93', chemin: '#efdcb0' },
+    savane: { sol: '#c9b26c', chemin: '#dcc28c' },
+    tropiques: { sol: '#5f9a45', chemin: '#c9ae82' },
+    montagne: { sol: saison === 'hiver' ? '#eef2f4' : nuance(herbe, -.06), chemin: saison === 'hiver' ? '#f6f7f8' : '#c4b79c' },
   }[lieu] || { sol: herbe, chemin: '#d2b98c' };
-  return { ...S, relief: { foret: 1.2, champs: .7, village: .5, rivage: 0, interieur: .7 }[lieu] ?? .7, eau: lieu === 'rivage' };
+  return { ...S, relief: { foret: 1.2, champs: .7, village: .5, rivage: 0, interieur: .7, desert: 1.5, savane: .5, tropiques: 1, montagne: 2.4 }[lieu] ?? .7, eau: lieu === 'rivage' };
 }
 
 /* ───────── Le sol, l’eau, le ciel ───────── */
@@ -248,7 +314,7 @@ export class Modeles {
     if (!this.cache.has(o.id)) this.cache.set(o.id, this.loader.loadAsync(new URL(o.fichier, this.base).href).then(g => {
       const s = g.scene; s.scale.setScalar(o.echelle || 1); s.updateMatrixWorld(true);
       const b = new THREE.Box3().setFromObject(s), c = b.getCenter(new THREE.Vector3());
-      const r = new THREE.Group(); s.position.set(-c.x, -b.min.y, -c.z); r.add(s);
+      const r = new THREE.Group(); s.position.set(-c.x, -b.min.y - (o.sous || 0), -c.z); r.add(s); // un socle, sous terre
       r.traverse(m => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } });
       return r;
     }).catch(e => { console.warn(o.id, e); return null; }));
@@ -275,8 +341,9 @@ export class Atelier {
     const modeles = await Promise.all(items.map(it => this.modeles.charger(F.get(it.id))));
     items.forEach((it, n) => {
       const m = modeles[n]; if (!m) return;
-      const o = m.clone(); o.position.set(it.x, (it.y || 0) + Math.max(hauteur(voisins, it.x, it.z), rampe(it.z) - .05), it.z); o.rotation.y = it.ry; o.scale.setScalar(it.s);
-      if (/watercraft|pirate-kit\/(boat|ship)/.test(it.id)) o.position.y = rampe(it.z) - .12; // un bateau flotte
+      const o = m.clone(); o.position.set(it.x, it.vol ? it.y : it.eau ? rampe(it.z) - .05 + it.y : (it.y || 0) + Math.max(hauteur(voisins, it.x, it.z), rampe(it.z) - .05), it.z); o.rotation.y = it.ry; o.scale.setScalar(it.s);
+      if (/watercraft|pirate-kit\/(boat|ship)|q-ships\/|q-survival\/Raft/.test(it.id)) o.position.y = rampe(it.z) - .12; // un bateau flotte
+      if (it.vol) o.traverse(m => { if (m.isMesh) m.castShadow = false; }); // ce qui vole n’assombrit pas le sol
       s.add(o);
     });
     // la lumière : la même partout, pour que les tuiles se raccordent ; le temps du jour vient de la teinte posée par le pinceau
@@ -285,7 +352,7 @@ export class Atelier {
     s.add(soleil, soleil.target, new THREE.HemisphereLight('#e4f0ff', '#b9a98a', 1.25));
     s.fog = new THREE.Fog('#dfe6ea', 106, 165);
     const cam = new THREE.OrthographicCamera(-l / 2, l / 2, V / 2, -V / 2, 1, 400), dir = new THREE.Vector3(0, -Math.sin(ELEV), -Math.cos(ELEV));
-    const cible = new THREE.Vector3(xc, (V / 2 + BAS) / Math.cos(ELEV), 0); cam.position.copy(cible).addScaledVector(dir, -100); cam.lookAt(cible); cam.updateMatrixWorld();
+    const cible = new THREE.Vector3(xc, CIBLE, 0); cam.position.copy(cible).addScaledVector(dir, -100); cam.lookAt(cible); cam.updateMatrixWorld();
     const r = this.rendu; r.setSize(W, HAUT, false); r.render(s, cam);
     const image = copie(this.canvas, W, HAUT);
     // la silhouette, en petit : la terre et ce qui s’y pose en rouge, l’eau en vert, le ciel en noir

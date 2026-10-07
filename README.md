@@ -152,24 +152,27 @@ Une île de l’archipel peut se relier à d’autres, par des routes sur l’ea
 
 ## Le chemin, une autre app sur le même site
 
-**→ https://chtabay.github.io/archipel/chemin/**, dans le dossier `chemin/`. Un journal : chaque page devient un bout de chemin, peint à l’aquarelle sur le téléphone, et le chemin s’allonge de page en page. `chemin/?demo` montre trente pages d’exemple.
+**→ https://chtabay.github.io/archipel/chemin/**, dans le dossier `chemin/`. Un journal : chaque page devient un bout de chemin, peint à l’aquarelle sur le téléphone, et le chemin s’allonge de page en page. `chemin/?demo` montre trente-deux pages d’exemple.
 
 - **Une seule façon d’écrire.** La zone « Aujourd’hui » prend quelques lignes, un courrier ou un roman entier. « Garder la page » la garde ; réécrire le même jour la remplace.
 - **Le découpage.** Un texte se découpe en passages d’environ 14 mots porteurs, une tuile chacun : une page de journal fait une tuile, un roman quelques centaines. Un mot porteur fait une image : il est proche d’un objet du catalogue, ou d’un champ de la vie ordinaire. On coupe aux titres, chapitres ou dates, et aux séparateurs ; puis entre les paragraphes, puis entre les phrases. Les répliques d’un dialogue restent ensemble tant qu’on peut. Une page de garde rejoint le passage qui suit ; un jour vide garde sa tuile. La première tuile d’une page porte sa date, celle d’un chapitre son titre.
-- **La tuile.** Les mots du passage choisissent le lieu, le temps qu’il fait, et jusqu’à six objets parmi 880 modèles libres, par la distance de leur sens. Chaque modèle a ses noms français, traduits une fois de ses noms anglais, dans le sens de l’objet : « can » y est une canette, « cup » une tasse. Un mot du texte retrouve ainsi l’objet qui porte son nom, ou le plus proche ; un pluriel compte comme son singulier. Un objet vu récemment devient moins probable. Tous les plans sont là, du premier plan au lointain, et le chemin ne s’interrompt pas d’une tuile à l’autre.
+- **La tuile.** Les mots du passage choisissent le lieu, le temps qu’il fait, et jusqu’à six objets parmi 1 713 modèles libres, par la distance de leur sens : ceux de Kenney, des KayKit, de Quaternius et d’OpenGameArt, et les choses de l’archipel. Chaque modèle a ses noms français, traduits une fois de ses noms anglais, dans le sens de l’objet : « can » y est une canette, « cup » une tasse. Un mot du texte retrouve ainsi l’objet qui porte son nom, ou le plus proche ; un pluriel compte comme son singulier. Un objet vu récemment devient moins probable. Tous les plans sont là, du premier plan au lointain, et le chemin ne s’interrompt pas d’une tuile à l’autre.
+- **Les paysages.** La maison, le village, la forêt, les champs, le bord de l’eau ; et, quand les mots y mènent, le désert, la savane, la jungle des tropiques, la montagne. Des modèles venus d’ailleurs : un baobab et des acacias, des bananiers, une paillote, une mosquée de terre du Mali, une pyramide maya, un gong chinois, des sushis.
+- **Des gens et des bêtes qui agissent.** Les verbes ont leurs images : une centaine de poses, figées dans les animations libres de leurs modèles. On marche, court, dort, lit, nage, danse, pêche, jardine, bricole, salue, applaudit ; on est triste ou joyeux. Le cheval galope, la vache broute, la baleine sort son dos de l’eau, l’aigle vole. Les métiers aussi : le médecin, la cuisinière, l’ouvrier, la grand-mère.
+- **Le temps qu’il fait.** La nuit a ses étoiles et sa lune ; le grand soleil, son disque et sa chaleur ; la pluie tombe en filets fins, la neige en flocons de papier réservé, et blanchit le sol et les arbres ; la brume monte avec la distance ; l’orage assombrit tout. Ces filtres viennent des mots, et passent d’une tuile à l’autre sans à-coup.
 - **L’intro.** Le chemin se trace au pinceau pendant que le vocabulaire se charge, que le texte se lit et que la première tuile se peint. Un toucher, et on entre.
 - **Gardé.** Les tuiles peintes sont gardées ; une tuile ne se repeint que si elle ou ses voisines changent. Loin de l’écran, son image quitte la mémoire. La lecture de chaque passage est gardée aussi : un roman se rouvre sans tout relire. Le chemin a son propre service worker, qui garde l’app et les objets déjà vus, et ne touche qu’aux caches qui commencent par `chemin-` ; celui de l’archipel ignore le dossier `chemin/`.
 
 | Fichier | Rôle |
 | --- | --- |
 | `chemin/app.js` | L’intro, la frise, la peinture et la garde des tuiles, la page du jour |
-| `chemin/sens.js` | Le découpage, les mots porteurs, les objets les plus proches, les champs, le lieu, la tonalité |
-| `chemin/monde.js` | Le plan de chaque tuile, le sol, l’eau, le ciel, les maisons ouvertes, le rendu en 3D |
+| `chemin/sens.js` | Le découpage, les mots porteurs, les objets les plus proches, les champs, le lieu, la tonalité, la météo |
+| `chemin/monde.js` | Le plan de chaque tuile, ses paysages, le sol, l’eau, le ciel, les maisons ouvertes, le temps qu’il fait, le rendu en 3D |
 | `chemin/carnet.js` | Les pages et les tuiles peintes, dans le stockage du téléphone |
 | `chemin/sw.js` | Le service worker du chemin |
 | `chemin/sens/`, `chemin/catalogue.json` | Les vecteurs du sens, tirés de fastText (CC BY-SA 3.0), et le catalogue des objets |
-| `chemin/objets/` | Les modèles de Kenney (CC0), allégés |
-| `chemin/outils/` | Ce qui fabrique le catalogue, les modèles allégés et les vecteurs |
+| `chemin/objets/` | Les modèles libres (CC0) : Kenney, KayKit, Quaternius, OpenGameArt, l’archipel ; et les poses. Leurs auteurs sont dans `chemin/objets/LISEZMOI.txt` |
+| `chemin/outils/` | Ce qui fabrique le catalogue : la conversion avec Blender, les poses, les modèles allégés et les vecteurs |
 
 ## Confidentialité
 

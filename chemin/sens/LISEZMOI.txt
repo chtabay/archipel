@@ -14,3 +14,8 @@ noms français (../outils/francais.py), un peu de ses mots anglais : français e
 images.bin : pour chaque mot de mots.txt, sa proximité au plus proche objet du catalogue, sur un octet (de 0 à 255 pour
 0 à 1) : au-dessus de la moitié, le mot fait une image, et compte parmi les mots porteurs d’un passage.
 Voir ../outils/sens.py.
+formes.txt : les formes conjuguées des verbes d’action qui font une image, chacune avec son infinitif : « dormi dormir ».
+Une étoile marque une forme qui est aussi un nom courant, comme « marché » ou « lit » : l’app n’y lit un verbe qu’après un
+auxiliaire ou un pronom. Tirées de Lexique 3.83 (www.lexique.org ; B. New, C. Pallier, L. Ferrand, R. Matos, 2001 et
+2004), sous licence Creative Commons Attribution - Partage dans les mêmes conditions 4.0 (CC BY-SA 4.0) ; ce fichier
+l’est aussi.
