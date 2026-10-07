@@ -4,7 +4,9 @@
 // passage et sa tonalité. Les vecteurs viennent de fastText, alignés et réduits : voir outils/sens.py.
 
 export const D = 96, PORTEURS = 14; // un passage, une tuile : environ 14 mots porteurs
-export const LECTURE = 1; // la version de la lecture d’un passage : on l’augmente quand un même passage se lirait autrement
+export const LECTURE = 2; // la version de la lecture d’un passage : on l’augmente quand un même passage se lirait autrement
+const IMAGE = Math.round(.55 * 255); // un mot fait une image s’il est à plus de 0,55 d’un objet
+const SEUIL = .7; // un objet vient sur la tuile si son score dépasse 0,7 : son nom est tout près d’un mot du passage
 const ECHELLE = 127 * 127; // les vecteurs sont quantifiés sur un octet, de longueur 127
 const MOT = /[a-zàâäçéèêëîïôöùûüÿœæ]+(?:-[a-zàâäçéèêëîïôöùûüÿœæ]+)*/g;
 // les mots qui ne portent rien : articles, pronoms, liaisons, et les verbes de tous les jours sous leurs formes courantes
@@ -48,7 +50,7 @@ const TON = {
   lent: 'calme lent paisible doux repos silence tranquille sieste lenteur',
 };
 
-export const FICHIERS_SENS = ['sens/mots.txt?v=2', 'sens/vecteurs.bin?v=2', 'sens/objets.bin?v=2', 'sens/images.bin?v=1', 'catalogue.json?v=2'];
+export const FICHIERS_SENS = ['sens/mots.txt?v=3', 'sens/vecteurs.bin?v=3', 'sens/objets.bin?v=3', 'sens/images.bin?v=2', 'catalogue.json?v=3'];
 export async function chargerSens(base = './') {
   const lire = (f, comment) => fetch(new URL(f, new URL(base, location.href))).then(r => { if (!r.ok) throw new Error(`${f} : ${r.status}`); return r[comment](); });
   const [mots, V, O, I, catalogue] = await Promise.all(FICHIERS_SENS.map((f, n) => lire(f, ['text', 'arrayBuffer', 'arrayBuffer', 'arrayBuffer', 'json'][n])));
@@ -77,17 +79,19 @@ const mots = texte => (texte || '').toLowerCase().replace(/[’'`´]/g, ' ').mat
 
 // Un mot porteur fait une image : il est proche d’un objet du catalogue, ou d’un champ de la vie ordinaire
 export function porteur(S, i) {
-  if (S.I[i] >= 128) return true; // à plus de 0,5 d’un objet : calculé d’avance, pour chaque mot
+  if (S.I[i] >= IMAGE) return true; // assez près d’un objet : calculé d’avance, pour chaque mot
   if (Number.isNaN(S.proche[i])) { let m = 0; for (const c of Object.values(S.champs)) m = Math.max(m, scal(S.V, i, c)); S.proche[i] = m; }
   return S.proche[i] >= .5;
 }
-// les mots du texte qui comptent, par leur numéro dans le vocabulaire ; un mot composé inconnu compte par ses morceaux
+// les mots du texte qui comptent, par leur numéro dans le vocabulaire. Un pluriel compte par son singulier s’il fait une
+// meilleure image : « vaches » trouve la vache. Un mot composé inconnu ne compte pas : ses morceaux trompent plus qu’ils
+// n’aident (« nique » dans « pique-nique »)
 function* jetons(S, texte) {
   for (const m of mots(texte)) {
     if (m.length < 3 || VIDES.has(m)) continue;
-    const i = S.index.get(m);
+    let i = S.index.get(m);
+    if (m.length > 4 && /[sx]$/.test(m)) { const j = S.index.get(m.slice(0, -1)); if (j != null && (i == null || S.I[j] > S.I[i])) i = j; }
     if (i != null) yield [m, i];
-    else if (m.includes('-')) for (const x of m.split('-')) { const j = x.length < 3 || VIDES.has(x) ? null : S.index.get(x); if (j != null) yield [x, j]; }
   }
 }
 
@@ -115,7 +119,7 @@ export function lirePage(S, texte) {
 
 // Les objets les plus proches des mots du passage, au-dessus d’un seuil ; un objet vu récemment est moins probable.
 // candidats : le calcul lourd, qui ne dépend que du passage, et qu’on peut garder d’une fois sur l’autre
-export function candidats(S, lecture, seuil = .565) {
+export function candidats(S, lecture, seuil = SEUIL) {
   const N = S.catalogue.length, best = new Float32Array(N), mot = new Int16Array(N).fill(-1), acc = new Float32Array(N), OT = S.OT;
   const tous = c => { acc.fill(0); for (let k = 0; k < D; k++) { const v = c(k); if (!v) continue; for (let j = 0, o = k * N; j < N; j++) acc[j] += v * OT[o + j]; } }; // un vecteur, contre tous les objets
   lecture.mots.forEach((x, w) => {
@@ -131,7 +135,7 @@ export function candidats(S, lecture, seuil = .565) {
   }
   return out;
 }
-export function objetsDeLaPage(S, lecture, { seuil = .565, max = 6, recents = new Map(), jour = 0, liste = null } = {}) {
+export function objetsDeLaPage(S, lecture, { seuil = SEUIL, max = 6, recents = new Map(), jour = 0, liste = null } = {}) {
   const out = (liste || candidats(S, lecture, seuil)).map(o => { const vu = recents.get(o.objet.id), oubli = vu == null ? 1 : 1 - .8 * Math.exp(-(jour - vu) / 5); return { ...o, score: o.brut * oubli }; });
   out.sort((a, b) => b.score - a.score);
   const pris = new Set(), choisis = [];
