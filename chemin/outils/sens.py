@@ -8,6 +8,28 @@ ICI = os.path.dirname(os.path.abspath(__file__)); RACINE = os.path.dirname(ICI)
 N, D = 40000, 96
 MOT_FR = re.compile(r"^[a-zàâäçéèêëîïôöùûüÿœæ]+(?:-[a-zàâäçéèêëîïôöùûüÿœæ]+)*$")
 COQUILLES = {'advocado': 'avocado', 'musterd': 'mustard', 'chopstic': 'chopstick', 'rond': 'round', 'darkh': 'dark', 'frappe': 'frappuccino'}
+# des mots d’étiquette trompeurs : leur sens le plus courant n’est pas l’objet. « can » est d’abord un verbe, « cup » une coupe
+# sportive, « bush » un président, « cabinet » un gouvernement. Pour le calcul du sens, on les remplace par des mots sans détour.
+SENS = {
+  'can': ['canned', 'soda'], 'chinese': ['takeout', 'noodles'], 'van': ['minivan'], 'cup': ['mug', 'teacup'], 'rock': ['boulders'],
+  'present': ['gift', 'gifts'], 'board': ['chopping'], 'race': ['racecar', 'racing'], 'table': ['table', 'dining'], 'fall': ['autumn'],
+  'camp': ['campsite'], 'log': ['timber'], 'logs': ['timber'], 'sign': ['signboard'], 'sub': ['sandwich'], 'fox': ['foxes'],
+  'row': ['rowboat'], 'fan': ['ventilator'], 'pan': ['saucepan', 'frying'], 'chair': ['armchair'], 'stool': ['armchair'],
+  'cabinet': ['cupboard'], 'bush': ['shrubs'], 'hedge': ['shrubs'], 'ottoman': [], 'speaker': ['loudspeaker'], 'apple': ['apples'],
+  'plate': ['dish'], 'coat': ['jacket'], 'sock': ['stocking'], 'delivery': ['truck'], 'hood': ['stove'], 'plateau': ['acacia'],
+  'bullet': ['shinkansen'], 'ham': ['pork'], 'moss': ['mosses'], 'lily': ['lilies', 'pond'], 'basket': ['baskets'], 'mint': ['peppermint'],
+  'sink': [], 'lantern': ['lanterns'], 'shelf': ['shelves'], 'signpost': ['crossroads'], 'stall': ['marketplace'], 'soda': ['lemonade'],
+  'leafs': ['leaves'], 'chick': ['chicks'], 'patty': ['sausage'], 'microwave': ['oven'], 'roe': ['caviar'], 'pennant': ['flag'],
+  'ribs': ['barbecue'], 'shaker': [], 'stump': ['stumps'], 'wreath': [], 'trashcan': ['garbage'], 'leek': ['leeks'], 'saucer': ['teacup'],
+  'maki': ['sushi'], 'chest': ['treasure'], 'barrel': ['cask', 'keg'], 'mortar': ['pestle'], 'planter': ['pot'], 'tank': ['tanker'],
+  'workbench': ['carpentry', 'workshop'], 'turkey': ['roast', 'poultry'], 'donut': ['doughnut'], 'tan': [], 'dim': [], 'sum': ['dumplings'],
+  'rolling': [], 'pin': ['dough', 'baking'], 'in': [], 'built': [], 'upper': [], 'whole': [], 'packed': [], 'vision': [], 'group': [],
+}
+NOMS = {r'food-kit/hot-dog': ['sausage']} # des noms entiers qui trompent : « hot dog » n’est pas un chien
+# les mots qui précisent sans nommer : couleurs, formes, états ; ils comptent peu, l’objet compte
+NUANCES = set('''red green blue yellow purple white black orange pink brown dark colored thin fat curved diagonal broken damaged deep triangle
+rectangle hanging crushed stacked stack speed luxury design fortified cross power head standing stand floor display future return block
+medium frame blocks stick bend tender raw deluxe vintage rack crooked whipped cut hot male female sports'''.split())
 
 def lire(chemin, garder, limite=None):
     mots, vecs = [], []
@@ -24,7 +46,11 @@ def lire(chemin, garder, limite=None):
 def main(fr, en):
     cat = json.load(open(os.path.join(ICI, 'catalogue-brut.json'), encoding='utf-8'))
     for o in cat: o['mots'] = [COQUILLES.get(m, m) for m in o['mots']]
-    voulus = {m for o in cat for m in o['mots']}
+    def sens_de(o): # les mots qui portent le sens de l’objet, chacun avec son poids d’origine
+        for motif, mots in NOMS.items():
+            if re.search(motif, o['id']): return [(m, [m]) for m in mots]
+        return [(m, SENS.get(m, [m])) for m in o['mots']]
+    voulus = {x for o in cat for _, l in sens_de(o) for x in l}
     vus = set()
     def garder_fr(m):
         if m in vus or not MOT_FR.match(m) or len(m) < 2: return False
@@ -46,15 +72,25 @@ def main(fr, en):
     objets, vecs, sans = [], [], []
     for o in cat:
         v = np.zeros(D, np.float32)
-        for m in o['mots']:
-            if m in en_index: v += math.log(len(cat) / df[m]) * Re[en_index[m]]
+        for m, l in sens_de(o):
+            l = [x for x in l if x in en_index]
+            if not l: continue
+            u = sum(Re[en_index[x]] for x in l); u /= max(np.linalg.norm(u), 1e-6)
+            v += math.log(len(cat) / df.get(m, 1)) * (.3 if m in NUANCES else 1) * u
         n = np.linalg.norm(v)
         if n < 1e-6: sans.append(o['id']); continue
         objets.append(o); vecs.append(v / n)
     q(np.vstack(vecs)).tofile(os.path.join(RACINE, 'sens', 'objets.bin'))
+    images(q(Rf), q(np.vstack(vecs)))
     json.dump(objets, open(os.path.join(RACINE, 'catalogue.json'), 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
     print(len(objets), 'objets avec un vecteur ;', len(sans), 'sans :', ' '.join(sans[:20]))
     return mots_fr, Rf, objets, np.vstack(vecs)
+
+def images(Vq, Oq): # pour chaque mot, sa proximité au plus proche objet du catalogue, sur un octet : les mots porteurs d’images
+    V, O = Vq.astype(np.float32) / 127, Oq.astype(np.float32) / 127
+    best = np.concatenate([(V[i:i + 4000] @ O.T).max(1) for i in range(0, len(V), 4000)])
+    np.round(np.clip(best, 0, 1) * 255).astype(np.uint8).tofile(os.path.join(RACINE, 'sens', 'images.bin'))
+    print(f"mots porteurs d’images : {(best >= .5).sum()} à 0,5 ; {(best >= .55).sum()} à 0,55")
 
 if __name__ == '__main__':
     mots, Rf, objets, O = main(sys.argv[1], sys.argv[2])

@@ -6,6 +6,7 @@
 import * as THREE from './vendor/three-chemin.min.js?v=1';
 import { rng, hash, melange, nuance } from '../outils.js?v=1';
 
+export const MOTEUR = 1; // la version du peintre, ici et dans l’aquarelle : on l’augmente quand une même page se peindrait autrement
 export const L = 14, V = 11, ELEV = 8 * Math.PI / 180, HAUT = 1000, LARGE = Math.round(HAUT * L / V), MARGE = 40; // un jour : 14 m de long, une tuile de 1273 × 1000 points, et une marge pour le pinceau
 const BAS = -2.2; // le bas de l’image, en mètres, sous le chemin
 const PLANS = { avant: [1.4, 3], bord: [-2.2, -1.1], milieu: [-3.4, -11], fond: [-15, -26] };
@@ -76,7 +77,7 @@ export function planifier(jour, veille, F, recents) {
     if (!o) return null;
     const [hmin, hmax, wmax] = h || TAILLES[plan] || TAILLES.chemin, haut = Math.max(o.taille[1], .02), large = Math.max(o.taille[0], o.taille[2], .02);
     s = Math.min(Math.max(s, hmin / haut), hmax / haut, wmax / large); // ni trop petit, ni trop grand, pour son plan
-    const [zA, zB] = PLANS[plan] || [-.4, .4], zz = z ?? zA + r() * (zB - zA), k = recul(zz) * s, larg = large * k;
+    const [zA, zB] = plan === 'bord' && lieu === 'rivage' ? [-1.5, -1.1] : PLANS[plan] || [-.4, .4], zz = z ?? zA + r() * (zB - zA), k = recul(zz) * s, larg = large * k; // au bord de l’eau, le bord du chemin est la plage
     const xx = x ?? place(plan, larg * .9, de, a); if (xx == null) return null;
     const long = o.taille[2] > o.taille[0] * 1.3, ry = (profil ?? long ? Math.PI / 2 * (r() < .5 ? 1 : -1) : 0) + (r() - .5) * .5;
     const it = { id: o.id, x: xx, z: zz, y, ry, s: k, plan }; items.push(it); return it;
@@ -121,9 +122,9 @@ export function planifier(jour, veille, F, recents) {
   // ce que la page appelle : au bord du chemin, sur le chemin, devant, ou sur l’eau
   for (const { objet: o } of jour.objets) {
     const role = o.role;
-    if (/^watercraft|^pirate-kit\/(boat|ship)/.test(o.id) && lieu === 'rivage') poser(o, 'milieu', { z: -5 - r() * 4, profil: true, h: BATEAU });
+    if (/^watercraft|^pirate-kit\/(boat|ship)/.test(o.id)) { if (lieu === 'rivage') poser(o, 'milieu', { z: -5 - r() * 4, profil: true, h: BATEAU }); } // loin de l’eau, pas de bateau
     else if (role === 'batiment') poser(o, 'milieu', { z: -5, profil: false, h: MAISON });
-    else if (/^train-kit|^holiday-kit\/train/.test(o.id)) { const it = poser(o, 'bord', { z: -1.8, profil: true, s: 1 }); if (it) poser(F.rails[0], 'bord', { x: it.x, z: -1.8, profil: true, s: 1.2 }); }
+    else if (/^train-kit|^holiday-kit\/train/.test(o.id)) { const z = lieu === 'rivage' ? -1.3 : -1.8, it = poser(o, 'bord', { z, profil: true, s: 1 }); if (it) poser(F.rails[0], 'bord', { x: it.x, z, profil: true, s: 1.2 }); } // au bord de l’eau, sur la plage
     else if (role === 'personne') poser(o, 'chemin', { z: (r() - .5) * .5, h: /character/.test(o.id) ? GENS : [.3, 1.5, 1.5] });
     else if (role === 'animal') poser(o, 'chemin', { z: (r() - .5) * .5, h: [.45, 1.8, 2.4] });
     else if (role === 'petit') { // une petite chose : en grand, au premier plan, comme une nature morte ; dans une maison, sur une table

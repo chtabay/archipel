@@ -10,4 +10,6 @@ vecteurs.bin : leurs vecteurs, réduits à 96 dimensions par une analyse en comp
 longueur 1 et quantifiés sur un octet signé (× 127), à la suite.
 objets.bin : de même, le vecteur de chaque objet du catalogue, dans l’ordre de ../catalogue.json, tiré de ses mots
 anglais : français et anglais vivent dans le même espace.
+images.bin : pour chaque mot de mots.txt, sa proximité au plus proche objet du catalogue, sur un octet (de 0 à 255 pour
+0 à 1) : au-dessus de la moitié, le mot fait une image, et compte parmi les mots porteurs d’un passage.
 Voir ../outils/sens.py.

@@ -7,22 +7,45 @@
   <meta name="color-scheme" content="light">
   <title>Le chemin</title>
   <meta name="description" content="Un journal : chaque page devient un bout de chemin, peint à l’aquarelle. Rien ne quitte ce téléphone.">
-  <link rel="stylesheet" href="style.css?v=1">
-  <script type="module" src="app.js?v=1"></script>
+  <link rel="preload" href="../fonts/nunito.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="style.css?v=2">
+  <script type="module" src="app.js?v=2"></script>
 </head>
-<body>
+<body class="accueil">
+  <div class="intro trace" id="intro" aria-hidden="true">
+    <svg viewBox="0 0 320 210" role="presentation">
+      <defs>
+        <radialGradient id="lavis" cx="50%" cy="58%" r="55%"><stop offset="0" stop-color="#cfe0b8" stop-opacity=".9"/><stop offset=".65" stop-color="#e6dcc0" stop-opacity=".55"/><stop offset="1" stop-color="#f4efe4" stop-opacity="0"/></radialGradient>
+        <filter id="pinceau" x="-10%" y="-10%" width="120%" height="120%"><feTurbulence type="fractalNoise" baseFrequency=".8" numOctaves="2" seed="3" result="b"/><feDisplacementMap in="SourceGraphic" in2="b" scale="3.5"/></filter>
+      </defs>
+      <ellipse class="lavis" cx="160" cy="122" rx="158" ry="86" fill="url(#lavis)"/>
+      <g filter="url(#pinceau)">
+        <path class="trait colline" style="--d:.08;--l:.5" pathLength="1" d="M8 104 C 52 86, 86 92, 118 98 S 176 78, 212 86 S 270 98, 312 80" stroke="#9fb48a" stroke-width="2.4"/>
+        <path class="trait colline" style="--d:.2;--l:.45" pathLength="1" d="M40 112 C 92 104, 132 110, 170 104 S 236 100, 288 108" stroke="#b9c7a4" stroke-width="1.6"/>
+        <path class="trait" style="--d:0;--l:.42" pathLength="1" d="M18 206 C 64 186, 118 176, 132 160 S 112 138, 150 130" stroke="#d6bb8f" stroke-width="15"/>
+        <path class="trait" style="--d:.38;--l:.3" pathLength="1" d="M150 130 C 182 124, 206 126, 200 117 S 186 110, 214 106" stroke="#d6bb8f" stroke-width="7.5"/>
+        <path class="trait" style="--d:.64;--l:.24" pathLength="1" d="M214 106 C 232 103, 246 102, 240 98 S 236 95, 252 93" stroke="#d9c39c" stroke-width="3.4"/>
+        <path class="trait arbre" style="--d:.5;--l:.22" pathLength="1" d="M92 150 L 92 120 M84 130 L 92 116 L 100 130 M86 140 L 92 126 L 98 140" stroke="#6f8f5e" stroke-width="2.6"/>
+        <path class="trait arbre" style="--d:.66;--l:.2" pathLength="1" d="M236 112 L 236 96 M231 102 L 236 92 L 241 102" stroke="#7f9b6c" stroke-width="1.8"/>
+      </g>
+    </svg>
+    <div class="nom">Le chemin</div>
+    <p class="ligne">Chaque page devient un bout de chemin.</p>
+    <p class="etat" id="intro-etat" aria-live="polite"></p>
+    <p class="passer">Toucher pour entrer</p>
+  </div>
   <header class="tete">
     <h1>Le chemin</h1>
-    <p class="dit" id="dit">Chaque page devient un bout de chemin.</p>
+    <p class="dit" id="dit" aria-live="polite">Chaque page devient un bout de chemin.</p>
   </header>
   <section class="frise" id="frise" aria-label="Le chemin de tes pages, du plus ancien au plus récent" tabindex="0"></section>
   <p class="jour" id="jour" aria-live="polite"></p>
   <main class="ecrire">
     <label for="page" class="titre" id="titre-page">Aujourd’hui</label>
-    <textarea id="page" rows="5" placeholder="Quelques lignes sur ta journée…" spellcheck="true"></textarea>
+    <textarea id="page" rows="5" placeholder="Quelques lignes sur ta journée, ou tout un texte…" spellcheck="true"></textarea>
     <div class="aide" id="aide" hidden></div>
     <p class="gestes"><button type="button" class="btn" id="garder">Garder la page</button></p>
-    <p class="tiny">Ta page reste sur ce téléphone. Elle est lue ici, jamais ailleurs, et seuls ses mots choisissent ce qui pousse sur le chemin.</p>
+    <p class="tiny">Ta page reste sur ce téléphone. Elle est lue ici, jamais ailleurs, et seuls ses mots choisissent ce qui pousse sur le chemin. Un long texte se découpe en passages : une tuile pour chacun.</p>
   </main>
 </body>
 </html>

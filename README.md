@@ -150,6 +150,27 @@ Une île de l’archipel peut se relier à d’autres, par des routes sur l’ea
 - **Dans l’archipel**, chaque route est un sillage en pointillé sur l’eau, en arc léger, d’une rive à l’autre, et une barque y fait l’aller-retour : elle ralentit à chaque rive, puis repart. Tout le monde voit les routes entre les îles ; personne ne sait à qui elles sont.
 - **Sur l’île**, chaque route a son ponton, tourné vers l’île au bout, sa barque amarrée, et un sillage qui part au large dans cette direction. Le ponton cherche une plage, jamais sur une chose ; sinon, le pied d’une falaise. Une route qui attend que l’île rejoigne l’archipel a déjà son ponton, et sa barque attend sous sa bâche, sans sillage.
 
+## Le chemin, une autre app sur le même site
+
+**→ https://chtabay.github.io/archipel/chemin/**, dans le dossier `chemin/`. Un journal : chaque page devient un bout de chemin, peint à l’aquarelle sur le téléphone, et le chemin s’allonge de page en page. `chemin/?demo` montre trente pages d’exemple.
+
+- **Une seule façon d’écrire.** La zone « Aujourd’hui » prend quelques lignes, un courrier ou un roman entier. « Garder la page » la garde ; réécrire le même jour la remplace.
+- **Le découpage.** Un texte se découpe en passages d’environ 14 mots porteurs, une tuile chacun : une page de journal fait une tuile, un roman deux cents. Un mot porteur fait une image : il est proche d’un objet du catalogue, ou d’un champ de la vie ordinaire. On coupe aux titres, chapitres ou dates, et aux séparateurs ; puis entre les paragraphes, puis entre les phrases. Les répliques d’un dialogue restent ensemble tant qu’on peut. Une page de garde rejoint le passage qui suit ; un jour vide garde sa tuile. La première tuile d’une page porte sa date, celle d’un chapitre son titre.
+- **La tuile.** Les mots du passage choisissent le lieu, le temps qu’il fait, et jusqu’à six objets parmi 876 modèles libres, par la distance de leur sens : les mots français et les noms anglais des modèles vivent dans le même espace. Un objet vu récemment devient moins probable. Tous les plans sont là, du premier plan au lointain, et le chemin ne s’interrompt pas d’une tuile à l’autre.
+- **L’intro.** Le chemin se trace au pinceau pendant que le vocabulaire se charge, que le texte se lit et que la première tuile se peint. Un toucher, et on entre.
+- **Gardé.** Les tuiles peintes sont gardées ; une tuile ne se repeint que si elle ou ses voisines changent. Loin de l’écran, son image quitte la mémoire. La lecture de chaque passage est gardée aussi : un roman se rouvre sans tout relire. Le chemin a son propre service worker, qui garde l’app et les objets déjà vus, et ne touche qu’aux caches qui commencent par `chemin-` ; celui de l’archipel ignore le dossier `chemin/`.
+
+| Fichier | Rôle |
+| --- | --- |
+| `chemin/app.js` | L’intro, la frise, la peinture et la garde des tuiles, la page du jour |
+| `chemin/sens.js` | Le découpage, les mots porteurs, les objets les plus proches, les champs, le lieu, la tonalité |
+| `chemin/monde.js` | Le plan de chaque tuile, le sol, l’eau, le ciel, les maisons ouvertes, le rendu en 3D |
+| `chemin/carnet.js` | Les pages et les tuiles peintes, dans le stockage du téléphone |
+| `chemin/sw.js` | Le service worker du chemin |
+| `chemin/sens/`, `chemin/catalogue.json` | Les vecteurs du sens, tirés de fastText (CC BY-SA 3.0), et le catalogue des objets |
+| `chemin/objets/` | Les modèles de Kenney (CC0), allégés |
+| `chemin/outils/` | Ce qui fabrique le catalogue, les modèles allégés et les vecteurs |
+
 ## Confidentialité
 
 - Site statique : pas de cookie, pas de traceur. La police et la bibliothèque 3D sont dans le dépôt. Le service worker ne garde que les fichiers du site.
@@ -157,6 +178,7 @@ Une île de l’archipel peut se relier à d’autres, par des routes sur l’ea
 - Le code d’un lien vit derrière un `#` : le serveur des pages ne le reçoit jamais. Son code QR est dessiné sur le téléphone, sans aucun service extérieur. Comme tout serveur, il voit passer l’adresse IP de la requête dans ses journaux ; la base, elle, ne la garde pas.
 - Ce qu’on dépose reste sur le téléphone, sans chiffrement, comme le nom de ses îles. Le texte y est lu, pour y trouver des sujets, et n’en sort jamais.
 - La carte postale est peinte sur le téléphone. Elle n’en sort que si on l’envoie ou l’enregistre, sans son nom sauf si on le demande.
+- Le chemin lit ses pages sur le téléphone, et les y garde, avec ses tuiles peintes, dans un stockage à lui : rien ne part, jamais.
 
 ## Sécurité et solidité
 
@@ -193,7 +215,7 @@ Une île de l’archipel peut se relier à d’autres, par des routes sur l’ea
 | `fonts/` | Nunito (licence SIL OFL 1.1) |
 | `404.html` | Page introuvable ; les anciennes adresses des maquettes et de `limbes/` mènent à l’accueil |
 | `base/archipel.sql` | La base de l’archipel partagé, telle qu’elle est dans le projet de Pyramides : les îles, les liens et les routes, puis le déplacement d’une île |
-| `tests/` | Les tests, dans Chromium avec une 3D logicielle : le parcours, l’intro, le retour, la stabilité, l’archipel partagé, les routes entre les îles, le nom des îles, les îles côte à côte, la carte postale, l’installation, la musique, le menu Plus. Ils parlent à un faux serveur, en mémoire, jamais à la vraie base |
+| `tests/` | Les tests, dans Chromium avec une 3D logicielle : le parcours, l’intro, le retour, la stabilité, l’archipel partagé, les routes entre les îles, le nom des îles, les îles côte à côte, la carte postale, l’installation, la musique, le menu Plus, le chemin. Ils parlent à un faux serveur, en mémoire, jamais à la vraie base |
 | `package.json` | Seulement pour les tests ; le site n’a besoin de rien |
 | `.nojekyll` | Sert les fichiers tels quels sur GitHub Pages |
 
