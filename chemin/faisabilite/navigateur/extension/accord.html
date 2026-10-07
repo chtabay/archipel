@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Le glaneur</title>
+  <style>
+    :root { --fond: #f6f1e7; --encre: #2b2a27; --doux: #6b675e; --accent: #3c6e5a; }
+    @media (prefers-color-scheme: dark) { :root { --fond: #1d1c1a; --encre: #ece6da; --doux: #a8a297; --accent: #8cc2a8; } }
+    body { margin: 0; background: var(--fond); color: var(--encre); font: 17px/1.55 system-ui, sans-serif; }
+    main { max-width: 38rem; margin: 0 auto; padding: 2rem 16px; }
+    h1 { font-size: 1.5rem; font-weight: 600; } li { margin: .3rem 0; } .doux { color: var(--doux); }
+    button { font: inherit; padding: .6rem 1rem; border-radius: .5rem; border: 1px solid var(--accent); background: transparent; color: var(--encre); cursor: pointer; margin: .3rem .5rem .3rem 0; }
+    #oui { background: var(--accent); color: var(--fond); }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Faire pousser le chemin avec ce que tu écris</h1>
+  <p>Si tu dis oui, cette extension lit ce que <strong>tu tapes toi-même</strong> dans les zones de texte des pages web : un courriel, un message, une note. Quand tu quittes la zone, ou que tu envoies, elle garde ce que tu as ajouté.</p>
+  <ul>
+    <li><strong>Ce qu’elle ne lit jamais :</strong> les mots de passe, les cartes, les codes reçus par SMS, les identifiants, les adresses, les barres de recherche, ce que tu colles, ce que tu cites d’un autre.</li>
+    <li><strong>Où ça va :</strong> dans le stockage de l’extension, sur cet ordinateur. Puis, quand tu ouvres le chemin dans ce navigateur, dans le carnet du chemin, sur cet ordinateur. Rien ne part, jamais : l’extension ne fait aucune requête réseau.</li>
+    <li><strong>Où elle ne lit pas :</strong> en navigation privée, sur les sites que tu exclus, et partout dès que tu la mets en pause.</li>
+    <li><strong>Ce que tu vois :</strong> le chiffre sur son icône dit combien d’écrits attendent le chemin.</li>
+  </ul>
+  <p class="doux">Le chemin de cet ordinateur n’est pas celui de ton téléphone : ils ne se parlent pas, puisque rien ne part.</p>
+  <button id="oui">Oui, glaner ce que j’écris</button><button id="non">Non, pas maintenant</button>
+  <p id="dit" class="doux" role="status"></p>
+</main>
+<script src="accord.js"></script>
+</body>
+</html>
