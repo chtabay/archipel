@@ -1,0 +1,52 @@
+{
+  "_note": "Ce que la journée devrait évoquer, écrit avant de lancer les mesures : pour chaque persona, les moments du jour et les mots (ou noms d’objets du catalogue) qui les rendraient reconnaissables sur une tuile. Un moment est « évoqué » si un objet choisi pour une tuile du jour a pour mot porteur, ou pour nom français, l’un de ces mots.",
+  "bureau": {
+    "camion en panne, tournée de livraison": ["camion", "véhicule", "utilitaire", "garage", "livraison", "tournée", "transporteur", "camionnette"],
+    "meubles : armoire rayée, chaises, table, palettes": ["armoire", "chaise", "chaises", "table", "palette", "palettes", "banc", "bancs", "tabouret", "carton", "cartons", "meuble", "meubles", "porte"],
+    "pot de départ : fraisier, fleurs, cadeau": ["gâteau", "fraisier", "fraise", "fraises", "bouquet", "fleur", "fleurs", "bougie", "bougies", "verre", "verres", "cadeau", "bouteille", "bouteilles", "nappe", "poterie"],
+    "anniversaire de maman : restaurant, album, mer": ["restaurant", "foulard", "album", "photo", "photos", "mer", "port"],
+    "Adam : chute de vélo, dentiste, foot": ["vélo", "vélos", "dent", "dentiste", "ballon", "gourde", "foot"],
+    "séance photo : canapé, lampes, tapis, plantes": ["canapé", "lampe", "lampes", "tapis", "bibliothèque", "plante", "plantes", "laiton"],
+    "dégât des eaux à l’entrepôt": ["toit", "toiture", "eau", "fuite", "bâche"],
+    "rando du dimanche en forêt": ["forêt", "randonnée", "rando", "pique-nique", "sommet", "marcher", "parking"],
+    "train pour Marseille": ["train", "gare"],
+    "le dîner : pain, œufs, omelette": ["pain", "oeufs", "œufs", "oeuf", "œuf", "omelette"]
+  },
+  "etudiant": {
+    "la coloc : le chat, le canapé, le lait": ["chat", "canapé", "lait"],
+    "boulangerie, croissant, candidature": ["croissant", "pain", "boulangerie", "viennoiseries", "fournil"],
+    "partiel, mitochondrie, révisions à la BU": ["mitochondrie", "partiel", "ordi", "ordinateur", "livre", "bibliothèque"],
+    "TP microscope, oignon, cellules": ["microscope", "oignon", "cellule", "cellules", "lame", "lames", "pipette", "bécher", "scalpel", "eau"],
+    "soirée pizza, bières, chips": ["pizza", "bière", "bières", "chips", "poubelle", "carton"],
+    "concert et guitare": ["concert", "guitar", "guitare", "band"],
+    "la pluie de Rennes": ["raining", "pluie", "rain"],
+    "rentrer chez maman en train, le pull": ["train", "pull", "maman"],
+    "le bus": ["bus"],
+    "insomnie, tisane": ["tisane", "camomille", "dormir", "endormir"]
+  },
+  "retraitee": {
+    "la chambre des petits-enfants, les bateaux": ["chambre", "draps", "bateaux", "bateau"],
+    "le jardin : dahlias, tomates, rosiers": ["jardin", "tomate", "tomates", "dahlias", "dahlia", "bouquet", "fleurs", "fleur", "rosiers", "rosier", "feuilles", "feuille", "arrosoir", "hortensias", "figuier"],
+    "plage, port, crêpes": ["plage", "sable", "port", "crêpes", "crêpe", "château", "châteaux"],
+    "le chat Pompon au coin du feu": ["chat", "fauteuil", "cheminée"],
+    "la maison de famille : puits, pommiers, grange": ["maison", "puits", "pommiers", "pommier", "pommes", "pomme", "grange", "charrette", "établi", "outils", "outil", "machine", "horloge", "clé", "géranium", "lierre"],
+    "la recette du far breton": ["far", "pruneaux", "pruneau", "gâteau", "cake", "four"],
+    "l’anniversaire de Lucas : vélo, livre, ballon": ["vélo", "ballon", "livre", "carte", "billet", "boîte"],
+    "la balade au bord de l’Odet, le café": ["thermos", "café", "bois", "balade", "pont", "rivière"],
+    "le genou, le médecin": ["genou", "médecin", "pharmacie"],
+    "la gare, le train": ["gare", "train"]
+  },
+  "anglais": {
+    "la machine à café cassée": ["coffee", "café", "machine"],
+    "le panier du site : basket, cart, paper bag": ["basket", "cart", "bag", "panier", "sac", "paper"],
+    "le vélo crevé": ["bike", "tyre", "vélo", "repair"],
+    "courir sous la pluie, le parc": ["running", "rain", "park", "pluie"],
+    "les courses en cuisinant : légumes, boulangerie": ["vegetables", "bakery", "groceries", "cooking", "kitchen"],
+    "le propriétaire : radiateur, évier, fuite": ["radiateur", "évier", "cuisine", "fuite", "chambre", "plombier"],
+    "l’anniversaire de Camille : pivoines, gâteau, restaurant": ["pivoines", "pivoine", "fleurs", "fleur", "gâteau", "citron", "restaurant", "peonies", "canal"],
+    "la campagne d’automne : feuilles, citrouilles, châtaigniers": ["leaves", "pumpkins", "sweaters", "chestnut", "trees", "autumn"],
+    "les courses du soir : lait, pain, vin": ["milk", "bread", "wine", "shop"],
+    "Londres à Noël, le chien de Jess": ["dog", "christmas", "london"],
+    "l’illustration : la fille au parapluie, le chat": ["umbrella", "cat", "girl", "illustration"]
+  }
+}

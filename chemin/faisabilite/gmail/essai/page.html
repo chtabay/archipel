@@ -1,0 +1,19 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Essai : une archive Takeout lue dans la page</title>
+<p>Une page d’essai : on y choisit une archive Takeout inventée ; elle se lit ici, et ses glanes vont dans un IndexedDB à part.</p>
+<input type="file" id="archive" accept=".zip,.mbox">
+<pre id="sortie"></pre>
+<script type="module">
+  import { depuisTakeout } from '../mime.js';
+  const ouvrir = () => new Promise((ok, ko) => { const r = indexedDB.open('chemin-essai-gmail', 1); r.onupgradeneeded = () => r.result.createObjectStore('glanes', { keyPath: 'id' }); r.onsuccess = () => ok(r.result); r.onerror = () => ko(r.error); });
+  document.querySelector('#archive').addEventListener('change', async e => {
+    const debut = performance.now(), compte = {}, glanes = [];
+    for await (const g of depuisTakeout(e.target.files[0], { compte })) glanes.push(g);
+    const db = await ouvrir(), t = db.transaction('glanes', 'readwrite');
+    for (const g of glanes) t.objectStore('glanes').put(g);
+    await new Promise(ok => { t.oncomplete = ok; });
+    window.resultat = { compte, glanes, ms: Math.round(performance.now() - debut) };
+    document.querySelector('#sortie').textContent = JSON.stringify(window.resultat.compte);
+  });
+</script>

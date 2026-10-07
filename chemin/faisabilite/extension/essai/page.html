@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <title>Page d’essai du glaneur</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+  <!-- Données SYNTHÉTIQUES uniquement. Chaque zone imite un cas réel. Aucun vrai mail, aucune vraie donnée. -->
+  <h1 id="ailleurs">Page d’essai</h1>
+
+  <!-- Un journal ordinaire : doit être glané -->
+  <p><textarea id="journal" rows="3" cols="60" placeholder="Ta journée…"></textarea></p>
+
+  <!-- Une recherche : ne doit PAS être glanée -->
+  <p><input id="recherche" type="search" name="q" placeholder="Rechercher"></p>
+
+  <!-- Un mot de passe : ne doit JAMAIS être glané -->
+  <form id="connexion">
+    <input id="login" name="identifiant" type="text" placeholder="Identifiant">
+    <input id="mdp" name="password" type="password" autocomplete="current-password">
+  </form>
+
+  <!-- Une carte bancaire : ne doit JAMAIS être glanée -->
+  <p><input id="carte" name="card-number" autocomplete="cc-number" placeholder="Numéro de carte"></p>
+  <p><input id="cvv" name="cvv" placeholder="CVV"></p>
+
+  <!-- Un éditeur riche « à la Gmail » : contenteditable + bouton Envoyer ; le message cité est écrit par quelqu’un d’autre -->
+  <div id="compose">
+    <div id="corps" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Corps du message"><br></div>
+    <div class="gmail_quote">
+      <div class="gmail_attr">Le 6 oct., Camille a écrit :</div>
+      <blockquote>Message cité de quelqu’un d’autre, à ne surtout pas garder.</blockquote>
+    </div>
+    <button id="envoyer" type="button" aria-label="Envoyer">Envoyer</button>
+  </div>
+
+  <!-- Un éditeur riche qui garde la main sur le DOM (pas d’événement input), comme Lexical/ProseMirror -->
+  <div id="riche" contenteditable="true" role="textbox" aria-multiline="true"></div>
+
+  <!-- Un fil : Entrée envoie et la page vide la zone aussitôt -->
+  <p><input id="chat" placeholder="Écrire un message"></p>
+
+  <script>
+    window.__inputs = 0;
+    const riche = document.getElementById('riche');
+    riche.addEventListener('input', () => { window.__inputs++; });
+    riche.addEventListener('beforeinput', e => { // l’éditeur écrit lui-même : aucun événement input n’est émis
+      if (e.inputType !== 'insertText') return;
+      e.preventDefault();
+      const s = getSelection(), r = s.getRangeAt(0); r.deleteContents();
+      const t = document.createTextNode(e.data); r.insertNode(t); r.setStartAfter(t); r.collapse(true); s.removeAllRanges(); s.addRange(r);
+    });
+    const chat = document.getElementById('chat');
+    chat.addEventListener('keydown', e => { if (e.key === 'Enter') { window.__envoye = chat.value; chat.value = ''; } });
+    document.getElementById('envoyer').addEventListener('click', () => { window.__envoiCompose = document.getElementById('corps').innerText; });
+  </script>
+</body>
+</html>

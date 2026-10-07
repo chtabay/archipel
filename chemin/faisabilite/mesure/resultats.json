@@ -1,0 +1,5819 @@
+{
+ "date": "2026-10-07T22:02:32.077Z",
+ "node": "v22.22.0",
+ "msPreparer": 48.3,
+ "personas": {
+  "bureau": {
+   "libelle": "Nadia (bureau)",
+   "fiche": "Persona : Nadia, 41 ans, chargée de logistique dans une PME de meubles (Ardoise Mobilier, fictive), près de Lyon. Journée : lundi 5 octobre 2026. Tout est inventé : noms, adresses, numéros (plages réservées à la fiction), commandes. Format : chaque saisie commence par « ### source | heure | outil | sujet » ; cette ligne n’est pas du texte tapé.",
+   "saisies": 26,
+   "parSource": {
+    "recherche": 4,
+    "chat": 6,
+    "mail": 15,
+    "formulaire": 1
+   },
+   "brut": {
+    "caracteres": 10660,
+    "octets": 10890,
+    "mots": 1756,
+    "motsLus": 1679,
+    "pleins": 905,
+    "connus": 792,
+    "couverture": 0.8751381215469614,
+    "porteurs": 187,
+    "porteursDistincts": 99
+   },
+   "net": {
+    "caracteres": 6315,
+    "octets": 6477,
+    "mots": 1137,
+    "motsLus": 1123,
+    "pleins": 518,
+    "connus": 470,
+    "couverture": 0.9073359073359073,
+    "porteurs": 143,
+    "porteursDistincts": 88
+   },
+   "decoupage": {
+    "brut": {
+     "passages": 12,
+     "ms": 3.6,
+     "porteurs": [
+      14,
+      15,
+      15,
+      11,
+      13,
+      15,
+      14,
+      14,
+      10,
+      14,
+      15,
+      14
+     ]
+    },
+    "net": {
+     "passages": 10,
+     "ms": 1.7,
+     "porteurs": [
+      13,
+      12,
+      13,
+      13,
+      12,
+      15,
+      15,
+      11,
+      13,
+      12
+     ]
+    }
+   },
+   "lecture": {
+    "msMediane": 2.9,
+    "msP95": 3.26,
+    "msMax": 3.26,
+    "octetsLectureGardee": 5461
+   },
+   "bruit": {
+    "brut": {
+     "caracteres": 10660,
+     "octets": 10890,
+     "mots": 1756,
+     "motsLus": 1679,
+     "pleins": 905,
+     "connus": 792,
+     "couverture": 0.8751381215469614,
+     "porteurs": 187,
+     "porteursDistincts": 99,
+     "tuiles": 12,
+     "objets": 52,
+     "parasites": 2,
+     "exemplesParasites": [
+      "salon→salon",
+      "salon→table"
+     ],
+     "top14Parasites": [],
+     "objetsJourParasites": [],
+     "lieuJour": "interieur"
+    },
+    "seule:citations": {
+     "caracteres": 9036,
+     "octets": 9230,
+     "mots": 1488,
+     "motsLus": 1444,
+     "pleins": 759,
+     "connus": 663,
+     "couverture": 0.8735177865612648,
+     "porteurs": 156,
+     "porteursDistincts": 93,
+     "tuiles": 10,
+     "objets": 43,
+     "parasites": 0,
+     "exemplesParasites": [],
+     "top14Parasites": [],
+     "objetsJourParasites": [],
+     "lieuJour": "interieur"
+    },
+    "seule:signatures": {
+     "caracteres": 8796,
+     "octets": 9000,
+     "mots": 1492,
+     "motsLus": 1458,
+     "pleins": 735,
+     "connus": 652,
+     "couverture": 0.8870748299319728,
+     "porteurs": 177,
+     "porteursDistincts": 96,
+     "tuiles": 11,
+     "objets": 48,
+     "parasites": 2,
+     "exemplesParasites": [
+      "salon→salon",
+      "salon→table"
+     ],
+     "top14Parasites": [],
+     "objetsJourParasites": [],
+     "lieuJour": "interieur"
+    },
+    "seule:adresses": {
+     "caracteres": 9952,
+     "octets": 10182,
+     "mots": 1751,
+     "motsLus": 1600,
+     "pleins": 832,
+     "connus": 744,
+     "couverture": 0.8942307692307693,
+     "porteurs": 187,
+     "porteursDistincts": 99,
+     "tuiles": 12,
+     "objets": 52,
+     "parasites": 1,
+     "exemplesParasites": [
+      "salon→salon"
+     ],
+     "top14Parasites": [],
+     "objetsJourParasites": [],
+     "lieuJour": "interieur"
+    },
+    "seule:code": {
+     "caracteres": 10566,
+     "octets": 10795,
+     "mots": 1739,
+     "motsLus": 1666,
+     "pleins": 898,
+     "connus": 786,
+     "couverture": 0.8752783964365256,
+     "porteurs": 187,
+     "porteursDistincts": 99,
+     "tuiles": 12,
+     "objets": 52,
+     "parasites": 2,
+     "exemplesParasites": [
+      "salon→salon",
+      "salon→table"
+     ],
+     "top14Parasites": [],
+     "objetsJourParasites": [],
+     "lieuJour": "interieur"
+    },
+    "seule:nombres": {
+     "caracteres": 9856,
+     "octets": 10084,
+     "mots": 1628,
+     "motsLus": 1619,
+     "pleins": 870,
+     "connus": 769,
+     "couverture": 0.8839080459770114,
+     "porteurs": 187,
+     "porteursDistincts": 99,
+     "tuiles": 12,
+     "objets": 52,
+     "parasites": 2,
+     "exemplesParasites": [
+      "salon→salon",
+      "salon→table"
+     ],
+     "top14Parasites": [],
+     "objetsJourParasites": [],
+     "lieuJour": "interieur"
+    },
+    "seule:propres": {
+     "caracteres": 9802,
+     "octets": 10022,
+     "mots": 1677,
+     "motsLus": 1555,
+     "pleins": 792,
+     "connus": 701,
+     "couverture": 0.88510101010101,
+     "porteurs": 182,
+     "porteursDistincts": 96,
+     "tuiles": 12,
+     "objets": 51,
+     "parasites": 2,
+     "exemplesParasites": [
+      "salon→salon",
+      "salon→table"
+     ],
+     "top14Parasites": [],
+     "objetsJourParasites": [],
+     "lieuJour": "interieur"
+    },
+    "seule:vides": {
+     "caracteres": 10640,
+     "octets": 10870,
+     "mots": 1752,
+     "motsLus": 1675,
+     "pleins": 902,
+     "connus": 789,
+     "couverture": 0.8747228381374723,
+     "porteurs": 186,
+     "porteursDistincts": 98,
+     "tuiles": 12,
+     "objets": 52,
+     "parasites": 2,
+     "exemplesParasites": [
+      "salon→salon",
+      "salon→table"
+     ],
+     "top14Parasites": [],
+     "objetsJourParasites": [],
+     "lieuJour": "interieur"
+    },
+    "net": {
+     "caracteres": 6315,
+     "octets": 6477,
+     "mots": 1137,
+     "motsLus": 1123,
+     "pleins": 518,
+     "connus": 470,
+     "couverture": 0.9073359073359073,
+     "porteurs": 143,
+     "porteursDistincts": 88,
+     "tuiles": 10,
+     "objets": 46,
+     "parasites": 0,
+     "exemplesParasites": [],
+     "top14Parasites": [],
+     "objetsJourParasites": [],
+     "lieuJour": "interieur"
+    }
+   },
+   "strategies": {
+    "a": {
+     "strategie": "(a) tous les passages",
+     "tuiles": 10,
+     "objetsParTuile": 4.6,
+     "sansObjet": 0,
+     "unOuMoins": 0,
+     "deuxOuMoins": 1,
+     "objetsDistincts": 42,
+     "lieux": {
+      "interieur": 7,
+      "village": 3
+     },
+     "evocation": {
+      "couverts": 6,
+      "total": 10,
+      "liste": [
+       "camion en panne, tournée de livraison",
+       "meubles : armoire rayée, chaises, table, palettes",
+       "pot de départ : fraisier, fleurs, cadeau",
+       "séance photo : canapé, lampes, tapis, plantes",
+       "train pour Marseille",
+       "le dîner : pain, œufs, omelette"
+      ],
+      "tuilesQuiEvoquent": 10
+     },
+     "evocationPoses": {
+      "couverts": 5,
+      "total": 10,
+      "liste": [
+       "camion en panne, tournée de livraison",
+       "meubles : armoire rayée, chaises, table, palettes",
+       "pot de départ : fraisier, fleurs, cadeau",
+       "séance photo : canapé, lampes, tapis, plantes",
+       "le dîner : pain, œufs, omelette"
+      ],
+      "tuilesQuiEvoquent": 10
+     },
+     "msPlan": 33.1,
+     "detail": [
+      {
+       "porteurs": 14,
+       "mots": [
+        "matin",
+        "meuble",
+        "chaise",
+        "livraison",
+        "garage",
+        "lampe",
+        "carton",
+        "camion",
+        "véhicule",
+        "cuisine",
+        "manque",
+        "retour",
+        "côté",
+        "utilitaire"
+       ],
+       "objets": [
+        "camion→camion",
+        "chaise→chaise",
+        "lampe→lampadaire",
+        "carton→carton",
+        "cuisine→évier"
+       ],
+       "nObjets": 5,
+       "poses": [
+        "camion",
+        "chaise",
+        "lampe",
+        "carton",
+        "cuisine"
+       ],
+       "lieu": "interieur",
+       "valence": -0.02,
+       "energie": 0.08,
+       "humeur": "neutre",
+       "extrait": "trafic périphérique nord lyon ce matin Salut , tu peux me confirmer le nombre de palettes"
+      },
+      {
+       "porteurs": 14,
+       "mots": [
+        "désolée",
+        "armoire",
+        "transporteur",
+        "entrepôt",
+        "excuse",
+        "chaise",
+        "mail",
+        "chêne",
+        "apprendre",
+        "table",
+        "porte",
+        "pied",
+        "dépôt",
+        "rayée"
+       ],
+       "objets": [
+        "chaise→chaise",
+        "table→table",
+        "armoire→armoire",
+        "chêne→arbre",
+        "porte→palissade"
+       ],
+       "nObjets": 5,
+       "poses": [
+        "chaise",
+        "table",
+        "armoire",
+        "chêne"
+       ],
+       "lieu": "interieur",
+       "valence": 0.03,
+       "energie": 0.14,
+       "humeur": "neutre",
+       "extrait": "Je suis vraiment désolée d'apprendre que la porte de votre armoire est arrivée rayée. Nous"
+      },
+      {
+       "porteurs": 14,
+       "mots": [
+        "chaise",
+        "armoire",
+        "livraison",
+        "camion",
+        "table",
+        "meuble",
+        "chêne",
+        "escalier",
+        "véhicule",
+        "cuisine",
+        "utilitaire",
+        "manque",
+        "mercredi",
+        "location"
+       ],
+       "objets": [
+        "camion→camion",
+        "table→table",
+        "armoire→armoire",
+        "chaise→chaise",
+        "chêne→arbre",
+        "cuisine→cuisine"
+       ],
+       "nObjets": 6,
+       "poses": [
+        "camion",
+        "table",
+        "chaise",
+        "chêne",
+        "cuisine"
+       ],
+       "lieu": "interieur",
+       "valence": 0.11,
+       "energie": 0.04,
+       "humeur": "doré",
+       "extrait": "Sophie m'a transmis votre commande : la table ronde en chêne et ses six chaises. Je peux v"
+      },
+      {
+       "porteurs": 14,
+       "mots": [
+        "pâtissier",
+        "fraise",
+        "bougie",
+        "nappe",
+        "gâteau",
+        "poterie",
+        "adore",
+        "bouquet",
+        "cadeau",
+        "pause",
+        "fleur",
+        "verre",
+        "forêt",
+        "validé"
+       ],
+       "objets": [
+        "gâteau→gâteau",
+        "fraise→fraise",
+        "fleur→fleur",
+        "verre→verre",
+        "cadeau→cadeau",
+        "poterie→jarre"
+       ],
+       "nObjets": 6,
+       "poses": [
+        "gâteau",
+        "fraise",
+        "fleur",
+        "verre",
+        "cadeau"
+       ],
+       "lieu": "village",
+       "valence": 0.32,
+       "energie": -0.02,
+       "humeur": "doré",
+       "extrait": "Bon, qui s'occupe du gâteau ? Je peux passer chez le pâtissier jeudi midi fraisier ou forê"
+      },
+      {
+       "porteurs": 14,
+       "mots": [
+        "chaise",
+        "vélo",
+        "tabouret",
+        "imprimante",
+        "livraison",
+        "banc",
+        "chêne",
+        "feuille",
+        "papier",
+        "réf",
+        "pied",
+        "pièce",
+        "pouce",
+        "enfant"
+       ],
+       "objets": [
+        "tabouret→tabouret",
+        "chaise→chaise",
+        "banc→banc",
+        "chêne→arbre"
+       ],
+       "nObjets": 4,
+       "poses": [
+        "tabouret",
+        "chaise",
+        "banc",
+        "chêne"
+       ],
+       "lieu": "interieur",
+       "valence": -0.05,
+       "energie": 0.09,
+       "humeur": "neutre",
+       "extrait": "L'imprimante du deuxième étage affiche « bourrage papier » alors qu'il n'y a plus de feuil"
+      },
+      {
+       "porteurs": 14,
+       "mots": [
+        "vélo",
+        "mange",
+        "maman",
+        "douleur",
+        "téléphone",
+        "restaurant",
+        "vacances",
+        "chat",
+        "prénom",
+        "table",
+        "dent",
+        "port",
+        "mer",
+        "photo"
+       ],
+       "objets": [
+        "chat→animal",
+        "table→table"
+       ],
+       "nObjets": 2,
+       "poses": [
+        "chat",
+        "table"
+       ],
+       "lieu": "interieur",
+       "valence": -0.23,
+       "energie": -0.05,
+       "humeur": "gris",
+       "extrait": "Pour les ans de maman le j'ai réservé au restaurant du port à , une table pour dix à midi."
+      },
+      {
+       "porteurs": 14,
+       "mots": [
+        "armoire",
+        "entrepôt",
+        "meuble",
+        "rouleau",
+        "livraison",
+        "coulé",
+        "chêne",
+        "toit",
+        "eaux",
+        "derrière",
+        "pièce",
+        "bâtiment",
+        "bois",
+        "porte"
+       ],
+       "objets": [
+        "bois→wagon",
+        "bâtiment→bâtiment",
+        "armoire→armoire",
+        "chêne→arbre",
+        "porte→palissade"
+       ],
+       "nObjets": 5,
+       "poses": [
+        "bois",
+        "bâtiment",
+        "armoire",
+        "chêne"
+       ],
+       "lieu": "interieur",
+       "valence": 0.04,
+       "energie": 0.12,
+       "humeur": "neutre",
+       "extrait": "Je te transmets la facture de pour septembre ( € ). Attention, la livraison du à est factu"
+      },
+      {
+       "porteurs": 14,
+       "mots": [
+        "laiton",
+        "canapé",
+        "noyer",
+        "lampe",
+        "camion",
+        "tapis",
+        "cuisine",
+        "plante",
+        "vert",
+        "bibliothèque",
+        "départ",
+        "dépôt",
+        "réparé",
+        "utilitaire"
+       ],
+       "objets": [
+        "tapis→tapis",
+        "canapé→salon",
+        "lampe→lampadaire",
+        "camion→benne",
+        "plante→plante",
+        "cuisine→placard"
+       ],
+       "nObjets": 6,
+       "poses": [
+        "tapis",
+        "canapé",
+        "lampe",
+        "plante",
+        "cuisine"
+       ],
+       "lieu": "interieur",
+       "valence": -0.03,
+       "energie": 0.12,
+       "humeur": "neutre",
+       "extrait": "Pour la séance photo du catalogue jeudi, je peux faire préparer le canapé vert, les deux l"
+      },
+      {
+       "porteurs": 14,
+       "mots": [
+        "cadeau",
+        "livraison",
+        "pause",
+        "bouteille",
+        "camion",
+        "vacances",
+        "sncf",
+        "soirée",
+        "matin",
+        "soir",
+        "absence",
+        "train",
+        "départ",
+        "nounou"
+       ],
+       "objets": [
+        "bouteille→bouteille",
+        "cadeau→cadeau",
+        "camion→camionnette",
+        "train→train"
+       ],
+       "nObjets": 4,
+       "poses": [
+        "bouteille",
+        "cadeau",
+        "camion"
+       ],
+       "lieu": "village",
+       "valence": 0.08,
+       "energie": -0.03,
+       "humeur": "neutre",
+       "extrait": "Élodie nous quitte après huit ans chez ! Nous fêterons son départ jeudi à dans la salle de"
+      },
+      {
+       "porteurs": 14,
+       "mots": [
+        "armoire",
+        "oublie",
+        "marcher",
+        "camion",
+        "parking",
+        "mont",
+        "vélo",
+        "pain",
+        "soir",
+        "sommet",
+        "forêt",
+        "enfant",
+        "rayée",
+        "dentiste"
+       ],
+       "objets": [
+        "pain→pain",
+        "camion→camionnette",
+        "armoire→armoire"
+       ],
+       "nObjets": 3,
+       "poses": [
+        "pain",
+        "camion",
+        "armoire"
+       ],
+       "lieu": "village",
+       "valence": -0.04,
+       "energie": -0.01,
+       "humeur": "neutre",
+       "extrait": "tu peux prendre du pain et des oeufs ? je fais une omelette ce soir Adam a foot à n'oublie"
+      }
+     ]
+    },
+    "b": {
+     "strategie": "(b) une tuile par jour",
+     "tuiles": 1,
+     "objetsParTuile": 6,
+     "sansObjet": 0,
+     "unOuMoins": 0,
+     "deuxOuMoins": 0,
+     "objetsDistincts": 6,
+     "lieux": {
+      "interieur": 1
+     },
+     "evocation": {
+      "couverts": 3,
+      "total": 10,
+      "liste": [
+       "camion en panne, tournée de livraison",
+       "meubles : armoire rayée, chaises, table, palettes",
+       "séance photo : canapé, lampes, tapis, plantes"
+      ],
+      "tuilesQuiEvoquent": 1
+     },
+     "evocationPoses": {
+      "couverts": 3,
+      "total": 10,
+      "liste": [
+       "camion en panne, tournée de livraison",
+       "meubles : armoire rayée, chaises, table, palettes",
+       "séance photo : canapé, lampes, tapis, plantes"
+      ],
+      "tuilesQuiEvoquent": 1
+     },
+     "msPlan": 5.1,
+     "detail": [
+      {
+       "porteurs": 14,
+       "mots": [
+        "armoire",
+        "chaise",
+        "livraison",
+        "camion",
+        "vélo",
+        "meuble",
+        "chêne",
+        "entrepôt",
+        "table",
+        "cadeau",
+        "lampe",
+        "pause",
+        "cuisine",
+        "matin"
+       ],
+       "objets": [
+        "camion→camion",
+        "chaise→chaise",
+        "armoire→armoire",
+        "table→table",
+        "chêne→arbre",
+        "lampe→lampadaire"
+       ],
+       "nObjets": 6,
+       "poses": [
+        "camion",
+        "chaise",
+        "armoire",
+        "chêne",
+        "lampe"
+       ],
+       "lieu": "interieur",
+       "valence": 0.11,
+       "energie": 0.13,
+       "humeur": "clair",
+       "extrait": "trafic périphérique nord lyon ce matin Salut , tu peux me confirmer le nombre de palettes"
+      }
+     ],
+     "top14": [
+      "armoire",
+      "chaise",
+      "livraison",
+      "camion",
+      "vélo",
+      "meuble",
+      "chêne",
+      "entrepôt",
+      "table",
+      "cadeau",
+      "lampe",
+      "pause",
+      "cuisine",
+      "matin"
+     ]
+    },
+    "c": {
+     "strategie": "(c) au plus 3 tuiles, les plus riches",
+     "tuiles": 3,
+     "objetsParTuile": 6,
+     "sansObjet": 0,
+     "unOuMoins": 0,
+     "deuxOuMoins": 0,
+     "objetsDistincts": 18,
+     "lieux": {
+      "interieur": 2,
+      "village": 1
+     },
+     "evocation": {
+      "couverts": 4,
+      "total": 10,
+      "liste": [
+       "camion en panne, tournée de livraison",
+       "meubles : armoire rayée, chaises, table, palettes",
+       "pot de départ : fraisier, fleurs, cadeau",
+       "séance photo : canapé, lampes, tapis, plantes"
+      ],
+      "tuilesQuiEvoquent": 3
+     },
+     "evocationPoses": {
+      "couverts": 4,
+      "total": 10,
+      "liste": [
+       "camion en panne, tournée de livraison",
+       "meubles : armoire rayée, chaises, table, palettes",
+       "pot de départ : fraisier, fleurs, cadeau",
+       "séance photo : canapé, lampes, tapis, plantes"
+      ],
+      "tuilesQuiEvoquent": 3
+     },
+     "msPlan": 9.6,
+     "detail": [
+      {
+       "porteurs": 14,
+       "mots": [
+        "chaise",
+        "armoire",
+        "livraison",
+        "camion",
+        "table",
+        "meuble",
+        "chêne",
+        "escalier",
+        "véhicule",
+        "cuisine",
+        "utilitaire",
+        "manque",
+        "mercredi",
+        "location"
+       ],
+       "objets": [
+        "chaise→chaise",
+        "camion→camion",
+        "table→table",
+        "armoire→armoire",
+        "chêne→arbre",
+        "cuisine→évier"
+       ],
+       "nObjets": 6,
+       "poses": [
+        "chaise",
+        "camion",
+        "armoire",
+        "chêne",
+        "cuisine"
+       ],
+       "lieu": "interieur",
+       "valence": 0.11,
+       "energie": 0.04,
+       "humeur": "doré",
+       "extrait": "Sophie m'a transmis votre commande : la table ronde en chêne et ses six chaises. Je peux v"
+      },
+      {
+       "porteurs": 14,
+       "mots": [
+        "pâtissier",
+        "fraise",
+        "bougie",
+        "nappe",
+        "gâteau",
+        "poterie",
+        "adore",
+        "bouquet",
+        "cadeau",
+        "pause",
+        "fleur",
+        "verre",
+        "forêt",
+        "validé"
+       ],
+       "objets": [
+        "gâteau→gâteau",
+        "fraise→fraise",
+        "fleur→fleur",
+        "verre→verre",
+        "cadeau→cadeau",
+        "poterie→jarre"
+       ],
+       "nObjets": 6,
+       "poses": [
+        "gâteau",
+        "fraise",
+        "fleur",
+        "verre",
+        "cadeau"
+       ],
+       "lieu": "village",
+       "valence": 0.32,
+       "energie": -0.02,
+       "humeur": "doré",
+       "extrait": "Bon, qui s'occupe du gâteau ? Je peux passer chez le pâtissier jeudi midi fraisier ou forê"
+      },
+      {
+       "porteurs": 14,
+       "mots": [
+        "laiton",
+        "canapé",
+        "noyer",
+        "lampe",
+        "camion",
+        "tapis",
+        "cuisine",
+        "plante",
+        "vert",
+        "bibliothèque",
+        "départ",
+        "dépôt",
+        "réparé",
+        "utilitaire"
+       ],
+       "objets": [
+        "tapis→tapis",
+        "camion→camion",
+        "canapé→salon",
+        "lampe→lampadaire",
+        "plante→plante",
+        "cuisine→cuisine"
+       ],
+       "nObjets": 6,
+       "poses": [
+        "tapis",
+        "camion",
+        "canapé",
+        "lampe",
+        "plante",
+        "cuisine"
+       ],
+       "lieu": "interieur",
+       "valence": -0.03,
+       "energie": 0.12,
+       "humeur": "neutre",
+       "extrait": "Pour la séance photo du catalogue jeudi, je peux faire préparer le canapé vert, les deux l"
+      }
+     ],
+     "gardes": [
+      2,
+      3,
+      7
+     ]
+    },
+    "e": {
+     "strategie": "(e) au plus 3 tuiles, riches et variées",
+     "tuiles": 3,
+     "objetsParTuile": 6,
+     "sansObjet": 0,
+     "unOuMoins": 0,
+     "deuxOuMoins": 0,
+     "objetsDistincts": 18,
+     "lieux": {
+      "interieur": 2,
+      "village": 1
+     },
+     "evocation": {
+      "couverts": 4,
+      "total": 10,
+      "liste": [
+       "camion en panne, tournée de livraison",
+       "meubles : armoire rayée, chaises, table, palettes",
+       "pot de départ : fraisier, fleurs, cadeau",
+       "séance photo : canapé, lampes, tapis, plantes"
+      ],
+      "tuilesQuiEvoquent": 3
+     },
+     "evocationPoses": {
+      "couverts": 4,
+      "total": 10,
+      "liste": [
+       "camion en panne, tournée de livraison",
+       "meubles : armoire rayée, chaises, table, palettes",
+       "pot de départ : fraisier, fleurs, cadeau",
+       "séance photo : canapé, lampes, tapis, plantes"
+      ],
+      "tuilesQuiEvoquent": 3
+     },
+     "msPlan": 9,
+     "detail": [
+      {
+       "porteurs": 14,
+       "mots": [
+        "chaise",
+        "armoire",
+        "livraison",
+        "camion",
+        "table",
+        "meuble",
+        "chêne",
+        "escalier",
+        "véhicule",
+        "cuisine",
+        "utilitaire",
+        "manque",
+        "mercredi",
+        "location"
+       ],
+       "objets": [
+        "chaise→chaise",
+        "camion→camion",
+        "table→table",
+        "armoire→armoire",
+        "chêne→arbre",
+        "cuisine→évier"
+       ],
+       "nObjets": 6,
+       "poses": [
+        "chaise",
+        "camion",
+        "armoire",
+        "chêne",
+        "cuisine"
+       ],
+       "lieu": "interieur",
+       "valence": 0.11,
+       "energie": 0.04,
+       "humeur": "doré",
+       "extrait": "Sophie m'a transmis votre commande : la table ronde en chêne et ses six chaises. Je peux v"
+      },
+      {
+       "porteurs": 14,
+       "mots": [
+        "pâtissier",
+        "fraise",
+        "bougie",
+        "nappe",
+        "gâteau",
+        "poterie",
+        "adore",
+        "bouquet",
+        "cadeau",
+        "pause",
+        "fleur",
+        "verre",
+        "forêt",
+        "validé"
+       ],
+       "objets": [
+        "gâteau→gâteau",
+        "fraise→fraise",
+        "fleur→fleur",
+        "verre→verre",
+        "cadeau→cadeau",
+        "poterie→jarre"
+       ],
+       "nObjets": 6,
+       "poses": [
+        "gâteau",
+        "fraise",
+        "fleur",
+        "verre",
+        "cadeau"
+       ],
+       "lieu": "village",
+       "valence": 0.32,
+       "energie": -0.02,
+       "humeur": "doré",
+       "extrait": "Bon, qui s'occupe du gâteau ? Je peux passer chez le pâtissier jeudi midi fraisier ou forê"
+      },
+      {
+       "porteurs": 14,
+       "mots": [
+        "laiton",
+        "canapé",
+        "noyer",
+        "lampe",
+        "camion",
+        "tapis",
+        "cuisine",
+        "plante",
+        "vert",
+        "bibliothèque",
+        "départ",
+        "dépôt",
+        "réparé",
+        "utilitaire"
+       ],
+       "objets": [
+        "tapis→tapis",
+        "camion→camion",
+        "canapé→salon",
+        "lampe→lampadaire",
+        "plante→plante",
+        "cuisine→cuisine"
+       ],
+       "nObjets": 6,
+       "poses": [
+        "tapis",
+        "camion",
+        "canapé",
+        "lampe",
+        "plante",
+        "cuisine"
+       ],
+       "lieu": "interieur",
+       "valence": -0.03,
+       "energie": 0.12,
+       "humeur": "neutre",
+       "extrait": "Pour la séance photo du catalogue jeudi, je peux faire préparer le canapé vert, les deux l"
+      }
+     ],
+     "gardes": [
+      2,
+      3,
+      7
+     ]
+    },
+    "d": {
+     "strategie": "(d) une tuile par source (mail / web)",
+     "tuiles": 2,
+     "objetsParTuile": 6,
+     "sansObjet": 0,
+     "unOuMoins": 0,
+     "deuxOuMoins": 0,
+     "objetsDistincts": 12,
+     "lieux": {
+      "village": 1,
+      "interieur": 1
+     },
+     "evocation": {
+      "couverts": 3,
+      "total": 10,
+      "liste": [
+       "camion en panne, tournée de livraison",
+       "meubles : armoire rayée, chaises, table, palettes",
+       "pot de départ : fraisier, fleurs, cadeau"
+      ],
+      "tuilesQuiEvoquent": 2
+     },
+     "evocationPoses": {
+      "couverts": 3,
+      "total": 10,
+      "liste": [
+       "camion en panne, tournée de livraison",
+       "meubles : armoire rayée, chaises, table, palettes",
+       "pot de départ : fraisier, fleurs, cadeau"
+      ],
+      "tuilesQuiEvoquent": 2
+     },
+     "msPlan": 7.2,
+     "detail": [
+      {
+       "porteurs": 14,
+       "mots": [
+        "vélo",
+        "chaise",
+        "camion",
+        "pâtissier",
+        "matin",
+        "fraise",
+        "armoire",
+        "bougie",
+        "nappe",
+        "gâteau",
+        "poterie",
+        "adore",
+        "mange",
+        "oublie"
+       ],
+       "objets": [
+        "gâteau→gâteau",
+        "camion→camion",
+        "chaise→chaise",
+        "fraise→fraise",
+        "armoire→armoire",
+        "poterie→jarre"
+       ],
+       "nObjets": 6,
+       "poses": [
+        "gâteau",
+        "camion",
+        "chaise",
+        "fraise",
+        "armoire",
+        "poterie"
+       ],
+       "lieu": "village",
+       "valence": -0.01,
+       "energie": 0.17,
+       "humeur": "neutre",
+       "extrait": "trafic périphérique nord lyon ce matin Salut , tu peux me confirmer le nombre de palettes"
+      },
+      {
+       "porteurs": 14,
+       "mots": [
+        "armoire",
+        "chaise",
+        "livraison",
+        "camion",
+        "meuble",
+        "entrepôt",
+        "chêne",
+        "table",
+        "cuisine",
+        "vélo",
+        "vacances",
+        "véhicule",
+        "tabouret",
+        "imprimante"
+       ],
+       "objets": [
+        "camion→camion",
+        "chaise→chaise",
+        "armoire→armoire",
+        "table→table",
+        "tabouret→tabouret",
+        "chêne→arbre"
+       ],
+       "nObjets": 6,
+       "poses": [
+        "camion",
+        "chaise",
+        "armoire",
+        "tabouret",
+        "chêne"
+       ],
+       "lieu": "interieur",
+       "valence": 0.17,
+       "energie": 0.03,
+       "humeur": "doré",
+       "extrait": "Merci pour votre retour. Je comprends bien que le camion est immobilisé au garage, mais no"
+      }
+     ],
+     "sources": [
+      "web",
+      "mail"
+     ]
+    },
+    "aBrut": {
+     "strategie": "(a) tous les passages, texte brut",
+     "tuiles": 12,
+     "objetsParTuile": 4.33,
+     "sansObjet": 0,
+     "unOuMoins": 0,
+     "deuxOuMoins": 3,
+     "objetsDistincts": 46,
+     "lieux": {
+      "interieur": 8,
+      "village": 4
+     },
+     "evocation": {
+      "couverts": 6,
+      "total": 10,
+      "liste": [
+       "camion en panne, tournée de livraison",
+       "meubles : armoire rayée, chaises, table, palettes",
+       "pot de départ : fraisier, fleurs, cadeau",
+       "séance photo : canapé, lampes, tapis, plantes",
+       "train pour Marseille",
+       "le dîner : pain, œufs, omelette"
+      ],
+      "tuilesQuiEvoquent": 12
+     },
+     "evocationPoses": {
+      "couverts": 6,
+      "total": 10,
+      "liste": [
+       "camion en panne, tournée de livraison",
+       "meubles : armoire rayée, chaises, table, palettes",
+       "pot de départ : fraisier, fleurs, cadeau",
+       "séance photo : canapé, lampes, tapis, plantes",
+       "train pour Marseille",
+       "le dîner : pain, œufs, omelette"
+      ],
+      "tuilesQuiEvoquent": 12
+     },
+     "msPlan": 0,
+     "detail": [
+      {
+       "porteurs": 14,
+       "mots": [
+        "matin",
+        "meuble",
+        "chaise",
+        "livraison",
+        "garage",
+        "lampe",
+        "carton",
+        "camion",
+        "véhicule",
+        "cuisine",
+        "manque",
+        "retour",
+        "côté",
+        "example"
+       ],
+       "objets": [
+        "camion→camion",
+        "chaise→chaise",
+        "lampe→lampadaire",
+        "carton→carton",
+        "cuisine→évier"
+       ],
+       "nObjets": 5,
+       "poses": [
+        "camion",
+        "chaise",
+        "lampe",
+        "carton",
+        "cuisine"
+       ],
+       "lieu": "interieur",
+       "valence": -0.01,
+       "energie": 0.08,
+       "humeur": "neutre",
+       "extrait": "trafic périphérique nord lyon ce matin Salut Karim, tu peux me confirmer le nombre de pal"
+      },
+      {
+       "porteurs": 14,
+       "mots": [
+        "désolée",
+        "armoire",
+        "transporteur",
+        "entrepôt",
+        "livraison",
+        "garage",
+        "camion",
+        "mail",
+        "désolé",
+        "apprendre",
+        "tonnes",
+        "express",
+        "soir",
+        "porte"
+       ],
+       "objets": [
+        "camion→camion",
+        "armoire→armoire"
+       ],
+       "nObjets": 2,
+       "poses": [
+        "camion",
+        "armoire"
+       ],
+       "lieu": "village",
+       "valence": -0.08,
+       "energie": 0.1,
+       "humeur": "neutre",
+       "extrait": "Le lun. 5 oct. 2026 à 07:58, Marc Dubois <marc.dubois@rhone-express.example> a écrit : > B"
+      },
+      {
+       "porteurs": 14,
+       "mots": [
+        "chaise",
+        "livraison",
+        "chêne",
+        "table",
+        "armoire",
+        "excuse",
+        "camion",
+        "escalier",
+        "express",
+        "manque",
+        "example",
+        "nadia",
+        "bron",
+        "pied"
+       ],
+       "objets": [
+        "chaise→chaise",
+        "table→table",
+        "chêne→arbre",
+        "armoire→armoire",
+        "camion→camionnette"
+       ],
+       "nObjets": 5,
+       "poses": [
+        "chaise",
+        "table",
+        "chêne",
+        "armoire"
+       ],
+       "lieu": "interieur",
+       "valence": 0.24,
+       "energie": 0.06,
+       "humeur": "doré",
+       "extrait": "Encore toutes nos excuses pour ce désagrément. Cordialement, Nadia Benali Responsable lo"
+      },
+      {
+       "porteurs": 14,
+       "mots": [
+        "armoire",
+        "meuble",
+        "chaise",
+        "livraison",
+        "camion",
+        "example",
+        "véhicule",
+        "cuisine",
+        "matin",
+        "table",
+        "salon",
+        "nadia",
+        "retards",
+        "utilitaire"
+       ],
+       "objets": [
+        "table→table",
+        "camion→camionnette",
+        "chaise→chaise",
+        "salon→salon",
+        "cuisine→cuisine",
+        "armoire→armoire"
+       ],
+       "nObjets": 6,
+       "poses": [
+        "table",
+        "camion",
+        "chaise",
+        "cuisine",
+        "armoire"
+       ],
+       "lieu": "interieur",
+       "valence": 0.14,
+       "energie": 0.03,
+       "humeur": "doré",
+       "extrait": "-----Message d'origine----- De : Julien Morel <j.morel@ardoise-mobilier.example> Envoyé : "
+      },
+      {
+       "porteurs": 14,
+       "mots": [
+        "pâtissier",
+        "fraise",
+        "bougie",
+        "nappe",
+        "gâteau",
+        "poterie",
+        "adore",
+        "bouquet",
+        "cadeau",
+        "pause",
+        "fleur",
+        "verre",
+        "forêt",
+        "validé"
+       ],
+       "objets": [
+        "gâteau→gâteau",
+        "fraise→fraise",
+        "fleur→fleur",
+        "verre→verre",
+        "cadeau→cadeau",
+        "poterie→jarre"
+       ],
+       "nObjets": 6,
+       "poses": [
+        "gâteau",
+        "fraise",
+        "fleur",
+        "verre",
+        "cadeau",
+        "poterie"
+       ],
+       "lieu": "village",
+       "valence": 0.32,
+       "energie": -0.02,
+       "humeur": "doré",
+       "extrait": "Bon, qui s'occupe du gâteau ? Je peux passer chez le pâtissier jeudi midi fraisier ou forê"
+      },
+      {
+       "porteurs": 14,
+       "mots": [
+        "chaise",
+        "banc",
+        "tabouret",
+        "imprimante",
+        "android",
+        "livraison",
+        "mail",
+        "chêne",
+        "feuille",
+        "bois",
+        "papier",
+        "réf",
+        "nadia",
+        "laisse"
+       ],
+       "objets": [
+        "tabouret→tabouret",
+        "banc→banc",
+        "chaise→chaise",
+        "chêne→arbre",
+        "bois→wagon"
+       ],
+       "nObjets": 5,
+       "poses": [
+        "tabouret",
+        "banc",
+        "chaise",
+        "chêne"
+       ],
+       "lieu": "interieur",
+       "valence": 0.1,
+       "energie": 0.08,
+       "humeur": "doré",
+       "extrait": "L'imprimante du deuxième étage affiche « bourrage papier » alors qu'il n'y a plus de feuil"
+      },
+      {
+       "porteurs": 14,
+       "mots": [
+        "vélo",
+        "iphone",
+        "maman",
+        "restaurant",
+        "vacances",
+        "chat",
+        "grave",
+        "soir",
+        "pouce",
+        "table",
+        "enfant",
+        "port",
+        "mer",
+        "photo"
+       ],
+       "objets": [
+        "chat→animal",
+        "table→table"
+       ],
+       "nObjets": 2,
+       "poses": [
+        "chat",
+        "table"
+       ],
+       "lieu": "interieur",
+       "valence": -0.05,
+       "energie": -0.08,
+       "humeur": "neutre",
+       "extrait": "vélo enfant 20 pouces occasion lyon leboncoin vélo btwin 20 pouces https://www.leboncoin.f"
+      },
+      {
+       "porteurs": 14,
+       "mots": [
+        "armoire",
+        "mange",
+        "rouleau",
+        "livraison",
+        "coulé",
+        "vélo",
+        "douleur",
+        "téléphone",
+        "toit",
+        "express",
+        "prénom",
+        "derrière",
+        "allergie",
+        "adam"
+       ],
+       "objets": [
+        "armoire→armoire",
+        "livraison→camionnette"
+       ],
+       "nObjets": 2,
+       "poses": [
+        "armoire"
+       ],
+       "lieu": "interieur",
+       "valence": -0.14,
+       "energie": 0.14,
+       "humeur": "orage",
+       "extrait": "Motif : douleur dentaire suite à une chute Informations pour le praticien : Mon fils Adam,"
+      },
+      {
+       "porteurs": 14,
+       "mots": [
+        "armoire",
+        "entrepôt",
+        "meuble",
+        "pièce",
+        "chêne",
+        "eaux",
+        "bâtiment",
+        "villeurbanne",
+        "bois",
+        "porte",
+        "gonflé",
+        "example",
+        "jointe",
+        "jointes"
+       ],
+       "objets": [
+        "chêne→arbre",
+        "bois→wagon",
+        "bâtiment→bâtiment",
+        "porte→palissade",
+        "entrepôt→bâtiment",
+        "armoire→armoire"
+       ],
+       "nObjets": 6,
+       "poses": [
+        "chêne",
+        "bois",
+        "bâtiment",
+        "porte",
+        "entrepôt"
+       ],
+       "lieu": "interieur",
+       "valence": 0.16,
+       "energie": -0.01,
+       "humeur": "doré",
+       "extrait": "Je vous déclare un dégât des eaux survenu ce week-end dans notre entrepôt de Villeurbanne "
+      },
+      {
+       "porteurs": 14,
+       "mots": [
+        "canapé",
+        "tapis",
+        "laiton",
+        "noyer",
+        "vert",
+        "lampe",
+        "camion",
+        "bibliothèque",
+        "example",
+        "cuisine",
+        "plante",
+        "nadia",
+        "printemps",
+        "salon"
+       ],
+       "objets": [
+        "tapis→tapis",
+        "canapé→salon",
+        "lampe→lampadaire",
+        "plante→plante",
+        "camion→benne",
+        "salon→table"
+       ],
+       "nObjets": 6,
+       "poses": [
+        "tapis",
+        "canapé",
+        "lampe",
+        "plante"
+       ],
+       "lieu": "interieur",
+       "valence": 0.3,
+       "energie": 0.1,
+       "humeur": "clair",
+       "extrait": "Pour la séance photo du catalogue jeudi, je peux faire préparer le canapé vert, les deux l"
+      },
+      {
+       "porteurs": 14,
+       "mots": [
+        "matin",
+        "cadeau",
+        "livraison",
+        "garage",
+        "pause",
+        "bouteille",
+        "camion",
+        "vacances",
+        "sncf",
+        "soir",
+        "absence",
+        "nadia",
+        "train",
+        "pièce"
+       ],
+       "objets": [
+        "bouteille→bouteille",
+        "train→train",
+        "camion→camionnette",
+        "cadeau→cadeau"
+       ],
+       "nObjets": 4,
+       "poses": [
+        "bouteille",
+        "train",
+        "camion",
+        "cadeau"
+       ],
+       "lieu": "village",
+       "valence": 0.04,
+       "energie": -0.04,
+       "humeur": "neutre",
+       "extrait": "Le lun. 5 oct. 2026 à 15:30, Marc Dubois <marc.dubois@rhone-express.example> a écrit : > N"
+      },
+      {
+       "porteurs": 14,
+       "mots": [
+        "camion",
+        "armoire",
+        "oublie",
+        "marcher",
+        "parking",
+        "mont",
+        "vélo",
+        "téléphone",
+        "pain",
+        "soirée",
+        "soir",
+        "sommet",
+        "forêt",
+        "enfant"
+       ],
+       "objets": [
+        "camion→camion",
+        "pain→pain",
+        "armoire→armoire"
+       ],
+       "nObjets": 3,
+       "poses": [
+        "camion",
+        "pain",
+        "armoire"
+       ],
+       "lieu": "village",
+       "valence": -0.03,
+       "energie": 0.05,
+       "humeur": "neutre",
+       "extrait": "je file, la nounou m'attend bonne soirée ! demain j'arrive à 8h pour le camion tu peux pr"
+      }
+     ]
+    }
+   },
+   "ton": {
+    "valence": 0.11,
+    "energie": 0.13,
+    "humeur": "clair",
+    "heure": "soir"
+   },
+   "msParTuileTout": 2.89,
+   "msOuvertureParTuile": 0.07,
+   "croissance": {
+    "saisies": 26,
+    "tuilesFinales": 10,
+    "passagesRecalcules": 47
+   },
+   "filet": {
+    "brut": {
+     "self": [],
+     "other": [],
+     "soft": []
+    },
+    "net": {
+     "self": [],
+     "other": [],
+     "soft": []
+    }
+   }
+  },
+  "etudiant": {
+   "libelle": "Léo (étudiant)",
+   "fiche": "Persona : Léo, 20 ans, étudiant en L2 de biologie à Rennes, en colocation. Messages courts, abréviations, un peu d’anglais. Journée : lundi 5 octobre 2026. Tout est inventé.",
+   "saisies": 15,
+   "parSource": {
+    "chat": 8,
+    "recherche": 4,
+    "document": 1,
+    "mail": 1,
+    "commentaire": 1
+   },
+   "brut": {
+    "caracteres": 3239,
+    "octets": 3305,
+    "mots": 579,
+    "motsLus": 581,
+    "pleins": 294,
+    "connus": 244,
+    "couverture": 0.8299319727891157,
+    "porteurs": 58,
+    "porteursDistincts": 43
+   },
+   "net": {
+    "caracteres": 2752,
+    "octets": 2817,
+    "mots": 480,
+    "motsLus": 485,
+    "pleins": 230,
+    "connus": 188,
+    "couverture": 0.8173913043478261,
+    "porteurs": 51,
+    "porteursDistincts": 40
+   },
+   "decoupage": {
+    "brut": {
+     "passages": 4,
+     "ms": 0.6,
+     "porteurs": [
+      11,
+      10,
+      16,
+      13
+     ]
+    },
+    "net": {
+     "passages": 3,
+     "ms": 0.5,
+     "porteurs": [
+      18,
+      15,
+      13
+     ]
+    }
+   },
+   "lecture": {
+    "msMediane": 2.76,
+    "msP95": 2.83,
+    "msMax": 2.83,
+    "octetsLectureGardee": 5863
+   },
+   "bruit": {
+    "brut": {
+     "caracteres": 3239,
+     "octets": 3305,
+     "mots": 579,
+     "motsLus": 581,
+     "pleins": 294,
+     "connus": 244,
+     "couverture": 0.8299319727891157,
+     "porteurs": 58,
+     "porteursDistincts": 43,
+     "tuiles": 4,
+     "objets": 18,
+     "parasites": 2,
+     "exemplesParasites": [
+      "renne→renne",
+      "renne→sanglier"
+     ],
+     "top14Parasites": [
+      "renne",
+      "vanne"
+     ],
+     "objetsJourParasites": [
+      "renne→renne"
+     ],
+     "lieuJour": "interieur"
+    },
+    "seule:citations": {
+     "caracteres": 3239,
+     "octets": 3305,
+     "mots": 579,
+     "motsLus": 581,
+     "pleins": 294,
+     "connus": 244,
+     "couverture": 0.8299319727891157,
+     "porteurs": 58,
+     "porteursDistincts": 43,
+     "tuiles": 4,
+     "objets": 18,
+     "parasites": 2,
+     "exemplesParasites": [
+      "renne→renne",
+      "renne→sanglier"
+     ],
+     "top14Parasites": [
+      "renne",
+      "vanne"
+     ],
+     "objetsJourParasites": [
+      "renne→renne"
+     ],
+     "lieuJour": "interieur"
+    },
+    "seule:signatures": {
+     "caracteres": 3151,
+     "octets": 3216,
+     "mots": 567,
+     "motsLus": 570,
+     "pleins": 284,
+     "connus": 235,
+     "couverture": 0.8274647887323944,
+     "porteurs": 58,
+     "porteursDistincts": 43,
+     "tuiles": 4,
+     "objets": 18,
+     "parasites": 2,
+     "exemplesParasites": [
+      "renne→renne",
+      "renne→sanglier"
+     ],
+     "top14Parasites": [
+      "renne",
+      "vanne"
+     ],
+     "objetsJourParasites": [
+      "renne→renne"
+     ],
+     "lieuJour": "interieur"
+    },
+    "seule:adresses": {
+     "caracteres": 3192,
+     "octets": 3258,
+     "mots": 579,
+     "motsLus": 571,
+     "pleins": 285,
+     "connus": 238,
+     "couverture": 0.8350877192982457,
+     "porteurs": 58,
+     "porteursDistincts": 43,
+     "tuiles": 4,
+     "objets": 18,
+     "parasites": 2,
+     "exemplesParasites": [
+      "renne→renne",
+      "renne→sanglier"
+     ],
+     "top14Parasites": [
+      "renne",
+      "vanne"
+     ],
+     "objetsJourParasites": [
+      "renne→renne"
+     ],
+     "lieuJour": "interieur"
+    },
+    "seule:code": {
+     "caracteres": 3129,
+     "octets": 3195,
+     "mots": 564,
+     "motsLus": 564,
+     "pleins": 280,
+     "connus": 232,
+     "couverture": 0.8285714285714286,
+     "porteurs": 58,
+     "porteursDistincts": 43,
+     "tuiles": 4,
+     "objets": 18,
+     "parasites": 2,
+     "exemplesParasites": [
+      "renne→renne",
+      "renne→sanglier"
+     ],
+     "top14Parasites": [
+      "renne",
+      "vanne"
+     ],
+     "objetsJourParasites": [
+      "renne→renne"
+     ],
+     "lieuJour": "interieur"
+    },
+    "seule:nombres": {
+     "caracteres": 3172,
+     "octets": 3238,
+     "mots": 562,
+     "motsLus": 573,
+     "pleins": 292,
+     "connus": 243,
+     "couverture": 0.8321917808219178,
+     "porteurs": 58,
+     "porteursDistincts": 43,
+     "tuiles": 4,
+     "objets": 18,
+     "parasites": 2,
+     "exemplesParasites": [
+      "renne→renne",
+      "renne→sanglier"
+     ],
+     "top14Parasites": [
+      "renne",
+      "vanne"
+     ],
+     "objetsJourParasites": [
+      "renne→renne"
+     ],
+     "lieuJour": "interieur"
+    },
+    "seule:propres": {
+     "caracteres": 3161,
+     "octets": 3227,
+     "mots": 566,
+     "motsLus": 566,
+     "pleins": 284,
+     "connus": 234,
+     "couverture": 0.823943661971831,
+     "porteurs": 52,
+     "porteursDistincts": 41,
+     "tuiles": 3,
+     "objets": 14,
+     "parasites": 0,
+     "exemplesParasites": [],
+     "top14Parasites": [],
+     "objetsJourParasites": [],
+     "lieuJour": "interieur"
+    },
+    "seule:vides": {
+     "caracteres": 3049,
+     "octets": 3115,
+     "mots": 531,
+     "motsLus": 530,
+     "pleins": 262,
+     "connus": 217,
+     "couverture": 0.8282442748091603,
+     "porteurs": 57,
+     "porteursDistincts": 42,
+     "tuiles": 3,
+     "objets": 15,
+     "parasites": 2,
+     "exemplesParasites": [
+      "renne→renne",
+      "renne→sanglier"
+     ],
+     "top14Parasites": [
+      "renne",
+      "vanne"
+     ],
+     "objetsJourParasites": [
+      "renne→renne"
+     ],
+     "lieuJour": "interieur"
+    },
+    "net": {
+     "caracteres": 2752,
+     "octets": 2817,
+     "mots": 480,
+     "motsLus": 485,
+     "pleins": 230,
+     "connus": 188,
+     "couverture": 0.8173913043478261,
+     "porteurs": 51,
+     "porteursDistincts": 40,
+     "tuiles": 3,
+     "objets": 15,
+     "parasites": 0,
+     "exemplesParasites": [],
+     "top14Parasites": [],
+     "objetsJourParasites": [],
+     "lieuJour": "interieur"
+    }
+   },
+   "strategies": {
+    "a": {
+     "strategie": "(a) tous les passages",
+     "tuiles": 3,
+     "objetsParTuile": 5,
+     "sansObjet": 0,
+     "unOuMoins": 0,
+     "deuxOuMoins": 0,
+     "objetsDistincts": 15,
+     "lieux": {
+      "interieur": 3
+     },
+     "evocation": {
+      "couverts": 5,
+      "total": 10,
+      "liste": [
+       "la coloc : le chat, le canapé, le lait",
+       "boulangerie, croissant, candidature",
+       "TP microscope, oignon, cellules",
+       "soirée pizza, bières, chips",
+       "rentrer chez maman en train, le pull"
+      ],
+      "tuilesQuiEvoquent": 3
+     },
+     "evocationPoses": {
+      "couverts": 4,
+      "total": 10,
+      "liste": [
+       "la coloc : le chat, le canapé, le lait",
+       "boulangerie, croissant, candidature",
+       "TP microscope, oignon, cellules",
+       "soirée pizza, bières, chips"
+      ],
+      "tuilesQuiEvoquent": 3
+     },
+     "msPlan": 9.9,
+     "detail": [
+      {
+       "porteurs": 14,
+       "mots": [
+        "oignon",
+        "canapé",
+        "pizza",
+        "salée",
+        "boulangerie",
+        "végétale",
+        "animale",
+        "croissant",
+        "bière",
+        "lait",
+        "pain",
+        "sel",
+        "chat",
+        "cellule"
+       ],
+       "objets": [
+        "oignon→oignon",
+        "lait→lait",
+        "pain→pain",
+        "pizza→pizza",
+        "boulangerie→pain",
+        "sel→salière"
+       ],
+       "nObjets": 6,
+       "poses": [
+        "oignon",
+        "lait",
+        "pain",
+        "pizza",
+        "boulangerie",
+        "sel"
+       ],
+       "lieu": "interieur",
+       "valence": 0.12,
+       "energie": 0.02,
+       "humeur": "doré",
+       "extrait": "qui a fini le lait ??? c'est pas moi jure le chat a encore vomi sur le canapé 😭 je passe "
+      },
+      {
+       "porteurs": 14,
+       "mots": [
+        "boulangerie",
+        "pull",
+        "mangé",
+        "laver",
+        "vendeur",
+        "maman",
+        "pain",
+        "rayon",
+        "colonne",
+        "aime",
+        "matin",
+        "vert",
+        "écrire",
+        "train"
+       ],
+       "objets": [
+        "pain→pain",
+        "boulangerie→congélateur",
+        "train→train"
+       ],
+       "nObjets": 3,
+       "poses": [
+        "pain",
+        "boulangerie"
+       ],
+       "lieu": "interieur",
+       "valence": 0.18,
+       "energie": 0.09,
+       "humeur": "doré",
+       "extrait": "Error t.test.formula : grouping factor exactly levels t'as groupes dans ta colonne, il fau"
+      },
+      {
+       "porteurs": 14,
+       "mots": [
+        "pizza",
+        "ordi",
+        "chips",
+        "poubelle",
+        "dort",
+        "gâteau",
+        "dormir",
+        "carton",
+        "fromage",
+        "bière",
+        "chat",
+        "soir",
+        "partiel",
+        "demain"
+       ],
+       "objets": [
+        "pizza→pizza",
+        "gâteau→gâteau",
+        "poubelle→poubelle",
+        "fromage→fromage",
+        "chat→animal",
+        "carton→carton"
+       ],
+       "nObjets": 6,
+       "poses": [
+        "pizza",
+        "gâteau",
+        "poubelle",
+        "fromage",
+        "chat",
+        "carton"
+       ],
+       "lieu": "interieur",
+       "valence": 0.1,
+       "energie": 0.11,
+       "humeur": "clair",
+       "extrait": "pizza fromages ou reine ? les deux j'ai pris des bières et des chips qui sort la poubelle "
+      }
+     ]
+    },
+    "b": {
+     "strategie": "(b) une tuile par jour",
+     "tuiles": 1,
+     "objetsParTuile": 6,
+     "sansObjet": 0,
+     "unOuMoins": 0,
+     "deuxOuMoins": 0,
+     "objetsDistincts": 6,
+     "lieux": {
+      "interieur": 1
+     },
+     "evocation": {
+      "couverts": 4,
+      "total": 10,
+      "liste": [
+       "la coloc : le chat, le canapé, le lait",
+       "boulangerie, croissant, candidature",
+       "TP microscope, oignon, cellules",
+       "soirée pizza, bières, chips"
+      ],
+      "tuilesQuiEvoquent": 1
+     },
+     "evocationPoses": {
+      "couverts": 4,
+      "total": 10,
+      "liste": [
+       "la coloc : le chat, le canapé, le lait",
+       "boulangerie, croissant, candidature",
+       "TP microscope, oignon, cellules",
+       "soirée pizza, bières, chips"
+      ],
+      "tuilesQuiEvoquent": 1
+     },
+     "msPlan": 3.4,
+     "detail": [
+      {
+       "porteurs": 14,
+       "mots": [
+        "pizza",
+        "boulangerie",
+        "oignon",
+        "bière",
+        "pain",
+        "chat",
+        "ordi",
+        "pull",
+        "chips",
+        "canapé",
+        "poubelle",
+        "soir",
+        "dort",
+        "mangé"
+       ],
+       "objets": [
+        "pizza→pizza",
+        "pain→pain",
+        "oignon→oignon",
+        "boulangerie→pain",
+        "poubelle→poubelle",
+        "chat→animal"
+       ],
+       "nObjets": 6,
+       "poses": [
+        "pizza",
+        "pain",
+        "oignon",
+        "boulangerie",
+        "poubelle",
+        "chat"
+       ],
+       "lieu": "interieur",
+       "valence": 0.27,
+       "energie": 0.1,
+       "humeur": "clair",
+       "extrait": "qui a fini le lait ??? c'est pas moi jure le chat a encore vomi sur le canapé 😭 je passe "
+      }
+     ],
+     "top14": [
+      "pizza",
+      "boulangerie",
+      "oignon",
+      "bière",
+      "pain",
+      "chat",
+      "ordi",
+      "pull",
+      "chips",
+      "canapé",
+      "poubelle",
+      "soir",
+      "dort",
+      "mangé"
+     ]
+    },
+    "c": {
+     "strategie": "(c) au plus 3 tuiles, les plus riches",
+     "tuiles": 3,
+     "objetsParTuile": 5,
+     "sansObjet": 0,
+     "unOuMoins": 0,
+     "deuxOuMoins": 0,
+     "objetsDistincts": 15,
+     "lieux": {
+      "interieur": 3
+     },
+     "evocation": {
+      "couverts": 5,
+      "total": 10,
+      "liste": [
+       "la coloc : le chat, le canapé, le lait",
+       "boulangerie, croissant, candidature",
+       "TP microscope, oignon, cellules",
+       "soirée pizza, bières, chips",
+       "rentrer chez maman en train, le pull"
+      ],
+      "tuilesQuiEvoquent": 3
+     },
+     "evocationPoses": {
+      "couverts": 4,
+      "total": 10,
+      "liste": [
+       "la coloc : le chat, le canapé, le lait",
+       "boulangerie, croissant, candidature",
+       "TP microscope, oignon, cellules",
+       "soirée pizza, bières, chips"
+      ],
+      "tuilesQuiEvoquent": 3
+     },
+     "msPlan": 9,
+     "detail": [
+      {
+       "porteurs": 14,
+       "mots": [
+        "oignon",
+        "canapé",
+        "pizza",
+        "salée",
+        "boulangerie",
+        "végétale",
+        "animale",
+        "croissant",
+        "bière",
+        "lait",
+        "pain",
+        "sel",
+        "chat",
+        "cellule"
+       ],
+       "objets": [
+        "oignon→oignon",
+        "lait→lait",
+        "pain→pain",
+        "pizza→pizza",
+        "boulangerie→pain",
+        "sel→salière"
+       ],
+       "nObjets": 6,
+       "poses": [
+        "oignon",
+        "lait",
+        "pain",
+        "pizza",
+        "boulangerie",
+        "sel"
+       ],
+       "lieu": "interieur",
+       "valence": 0.12,
+       "energie": 0.02,
+       "humeur": "doré",
+       "extrait": "qui a fini le lait ??? c'est pas moi jure le chat a encore vomi sur le canapé 😭 je passe "
+      },
+      {
+       "porteurs": 14,
+       "mots": [
+        "boulangerie",
+        "pull",
+        "mangé",
+        "laver",
+        "vendeur",
+        "maman",
+        "pain",
+        "rayon",
+        "colonne",
+        "aime",
+        "matin",
+        "vert",
+        "écrire",
+        "train"
+       ],
+       "objets": [
+        "pain→pain",
+        "boulangerie→congélateur",
+        "train→train"
+       ],
+       "nObjets": 3,
+       "poses": [
+        "pain",
+        "boulangerie"
+       ],
+       "lieu": "interieur",
+       "valence": 0.18,
+       "energie": 0.09,
+       "humeur": "doré",
+       "extrait": "Error t.test.formula : grouping factor exactly levels t'as groupes dans ta colonne, il fau"
+      },
+      {
+       "porteurs": 14,
+       "mots": [
+        "pizza",
+        "ordi",
+        "chips",
+        "poubelle",
+        "dort",
+        "gâteau",
+        "dormir",
+        "carton",
+        "fromage",
+        "bière",
+        "chat",
+        "soir",
+        "partiel",
+        "demain"
+       ],
+       "objets": [
+        "pizza→pizza",
+        "gâteau→gâteau",
+        "poubelle→poubelle",
+        "fromage→fromage",
+        "chat→animal",
+        "carton→carton"
+       ],
+       "nObjets": 6,
+       "poses": [
+        "pizza",
+        "gâteau",
+        "poubelle",
+        "fromage",
+        "chat",
+        "carton"
+       ],
+       "lieu": "interieur",
+       "valence": 0.1,
+       "energie": 0.11,
+       "humeur": "clair",
+       "extrait": "pizza fromages ou reine ? les deux j'ai pris des bières et des chips qui sort la poubelle "
+      }
+     ],
+     "gardes": [
+      0,
+      1,
+      2
+     ]
+    },
+    "e": {
+     "strategie": "(e) au plus 3 tuiles, riches et variées",
+     "tuiles": 3,
+     "objetsParTuile": 5,
+     "sansObjet": 0,
+     "unOuMoins": 0,
+     "deuxOuMoins": 0,
+     "objetsDistincts": 15,
+     "lieux": {
+      "interieur": 3
+     },
+     "evocation": {
+      "couverts": 5,
+      "total": 10,
+      "liste": [
+       "la coloc : le chat, le canapé, le lait",
+       "boulangerie, croissant, candidature",
+       "TP microscope, oignon, cellules",
+       "soirée pizza, bières, chips",
+       "rentrer chez maman en train, le pull"
+      ],
+      "tuilesQuiEvoquent": 3
+     },
+     "evocationPoses": {
+      "couverts": 4,
+      "total": 10,
+      "liste": [
+       "la coloc : le chat, le canapé, le lait",
+       "boulangerie, croissant, candidature",
+       "TP microscope, oignon, cellules",
+       "soirée pizza, bières, chips"
+      ],
+      "tuilesQuiEvoquent": 3
+     },
+     "msPlan": 9,
+     "detail": [
+      {
+       "porteurs": 14,
+       "mots": [
+        "oignon",
+        "canapé",
+        "pizza",
+        "salée",
+        "boulangerie",
+        "végétale",
+        "animale",
+        "croissant",
+        "bière",
+        "lait",
+        "pain",
+        "sel",
+        "chat",
+        "cellule"
+       ],
+       "objets": [
+        "oignon→oignon",
+        "lait→lait",
+        "pain→pain",
+        "pizza→pizza",
+        "boulangerie→pain",
+        "sel→salière"
+       ],
+       "nObjets": 6,
+       "poses": [
+        "oignon",
+        "lait",
+        "pain",
+        "pizza",
+        "boulangerie",
+        "sel"
+       ],
+       "lieu": "interieur",
+       "valence": 0.12,
+       "energie": 0.02,
+       "humeur": "doré",
+       "extrait": "qui a fini le lait ??? c'est pas moi jure le chat a encore vomi sur le canapé 😭 je passe "
+      },
+      {
+       "porteurs": 14,
+       "mots": [
+        "boulangerie",
+        "pull",
+        "mangé",
+        "laver",
+        "vendeur",
+        "maman",
+        "pain",
+        "rayon",
+        "colonne",
+        "aime",
+        "matin",
+        "vert",
+        "écrire",
+        "train"
+       ],
+       "objets": [
+        "pain→pain",
+        "boulangerie→congélateur",
+        "train→train"
+       ],
+       "nObjets": 3,
+       "poses": [
+        "pain",
+        "boulangerie"
+       ],
+       "lieu": "interieur",
+       "valence": 0.18,
+       "energie": 0.09,
+       "humeur": "doré",
+       "extrait": "Error t.test.formula : grouping factor exactly levels t'as groupes dans ta colonne, il fau"
+      },
+      {
+       "porteurs": 14,
+       "mots": [
+        "pizza",
+        "ordi",
+        "chips",
+        "poubelle",
+        "dort",
+        "gâteau",
+        "dormir",
+        "carton",
+        "fromage",
+        "bière",
+        "chat",
+        "soir",
+        "partiel",
+        "demain"
+       ],
+       "objets": [
+        "pizza→pizza",
+        "gâteau→gâteau",
+        "poubelle→poubelle",
+        "fromage→fromage",
+        "chat→animal",
+        "carton→carton"
+       ],
+       "nObjets": 6,
+       "poses": [
+        "pizza",
+        "gâteau",
+        "poubelle",
+        "fromage",
+        "chat",
+        "carton"
+       ],
+       "lieu": "interieur",
+       "valence": 0.1,
+       "energie": 0.11,
+       "humeur": "clair",
+       "extrait": "pizza fromages ou reine ? les deux j'ai pris des bières et des chips qui sort la poubelle "
+      }
+     ],
+     "gardes": [
+      0,
+      1,
+      2
+     ]
+    },
+    "d": {
+     "strategie": "(d) une tuile par source (mail / web)",
+     "tuiles": 2,
+     "objetsParTuile": 4,
+     "sansObjet": 0,
+     "unOuMoins": 0,
+     "deuxOuMoins": 1,
+     "objetsDistincts": 8,
+     "lieux": {
+      "interieur": 2
+     },
+     "evocation": {
+      "couverts": 4,
+      "total": 10,
+      "liste": [
+       "la coloc : le chat, le canapé, le lait",
+       "boulangerie, croissant, candidature",
+       "TP microscope, oignon, cellules",
+       "soirée pizza, bières, chips"
+      ],
+      "tuilesQuiEvoquent": 2
+     },
+     "evocationPoses": {
+      "couverts": 4,
+      "total": 10,
+      "liste": [
+       "la coloc : le chat, le canapé, le lait",
+       "boulangerie, croissant, candidature",
+       "TP microscope, oignon, cellules",
+       "soirée pizza, bières, chips"
+      ],
+      "tuilesQuiEvoquent": 2
+     },
+     "msPlan": 6.1,
+     "detail": [
+      {
+       "porteurs": 14,
+       "mots": [
+        "pizza",
+        "oignon",
+        "bière",
+        "chat",
+        "ordi",
+        "pull",
+        "chips",
+        "canapé",
+        "poubelle",
+        "soir",
+        "dort",
+        "mangé",
+        "salée",
+        "boulangerie"
+       ],
+       "objets": [
+        "pizza→pizza",
+        "oignon→oignon",
+        "poubelle→poubelle",
+        "chat→animal",
+        "boulangerie→pain",
+        "canapé→salon"
+       ],
+       "nObjets": 6,
+       "poses": [
+        "pizza",
+        "oignon",
+        "poubelle",
+        "chat",
+        "boulangerie",
+        "canapé"
+       ],
+       "lieu": "interieur",
+       "valence": 0.28,
+       "energie": 0.11,
+       "humeur": "clair",
+       "extrait": "qui a fini le lait ??? c'est pas moi jure le chat a encore vomi sur le canapé 😭 je passe "
+      },
+      {
+       "porteurs": 14,
+       "mots": [
+        "boulangerie",
+        "vendeur",
+        "pain",
+        "rayon",
+        "aime",
+        "matin",
+        "écrire",
+        "pièce",
+        "ponctuel",
+        "jointe",
+        "trouverez",
+        "souhaitez",
+        "étés",
+        "nettoyage"
+       ],
+       "objets": [
+        "pain→pain",
+        "boulangerie→congélateur"
+       ],
+       "nObjets": 2,
+       "poses": [
+        "pain",
+        "boulangerie"
+       ],
+       "lieu": "interieur",
+       "valence": 0.16,
+       "energie": -0.02,
+       "humeur": "doré",
+       "extrait": "Je me permets de vous écrire suite à votre annonce pour un poste de vendeur le week-end à "
+      }
+     ],
+     "sources": [
+      "web",
+      "mail"
+     ]
+    },
+    "aBrut": {
+     "strategie": "(a) tous les passages, texte brut",
+     "tuiles": 4,
+     "objetsParTuile": 4.5,
+     "sansObjet": 0,
+     "unOuMoins": 0,
+     "deuxOuMoins": 0,
+     "objetsDistincts": 18,
+     "lieux": {
+      "interieur": 4
+     },
+     "evocation": {
+      "couverts": 4,
+      "total": 10,
+      "liste": [
+       "la coloc : le chat, le canapé, le lait",
+       "boulangerie, croissant, candidature",
+       "TP microscope, oignon, cellules",
+       "soirée pizza, bières, chips"
+      ],
+      "tuilesQuiEvoquent": 4
+     },
+     "evocationPoses": {
+      "couverts": 4,
+      "total": 10,
+      "liste": [
+       "la coloc : le chat, le canapé, le lait",
+       "boulangerie, croissant, candidature",
+       "TP microscope, oignon, cellules",
+       "soirée pizza, bières, chips"
+      ],
+      "tuilesQuiEvoquent": 4
+     },
+     "msPlan": 0,
+     "detail": [
+      {
+       "porteurs": 14,
+       "mots": [
+        "renne",
+        "canapé",
+        "boulangerie",
+        "végétale",
+        "animale",
+        "croissant",
+        "lait",
+        "pain",
+        "chat",
+        "bus",
+        "chaîne",
+        "bro",
+        "lol",
+        "proton"
+       ],
+       "objets": [
+        "lait→lait",
+        "renne→renne",
+        "pain→pain",
+        "chat→animal",
+        "boulangerie→pain",
+        "croissant→croissant"
+       ],
+       "nObjets": 6,
+       "poses": [
+        "lait",
+        "renne",
+        "pain",
+        "chat",
+        "boulangerie",
+        "croissant"
+       ],
+       "lieu": "interieur",
+       "valence": 0.13,
+       "energie": 0.03,
+       "humeur": "doré",
+       "extrait": "qui a fini le lait ??? c'est pas moi jure le chat a encore vomi sur le canapé 😭 je passe "
+      },
+      {
+       "porteurs": 14,
+       "mots": [
+        "oignon",
+        "pizza",
+        "salée",
+        "bière",
+        "sel",
+        "colonne",
+        "grave",
+        "eau",
+        "soir",
+        "cellule",
+        "paroi",
+        "bleu",
+        "data",
+        "ouf"
+       ],
+       "objets": [
+        "oignon→oignon",
+        "pizza→pizza",
+        "sel→salière"
+       ],
+       "nObjets": 3,
+       "poses": [
+        "oignon",
+        "pizza",
+        "sel"
+       ],
+       "lieu": "interieur",
+       "valence": 0.09,
+       "energie": 0.01,
+       "humeur": "neutre",
+       "extrait": "Nous avons observé au microscope optique des cellules d'épiderme d'oignon, colorées au ble"
+      },
+      {
+       "porteurs": 14,
+       "mots": [
+        "renne",
+        "boulangerie",
+        "pull",
+        "vanne",
+        "mangé",
+        "laver",
+        "vendeur",
+        "maman",
+        "pain",
+        "rayon",
+        "aime",
+        "matin",
+        "vert",
+        "ubu"
+       ],
+       "objets": [
+        "pain→pain",
+        "renne→sanglier",
+        "boulangerie→congélateur"
+       ],
+       "nObjets": 3,
+       "poses": [
+        "pain",
+        "renne",
+        "boulangerie"
+       ],
+       "lieu": "interieur",
+       "valence": 0.04,
+       "energie": 0.03,
+       "humeur": "neutre",
+       "extrait": "Je me permets de vous écrire suite à votre annonce pour un poste de vendeur le week-end à "
+      },
+      {
+       "porteurs": 14,
+       "mots": [
+        "pizza",
+        "ordi",
+        "chips",
+        "poubelle",
+        "dort",
+        "gâteau",
+        "dormir",
+        "carton",
+        "fromage",
+        "bière",
+        "chat",
+        "soir",
+        "partiel",
+        "demain"
+       ],
+       "objets": [
+        "pizza→pizza",
+        "gâteau→gâteau",
+        "poubelle→poubelle",
+        "fromage→fromage",
+        "carton→carton",
+        "chat→animal"
+       ],
+       "nObjets": 6,
+       "poses": [
+        "pizza",
+        "gâteau",
+        "poubelle",
+        "fromage",
+        "carton",
+        "chat"
+       ],
+       "lieu": "interieur",
+       "valence": 0.1,
+       "energie": 0.11,
+       "humeur": "clair",
+       "extrait": "pizza 4 fromages ou reine ? les deux j'ai pris des bières et des chips qui sort la poubell"
+      }
+     ]
+    }
+   },
+   "ton": {
+    "valence": 0.27,
+    "energie": 0.1,
+    "humeur": "clair",
+    "heure": "soir"
+   },
+   "msParTuileTout": 2.97,
+   "msOuvertureParTuile": 0.08,
+   "croissance": {
+    "saisies": 15,
+    "tuilesFinales": 3,
+    "passagesRecalcules": 21
+   },
+   "filet": {
+    "brut": {
+     "self": [],
+     "other": [],
+     "soft": []
+    },
+    "net": {
+     "self": [],
+     "other": [],
+     "soft": []
+    }
+   }
+  },
+  "retraitee": {
+   "libelle": "Monique (retraitée)",
+   "fiche": "Persona : Monique, 72 ans, retraitée (ancienne institutrice) près de Quimper. Peu de saisies, mais longues : des courriels à la famille écrits d’un seul bloc, une recette cherchée, un message sur un forum de jardinage. Journée : lundi 5 octobre 2026. Tout est inventé.",
+   "saisies": 8,
+   "parSource": {
+    "mail": 4,
+    "recherche": 2,
+    "forum": 2
+   },
+   "brut": {
+    "caracteres": 4305,
+    "octets": 4394,
+    "mots": 766,
+    "motsLus": 809,
+    "pleins": 336,
+    "connus": 290,
+    "couverture": 0.8630952380952381,
+    "porteurs": 111,
+    "porteursDistincts": 89
+   },
+   "net": {
+    "caracteres": 3723,
+    "octets": 3799,
+    "mots": 689,
+    "motsLus": 716,
+    "pleins": 276,
+    "connus": 239,
+    "couverture": 0.8659420289855072,
+    "porteurs": 102,
+    "porteursDistincts": 84
+   },
+   "decoupage": {
+    "brut": {
+     "passages": 7,
+     "ms": 1,
+     "porteurs": [
+      18,
+      16,
+      18,
+      14,
+      16,
+      12,
+      12
+     ]
+    },
+    "net": {
+     "passages": 7,
+     "ms": 0.8,
+     "porteurs": [
+      17,
+      16,
+      18,
+      14,
+      11,
+      12,
+      11
+     ]
+    }
+   },
+   "lecture": {
+    "msMediane": 2.74,
+    "msP95": 2.97,
+    "msMax": 2.97,
+    "octetsLectureGardee": 5467
+   },
+   "bruit": {
+    "brut": {
+     "caracteres": 4305,
+     "octets": 4394,
+     "mots": 766,
+     "motsLus": 809,
+     "pleins": 336,
+     "connus": 290,
+     "couverture": 0.8630952380952381,
+     "porteurs": 111,
+     "porteursDistincts": 89,
+     "tuiles": 7,
+     "objets": 31,
+     "parasites": 0,
+     "exemplesParasites": [],
+     "top14Parasites": [],
+     "objetsJourParasites": [],
+     "lieuJour": "champs"
+    },
+    "seule:citations": {
+     "caracteres": 4053,
+     "octets": 4135,
+     "mots": 721,
+     "motsLus": 761,
+     "pleins": 316,
+     "connus": 271,
+     "couverture": 0.8575949367088608,
+     "porteurs": 106,
+     "porteursDistincts": 86,
+     "tuiles": 7,
+     "objets": 31,
+     "parasites": 0,
+     "exemplesParasites": [],
+     "top14Parasites": [],
+     "objetsJourParasites": [],
+     "lieuJour": "champs"
+    },
+    "seule:signatures": {
+     "caracteres": 4221,
+     "octets": 4308,
+     "mots": 753,
+     "motsLus": 796,
+     "pleins": 326,
+     "connus": 280,
+     "couverture": 0.8588957055214724,
+     "porteurs": 109,
+     "porteursDistincts": 87,
+     "tuiles": 7,
+     "objets": 31,
+     "parasites": 0,
+     "exemplesParasites": [],
+     "top14Parasites": [],
+     "objetsJourParasites": [],
+     "lieuJour": "champs"
+    },
+    "seule:adresses": {
+     "caracteres": 4214,
+     "octets": 4303,
+     "mots": 766,
+     "motsLus": 797,
+     "pleins": 324,
+     "connus": 281,
+     "couverture": 0.8672839506172839,
+     "porteurs": 108,
+     "porteursDistincts": 89,
+     "tuiles": 7,
+     "objets": 30,
+     "parasites": 0,
+     "exemplesParasites": [],
+     "top14Parasites": [],
+     "objetsJourParasites": [],
+     "lieuJour": "champs"
+    },
+    "seule:code": {
+     "caracteres": 4305,
+     "octets": 4394,
+     "mots": 766,
+     "motsLus": 809,
+     "pleins": 336,
+     "connus": 290,
+     "couverture": 0.8630952380952381,
+     "porteurs": 111,
+     "porteursDistincts": 89,
+     "tuiles": 7,
+     "objets": 31,
+     "parasites": 0,
+     "exemplesParasites": [],
+     "top14Parasites": [],
+     "objetsJourParasites": [],
+     "lieuJour": "champs"
+    },
+    "seule:nombres": {
+     "caracteres": 4176,
+     "octets": 4265,
+     "mots": 756,
+     "motsLus": 795,
+     "pleins": 324,
+     "connus": 281,
+     "couverture": 0.8672839506172839,
+     "porteurs": 108,
+     "porteursDistincts": 89,
+     "tuiles": 7,
+     "objets": 30,
+     "parasites": 0,
+     "exemplesParasites": [],
+     "top14Parasites": [],
+     "objetsJourParasites": [],
+     "lieuJour": "champs"
+    },
+    "seule:propres": {
+     "caracteres": 4107,
+     "octets": 4192,
+     "mots": 749,
+     "motsLus": 780,
+     "pleins": 308,
+     "connus": 268,
+     "couverture": 0.8701298701298701,
+     "porteurs": 111,
+     "porteursDistincts": 89,
+     "tuiles": 7,
+     "objets": 31,
+     "parasites": 0,
+     "exemplesParasites": [],
+     "top14Parasites": [],
+     "objetsJourParasites": [],
+     "lieuJour": "champs"
+    },
+    "seule:vides": {
+     "caracteres": 4305,
+     "octets": 4394,
+     "mots": 766,
+     "motsLus": 809,
+     "pleins": 336,
+     "connus": 290,
+     "couverture": 0.8630952380952381,
+     "porteurs": 111,
+     "porteursDistincts": 89,
+     "tuiles": 7,
+     "objets": 31,
+     "parasites": 0,
+     "exemplesParasites": [],
+     "top14Parasites": [],
+     "objetsJourParasites": [],
+     "lieuJour": "champs"
+    },
+    "net": {
+     "caracteres": 3723,
+     "octets": 3799,
+     "mots": 689,
+     "motsLus": 716,
+     "pleins": 276,
+     "connus": 239,
+     "couverture": 0.8659420289855072,
+     "porteurs": 102,
+     "porteursDistincts": 84,
+     "tuiles": 7,
+     "objets": 30,
+     "parasites": 0,
+     "exemplesParasites": [],
+     "top14Parasites": [],
+     "objetsJourParasites": [],
+     "lieuJour": "champs"
+    }
+   },
+   "strategies": {
+    "a": {
+     "strategie": "(a) tous les passages",
+     "tuiles": 7,
+     "objetsParTuile": 4.29,
+     "sansObjet": 0,
+     "unOuMoins": 0,
+     "deuxOuMoins": 1,
+     "objetsDistincts": 30,
+     "lieux": {
+      "rivage": 1,
+      "interieur": 1,
+      "foret": 2,
+      "champs": 1,
+      "village": 2
+     },
+     "evocation": {
+      "couverts": 8,
+      "total": 10,
+      "liste": [
+       "la chambre des petits-enfants, les bateaux",
+       "le jardin : dahlias, tomates, rosiers",
+       "plage, port, crêpes",
+       "le chat Pompon au coin du feu",
+       "la maison de famille : puits, pommiers, grange",
+       "la recette du far breton",
+       "la balade au bord de l’Odet, le café",
+       "la gare, le train"
+      ],
+      "tuilesQuiEvoquent": 7
+     },
+     "evocationPoses": {
+      "couverts": 8,
+      "total": 10,
+      "liste": [
+       "la chambre des petits-enfants, les bateaux",
+       "le jardin : dahlias, tomates, rosiers",
+       "plage, port, crêpes",
+       "le chat Pompon au coin du feu",
+       "la maison de famille : puits, pommiers, grange",
+       "la recette du far breton",
+       "la balade au bord de l’Odet, le café",
+       "la gare, le train"
+      ],
+      "tuilesQuiEvoquent": 7
+     },
+     "msPlan": 20.6,
+     "detail": [
+      {
+       "porteurs": 14,
+       "mots": [
+        "crêpes",
+        "dahlia",
+        "tomate",
+        "bouquet",
+        "manger",
+        "bleue",
+        "garçon",
+        "plage",
+        "sable",
+        "orange",
+        "bateau",
+        "table",
+        "jardin",
+        "chambre"
+       ],
+       "objets": [
+        "crêpes→crêpes",
+        "tomate→tomate",
+        "table→table",
+        "sable→rocher",
+        "orange→orange",
+        "bateau→barque"
+       ],
+       "nObjets": 6,
+       "poses": [
+        "tomate",
+        "table",
+        "sable",
+        "orange",
+        "bateau"
+       ],
+       "lieu": "rivage",
+       "valence": 0.22,
+       "energie": 0.04,
+       "humeur": "doré",
+       "extrait": "Je suis bien contente que vous veniez pour la , j'ai déjà préparé la chambre bleue pour le"
+      },
+      {
+       "porteurs": 14,
+       "mots": [
+        "dort",
+        "boulangerie",
+        "embrasse",
+        "gâteau",
+        "cuisson",
+        "cheminée",
+        "maman",
+        "marcher",
+        "fauteuil",
+        "chocolat",
+        "recette",
+        "chat",
+        "matin",
+        "médecin"
+       ],
+       "objets": [
+        "gâteau→gâteau",
+        "chocolat→chocolat",
+        "boulangerie→pain",
+        "fauteuil→fauteuil",
+        "chat→animal"
+       ],
+       "nObjets": 5,
+       "poses": [
+        "gâteau",
+        "chocolat",
+        "boulangerie",
+        "fauteuil",
+        "chat"
+       ],
+       "lieu": "interieur",
+       "valence": 0.08,
+       "energie": 0.07,
+       "humeur": "neutre",
+       "extrait": " Votre père aurait aimé ça. Le chat dort toute la journée sur le fauteuil près de la chemi"
+      },
+      {
+       "porteurs": 14,
+       "mots": [
+        "rosier",
+        "bouillie",
+        "figuier",
+        "tailler",
+        "feuilles",
+        "feuillage",
+        "abeille",
+        "malade",
+        "pluie",
+        "oiseau",
+        "mur",
+        "jardin",
+        "rose",
+        "pied"
+       ],
+       "objets": [
+        "feuilles→herbe",
+        "figuier→arbre",
+        "abeille→animal",
+        "feuillage→plante",
+        "rose→fleur"
+       ],
+       "nObjets": 5,
+       "poses": [
+        "feuilles",
+        "abeille",
+        "feuillage",
+        "rose"
+       ],
+       "lieu": "foret",
+       "valence": 0.17,
+       "energie": 0.08,
+       "humeur": "doré",
+       "extrait": "Bonjour à tous, Depuis les pluies de septembre mes rosiers ont des taches noires sur les f"
+      },
+      {
+       "porteurs": 14,
+       "mots": [
+        "ramasse",
+        "lierre",
+        "pommier",
+        "maman",
+        "prairie",
+        "pot",
+        "pomme",
+        "couvert",
+        "jardin",
+        "cœur",
+        "enfant",
+        "personne",
+        "réfléchi",
+        "maison"
+       ],
+       "objets": [
+        "pot→pot",
+        "pomme→pomme"
+       ],
+       "nObjets": 2,
+       "poses": [
+        "pomme"
+       ],
+       "lieu": "champs",
+       "valence": 0.1,
+       "energie": -0.02,
+       "humeur": "doré",
+       "extrait": "J'ai bien réfléchi depuis ton message de dimanche et je crois que tu as raison, il faut ve"
+      },
+      {
+       "porteurs": 14,
+       "mots": [
+        "charrette",
+        "machine",
+        "embrasse",
+        "maman",
+        "notaire",
+        "grange",
+        "horloge",
+        "cuisine",
+        "établi",
+        "coudre",
+        "train",
+        "gare",
+        "rangé",
+        "pourrai"
+       ],
+       "objets": [
+        "charrette→charrette",
+        "train→train",
+        "cuisine→cuisine"
+       ],
+       "nObjets": 3,
+       "poses": [
+        "charrette",
+        "train",
+        "cuisine"
+       ],
+       "lieu": "village",
+       "valence": 0.11,
+       "energie": 0.01,
+       "humeur": "doré",
+       "extrait": " Dans la grange il y a encore la charrette et l'établi de papa avec ses outils bien rangés"
+      },
+      {
+       "porteurs": 14,
+       "mots": [
+        "crêpes",
+        "joyeux",
+        "maman",
+        "marée",
+        "parent",
+        "vélo",
+        "boîte",
+        "anniversaire",
+        "aime",
+        "bateau",
+        "mamie",
+        "port",
+        "livre",
+        "hâte"
+       ],
+       "objets": [
+        "anniversaire→gâteau",
+        "bateau→barque",
+        "crêpes→beignet"
+       ],
+       "nObjets": 3,
+       "poses": [
+        "anniversaire",
+        "crêpes"
+       ],
+       "lieu": "village",
+       "valence": 0.25,
+       "energie": -0.02,
+       "humeur": "doré",
+       "extrait": "Joyeux anniversaire pour tes ans ! Ta maman m'a dit que tu rêvais d'un nouveau vélo, alors"
+      },
+      {
+       "porteurs": 14,
+       "mots": [
+        "cake",
+        "balade",
+        "rosier",
+        "parking",
+        "pomme",
+        "fleur",
+        "café",
+        "feuilles",
+        "printemps",
+        "pied",
+        "bois",
+        "dirai",
+        "ferai",
+        "revenue"
+       ],
+       "objets": [
+        "fleur→fleur",
+        "café→café",
+        "pomme→pomme",
+        "feuilles→herbe",
+        "printemps→arbre",
+        "bois→wagon"
+       ],
+       "nObjets": 6,
+       "poses": [
+        "fleur",
+        "café",
+        "pomme",
+        "feuilles"
+       ],
+       "lieu": "foret",
+       "valence": 0.3,
+       "energie": -0.04,
+       "humeur": "doré",
+       "extrait": "Oui je serai de la sortie jeudi, rendez-vous à au parking du pont du pour la balade le lon"
+      }
+     ]
+    },
+    "b": {
+     "strategie": "(b) une tuile par jour",
+     "tuiles": 1,
+     "objetsParTuile": 5,
+     "sansObjet": 0,
+     "unOuMoins": 0,
+     "deuxOuMoins": 0,
+     "objetsDistincts": 5,
+     "lieux": {
+      "champs": 1
+     },
+     "evocation": {
+      "couverts": 3,
+      "total": 10,
+      "liste": [
+       "le jardin : dahlias, tomates, rosiers",
+       "plage, port, crêpes",
+       "la maison de famille : puits, pommiers, grange"
+      ],
+      "tuilesQuiEvoquent": 1
+     },
+     "evocationPoses": {
+      "couverts": 1,
+      "total": 10,
+      "liste": [
+       "le jardin : dahlias, tomates, rosiers"
+      ],
+      "tuilesQuiEvoquent": 1
+     },
+     "msPlan": 3.9,
+     "detail": [
+      {
+       "porteurs": 14,
+       "mots": [
+        "maman",
+        "rosier",
+        "crêpes",
+        "embrasse",
+        "feuilles",
+        "pomme",
+        "jardin",
+        "ramasse",
+        "dahlia",
+        "bouillie",
+        "figuier",
+        "cake",
+        "charrette",
+        "tailler"
+       ],
+       "objets": [
+        "crêpes→crêpes",
+        "pomme→pomme",
+        "charrette→charrette",
+        "feuilles→herbe",
+        "figuier→arbre"
+       ],
+       "nObjets": 5,
+       "poses": [
+        "feuilles"
+       ],
+       "lieu": "champs",
+       "valence": 0.29,
+       "energie": 0.11,
+       "humeur": "clair",
+       "extrait": "Je suis bien contente que vous veniez pour la , j'ai déjà préparé la chambre bleue pour le"
+      }
+     ],
+     "top14": [
+      "maman",
+      "rosier",
+      "crêpes",
+      "embrasse",
+      "feuilles",
+      "pomme",
+      "jardin",
+      "ramasse",
+      "dahlia",
+      "bouillie",
+      "figuier",
+      "cake",
+      "charrette",
+      "tailler"
+     ]
+    },
+    "c": {
+     "strategie": "(c) au plus 3 tuiles, les plus riches",
+     "tuiles": 3,
+     "objetsParTuile": 5.67,
+     "sansObjet": 0,
+     "unOuMoins": 0,
+     "deuxOuMoins": 0,
+     "objetsDistincts": 17,
+     "lieux": {
+      "rivage": 1,
+      "interieur": 1,
+      "foret": 1
+     },
+     "evocation": {
+      "couverts": 7,
+      "total": 10,
+      "liste": [
+       "la chambre des petits-enfants, les bateaux",
+       "le jardin : dahlias, tomates, rosiers",
+       "plage, port, crêpes",
+       "le chat Pompon au coin du feu",
+       "la maison de famille : puits, pommiers, grange",
+       "la recette du far breton",
+       "la balade au bord de l’Odet, le café"
+      ],
+      "tuilesQuiEvoquent": 3
+     },
+     "evocationPoses": {
+      "couverts": 6,
+      "total": 10,
+      "liste": [
+       "la chambre des petits-enfants, les bateaux",
+       "le jardin : dahlias, tomates, rosiers",
+       "plage, port, crêpes",
+       "le chat Pompon au coin du feu",
+       "la maison de famille : puits, pommiers, grange",
+       "la recette du far breton"
+      ],
+      "tuilesQuiEvoquent": 3
+     },
+     "msPlan": 9,
+     "detail": [
+      {
+       "porteurs": 14,
+       "mots": [
+        "crêpes",
+        "dahlia",
+        "tomate",
+        "bouquet",
+        "manger",
+        "bleue",
+        "garçon",
+        "plage",
+        "sable",
+        "orange",
+        "bateau",
+        "table",
+        "jardin",
+        "chambre"
+       ],
+       "objets": [
+        "crêpes→crêpes",
+        "tomate→tomate",
+        "table→table",
+        "sable→rocher",
+        "orange→orange",
+        "bateau→barque"
+       ],
+       "nObjets": 6,
+       "poses": [
+        "tomate",
+        "table",
+        "sable",
+        "orange",
+        "bateau"
+       ],
+       "lieu": "rivage",
+       "valence": 0.22,
+       "energie": 0.04,
+       "humeur": "doré",
+       "extrait": "Je suis bien contente que vous veniez pour la , j'ai déjà préparé la chambre bleue pour le"
+      },
+      {
+       "porteurs": 14,
+       "mots": [
+        "dort",
+        "boulangerie",
+        "embrasse",
+        "gâteau",
+        "cuisson",
+        "cheminée",
+        "maman",
+        "marcher",
+        "fauteuil",
+        "chocolat",
+        "recette",
+        "chat",
+        "matin",
+        "médecin"
+       ],
+       "objets": [
+        "gâteau→gâteau",
+        "chocolat→chocolat",
+        "boulangerie→pain",
+        "fauteuil→fauteuil",
+        "chat→animal"
+       ],
+       "nObjets": 5,
+       "poses": [
+        "gâteau",
+        "chocolat",
+        "boulangerie",
+        "fauteuil",
+        "chat"
+       ],
+       "lieu": "interieur",
+       "valence": 0.08,
+       "energie": 0.07,
+       "humeur": "neutre",
+       "extrait": " Votre père aurait aimé ça. Le chat dort toute la journée sur le fauteuil près de la chemi"
+      },
+      {
+       "porteurs": 14,
+       "mots": [
+        "cake",
+        "balade",
+        "rosier",
+        "parking",
+        "pomme",
+        "fleur",
+        "café",
+        "feuilles",
+        "printemps",
+        "pied",
+        "bois",
+        "dirai",
+        "ferai",
+        "revenue"
+       ],
+       "objets": [
+        "fleur→fleur",
+        "café→café",
+        "pomme→pomme",
+        "feuilles→herbe",
+        "printemps→arbre",
+        "bois→wagon"
+       ],
+       "nObjets": 6,
+       "poses": [
+        "fleur",
+        "pomme",
+        "feuilles",
+        "printemps"
+       ],
+       "lieu": "foret",
+       "valence": 0.3,
+       "energie": -0.04,
+       "humeur": "doré",
+       "extrait": "Oui je serai de la sortie jeudi, rendez-vous à au parking du pont du pour la balade le lon"
+      }
+     ],
+     "gardes": [
+      0,
+      1,
+      6
+     ]
+    },
+    "e": {
+     "strategie": "(e) au plus 3 tuiles, riches et variées",
+     "tuiles": 3,
+     "objetsParTuile": 5.67,
+     "sansObjet": 0,
+     "unOuMoins": 0,
+     "deuxOuMoins": 0,
+     "objetsDistincts": 17,
+     "lieux": {
+      "rivage": 1,
+      "interieur": 1,
+      "foret": 1
+     },
+     "evocation": {
+      "couverts": 7,
+      "total": 10,
+      "liste": [
+       "la chambre des petits-enfants, les bateaux",
+       "le jardin : dahlias, tomates, rosiers",
+       "plage, port, crêpes",
+       "le chat Pompon au coin du feu",
+       "la maison de famille : puits, pommiers, grange",
+       "la recette du far breton",
+       "la balade au bord de l’Odet, le café"
+      ],
+      "tuilesQuiEvoquent": 3
+     },
+     "evocationPoses": {
+      "couverts": 6,
+      "total": 10,
+      "liste": [
+       "la chambre des petits-enfants, les bateaux",
+       "le jardin : dahlias, tomates, rosiers",
+       "plage, port, crêpes",
+       "le chat Pompon au coin du feu",
+       "la maison de famille : puits, pommiers, grange",
+       "la recette du far breton"
+      ],
+      "tuilesQuiEvoquent": 3
+     },
+     "msPlan": 9.1,
+     "detail": [
+      {
+       "porteurs": 14,
+       "mots": [
+        "crêpes",
+        "dahlia",
+        "tomate",
+        "bouquet",
+        "manger",
+        "bleue",
+        "garçon",
+        "plage",
+        "sable",
+        "orange",
+        "bateau",
+        "table",
+        "jardin",
+        "chambre"
+       ],
+       "objets": [
+        "crêpes→crêpes",
+        "tomate→tomate",
+        "table→table",
+        "sable→rocher",
+        "orange→orange",
+        "bateau→barque"
+       ],
+       "nObjets": 6,
+       "poses": [
+        "tomate",
+        "table",
+        "sable",
+        "orange",
+        "bateau"
+       ],
+       "lieu": "rivage",
+       "valence": 0.22,
+       "energie": 0.04,
+       "humeur": "doré",
+       "extrait": "Je suis bien contente que vous veniez pour la , j'ai déjà préparé la chambre bleue pour le"
+      },
+      {
+       "porteurs": 14,
+       "mots": [
+        "dort",
+        "boulangerie",
+        "embrasse",
+        "gâteau",
+        "cuisson",
+        "cheminée",
+        "maman",
+        "marcher",
+        "fauteuil",
+        "chocolat",
+        "recette",
+        "chat",
+        "matin",
+        "médecin"
+       ],
+       "objets": [
+        "gâteau→gâteau",
+        "chocolat→chocolat",
+        "boulangerie→pain",
+        "fauteuil→fauteuil",
+        "chat→animal"
+       ],
+       "nObjets": 5,
+       "poses": [
+        "gâteau",
+        "chocolat",
+        "boulangerie",
+        "fauteuil",
+        "chat"
+       ],
+       "lieu": "interieur",
+       "valence": 0.08,
+       "energie": 0.07,
+       "humeur": "neutre",
+       "extrait": " Votre père aurait aimé ça. Le chat dort toute la journée sur le fauteuil près de la chemi"
+      },
+      {
+       "porteurs": 14,
+       "mots": [
+        "cake",
+        "balade",
+        "rosier",
+        "parking",
+        "pomme",
+        "fleur",
+        "café",
+        "feuilles",
+        "printemps",
+        "pied",
+        "bois",
+        "dirai",
+        "ferai",
+        "revenue"
+       ],
+       "objets": [
+        "fleur→fleur",
+        "café→café",
+        "pomme→pomme",
+        "feuilles→herbe",
+        "printemps→arbre",
+        "bois→wagon"
+       ],
+       "nObjets": 6,
+       "poses": [
+        "fleur",
+        "pomme",
+        "feuilles",
+        "printemps"
+       ],
+       "lieu": "foret",
+       "valence": 0.3,
+       "energie": -0.04,
+       "humeur": "doré",
+       "extrait": "Oui je serai de la sortie jeudi, rendez-vous à au parking du pont du pour la balade le lon"
+      }
+     ],
+     "gardes": [
+      0,
+      1,
+      6
+     ]
+    },
+    "d": {
+     "strategie": "(d) une tuile par source (mail / web)",
+     "tuiles": 2,
+     "objetsParTuile": 5.5,
+     "sansObjet": 0,
+     "unOuMoins": 0,
+     "deuxOuMoins": 0,
+     "objetsDistincts": 11,
+     "lieux": {
+      "champs": 1,
+      "foret": 1
+     },
+     "evocation": {
+      "couverts": 4,
+      "total": 10,
+      "liste": [
+       "la chambre des petits-enfants, les bateaux",
+       "le jardin : dahlias, tomates, rosiers",
+       "plage, port, crêpes",
+       "la maison de famille : puits, pommiers, grange"
+      ],
+      "tuilesQuiEvoquent": 2
+     },
+     "evocationPoses": {
+      "couverts": 1,
+      "total": 10,
+      "liste": [
+       "le jardin : dahlias, tomates, rosiers"
+      ],
+      "tuilesQuiEvoquent": 1
+     },
+     "msPlan": 6.9,
+     "detail": [
+      {
+       "porteurs": 14,
+       "mots": [
+        "maman",
+        "crêpes",
+        "embrasse",
+        "pomme",
+        "ramasse",
+        "dahlia",
+        "cake",
+        "charrette",
+        "lierre",
+        "machine",
+        "balade",
+        "bateau",
+        "dort",
+        "tomate"
+       ],
+       "objets": [
+        "crêpes→crêpes",
+        "charrette→charrette",
+        "pomme→pomme",
+        "tomate→tomate",
+        "bateau→barque"
+       ],
+       "nObjets": 5,
+       "poses": [],
+       "lieu": "champs",
+       "valence": 0.12,
+       "energie": 0.08,
+       "humeur": "doré",
+       "extrait": "Je suis bien contente que vous veniez pour la , j'ai déjà préparé la chambre bleue pour le"
+      },
+      {
+       "porteurs": 14,
+       "mots": [
+        "rosier",
+        "feuilles",
+        "bouillie",
+        "figuier",
+        "tailler",
+        "feuillage",
+        "abeille",
+        "cuisson",
+        "pied",
+        "recette",
+        "marée",
+        "malade",
+        "fleur",
+        "pluie"
+       ],
+       "objets": [
+        "fleur→fleur",
+        "feuilles→herbe",
+        "abeille→animal",
+        "figuier→arbre",
+        "feuillage→plante",
+        "bouillie→céleri"
+       ],
+       "nObjets": 6,
+       "poses": [
+        "fleur",
+        "feuilles",
+        "abeille",
+        "bouillie"
+       ],
+       "lieu": "foret",
+       "valence": 0.28,
+       "energie": 0.06,
+       "humeur": "doré",
+       "extrait": "recette far breton pruneaux grand-mère far breton sans pruneaux temps de cuisson Bonjour "
+      }
+     ],
+     "sources": [
+      "mail",
+      "web"
+     ]
+    },
+    "aBrut": {
+     "strategie": "(a) tous les passages, texte brut",
+     "tuiles": 7,
+     "objetsParTuile": 4.43,
+     "sansObjet": 0,
+     "unOuMoins": 0,
+     "deuxOuMoins": 1,
+     "objetsDistincts": 31,
+     "lieux": {
+      "rivage": 1,
+      "interieur": 1,
+      "foret": 2,
+      "champs": 1,
+      "village": 2
+     },
+     "evocation": {
+      "couverts": 8,
+      "total": 10,
+      "liste": [
+       "la chambre des petits-enfants, les bateaux",
+       "le jardin : dahlias, tomates, rosiers",
+       "plage, port, crêpes",
+       "le chat Pompon au coin du feu",
+       "la maison de famille : puits, pommiers, grange",
+       "la recette du far breton",
+       "la balade au bord de l’Odet, le café",
+       "la gare, le train"
+      ],
+      "tuilesQuiEvoquent": 7
+     },
+     "evocationPoses": {
+      "couverts": 8,
+      "total": 10,
+      "liste": [
+       "la chambre des petits-enfants, les bateaux",
+       "le jardin : dahlias, tomates, rosiers",
+       "plage, port, crêpes",
+       "le chat Pompon au coin du feu",
+       "la maison de famille : puits, pommiers, grange",
+       "la recette du far breton",
+       "la balade au bord de l’Odet, le café",
+       "la gare, le train"
+      ],
+      "tuilesQuiEvoquent": 7
+     },
+     "msPlan": 0,
+     "detail": [
+      {
+       "porteurs": 14,
+       "mots": [
+        "crêpes",
+        "dahlia",
+        "tomate",
+        "chérie",
+        "bouquet",
+        "manger",
+        "bleue",
+        "garçon",
+        "plage",
+        "sable",
+        "orange",
+        "bateau",
+        "table",
+        "jardin"
+       ],
+       "objets": [
+        "crêpes→crêpes",
+        "tomate→tomate",
+        "sable→rocher",
+        "table→table",
+        "orange→orange",
+        "bateau→barque"
+       ],
+       "nObjets": 6,
+       "poses": [
+        "tomate",
+        "sable",
+        "table",
+        "orange",
+        "bateau"
+       ],
+       "lieu": "rivage",
+       "valence": 0.26,
+       "energie": 0.05,
+       "humeur": "doré",
+       "extrait": "Ma chérie, Je suis bien contente que vous veniez pour la Toussaint, j'ai déjà préparé la "
+      },
+      {
+       "porteurs": 14,
+       "mots": [
+        "recette",
+        "dort",
+        "boulangerie",
+        "embrasse",
+        "gâteau",
+        "cuisson",
+        "cheminée",
+        "maman",
+        "marcher",
+        "fauteuil",
+        "chocolat",
+        "chat",
+        "matin",
+        "médecin"
+       ],
+       "objets": [
+        "gâteau→gâteau",
+        "chocolat→chocolat",
+        "boulangerie→pain",
+        "fauteuil→fauteuil",
+        "chat→animal",
+        "recette→assiette"
+       ],
+       "nObjets": 6,
+       "poses": [
+        "gâteau",
+        "chocolat",
+        "boulangerie",
+        "fauteuil",
+        "chat",
+        "recette"
+       ],
+       "lieu": "interieur",
+       "valence": 0.04,
+       "energie": 0.07,
+       "humeur": "neutre",
+       "extrait": " Votre père aurait aimé ça. Le chat Pompon dort toute la journée sur le fauteuil près de l"
+      },
+      {
+       "porteurs": 14,
+       "mots": [
+        "rosier",
+        "bouillie",
+        "figuier",
+        "tailler",
+        "feuilles",
+        "feuillage",
+        "abeille",
+        "malade",
+        "pluie",
+        "oiseau",
+        "mur",
+        "jardin",
+        "rose",
+        "pied"
+       ],
+       "objets": [
+        "feuilles→herbe",
+        "figuier→arbre",
+        "abeille→animal",
+        "feuillage→plante",
+        "rose→fleur"
+       ],
+       "nObjets": 5,
+       "poses": [
+        "feuilles",
+        "abeille",
+        "feuillage",
+        "rose"
+       ],
+       "lieu": "foret",
+       "valence": 0.17,
+       "energie": 0.08,
+       "humeur": "doré",
+       "extrait": "Bonjour à tous, Depuis les pluies de septembre mes rosiers ont des taches noires sur les f"
+      },
+      {
+       "porteurs": 14,
+       "mots": [
+        "ramasse",
+        "lierre",
+        "pommier",
+        "maman",
+        "prairie",
+        "pot",
+        "pomme",
+        "couvert",
+        "jardin",
+        "cœur",
+        "enfant",
+        "personne",
+        "réfléchi",
+        "maison"
+       ],
+       "objets": [
+        "pot→pot",
+        "pomme→pomme"
+       ],
+       "nObjets": 2,
+       "poses": [
+        "pomme"
+       ],
+       "lieu": "champs",
+       "valence": 0.1,
+       "energie": -0.02,
+       "humeur": "doré",
+       "extrait": "J'ai bien réfléchi depuis ton message de dimanche et je crois que tu as raison, il faut ve"
+      },
+      {
+       "porteurs": 14,
+       "mots": [
+        "charrette",
+        "machine",
+        "embrasse",
+        "maman",
+        "notaire",
+        "grange",
+        "horloge",
+        "téléphone",
+        "cuisine",
+        "établi",
+        "orange",
+        "coudre",
+        "sœur",
+        "train"
+       ],
+       "objets": [
+        "charrette→charrette",
+        "train→train",
+        "cuisine→cuisine"
+       ],
+       "nObjets": 3,
+       "poses": [
+        "charrette",
+        "train",
+        "cuisine"
+       ],
+       "lieu": "village",
+       "valence": 0.12,
+       "energie": 0.05,
+       "humeur": "doré",
+       "extrait": " Dans la grange il y a encore la charrette et l'établi de papa avec ses outils bien rangés"
+      },
+      {
+       "porteurs": 14,
+       "mots": [
+        "crêpes",
+        "joyeux",
+        "maman",
+        "marée",
+        "parent",
+        "vélo",
+        "boîte",
+        "anniversaire",
+        "aime",
+        "bateau",
+        "mamie",
+        "port",
+        "livre",
+        "hâte"
+       ],
+       "objets": [
+        "anniversaire→gâteau",
+        "bateau→barque",
+        "crêpes→beignet"
+       ],
+       "nObjets": 3,
+       "poses": [
+        "anniversaire",
+        "crêpes"
+       ],
+       "lieu": "village",
+       "valence": 0.25,
+       "energie": -0.02,
+       "humeur": "doré",
+       "extrait": "Joyeux anniversaire pour tes 11 ans ! Ta maman m'a dit que tu rêvais d'un nouveau vélo, al"
+      },
+      {
+       "porteurs": 14,
+       "mots": [
+        "cake",
+        "balade",
+        "rosier",
+        "parking",
+        "pomme",
+        "fleur",
+        "soirée",
+        "café",
+        "feuilles",
+        "printemps",
+        "pied",
+        "bois",
+        "odet",
+        "dirai"
+       ],
+       "objets": [
+        "fleur→fleur",
+        "café→café",
+        "pomme→pomme",
+        "feuilles→herbe",
+        "printemps→arbre",
+        "bois→wagon"
+       ],
+       "nObjets": 6,
+       "poses": [
+        "fleur",
+        "café",
+        "pomme",
+        "feuilles"
+       ],
+       "lieu": "foret",
+       "valence": 0.31,
+       "energie": -0.02,
+       "humeur": "doré",
+       "extrait": "Oui je serai de la sortie jeudi, rendez-vous à 9h au parking du pont du Cap-Horn pour la b"
+      }
+     ]
+    }
+   },
+   "ton": {
+    "valence": 0.29,
+    "energie": 0.11,
+    "humeur": "clair",
+    "heure": null
+   },
+   "msParTuileTout": 3.09,
+   "msOuvertureParTuile": 0.09,
+   "croissance": {
+    "saisies": 8,
+    "tuilesFinales": 7,
+    "passagesRecalcules": 11
+   },
+   "filet": {
+    "brut": {
+     "self": [],
+     "other": [],
+     "soft": []
+    },
+    "net": {
+     "self": [],
+     "other": [],
+     "soft": []
+    }
+   }
+  },
+  "anglais": {
+   "libelle": "Sam (surtout en anglais)",
+   "fiche": "Persona : Sam, 34 ans, designer britannique installé à Paris, dans une start-up où l’on travaille en anglais. Il écrit surtout en anglais (Slack, courriels, recherches), un peu en français (propriétaire, belle-famille). Journée : lundi 5 octobre 2026. Tout est inventé.",
+   "saisies": 11,
+   "parSource": {
+    "chat": 5,
+    "mail": 4,
+    "recherche": 2
+   },
+   "brut": {
+    "caracteres": 3920,
+    "octets": 3940,
+    "mots": 681,
+    "motsLus": 671,
+    "pleins": 499,
+    "connus": 400,
+    "couverture": 0.8016032064128257,
+    "porteurs": 45,
+    "porteursDistincts": 37
+   },
+   "net": {
+    "caracteres": 2267,
+    "octets": 2284,
+    "mots": 361,
+    "motsLus": 345,
+    "pleins": 271,
+    "connus": 199,
+    "couverture": 0.7343173431734318,
+    "porteurs": 41,
+    "porteursDistincts": 34
+   },
+   "decoupage": {
+    "brut": {
+     "passages": 3,
+     "ms": 0.7,
+     "porteurs": [
+      17,
+      13,
+      12
+     ]
+    },
+    "net": {
+     "passages": 3,
+     "ms": 0.4,
+     "porteurs": [
+      15,
+      13,
+      11
+     ]
+    }
+   },
+   "lecture": {
+    "msMediane": 2.88,
+    "msP95": 2.93,
+    "msMax": 2.93,
+    "octetsLectureGardee": 4991
+   },
+   "bruit": {
+    "brut": {
+     "caracteres": 3920,
+     "octets": 3940,
+     "mots": 681,
+     "motsLus": 671,
+     "pleins": 499,
+     "connus": 400,
+     "couverture": 0.8016032064128257,
+     "porteurs": 45,
+     "porteursDistincts": 37,
+     "tuiles": 3,
+     "objets": 6,
+     "parasites": 0,
+     "exemplesParasites": [],
+     "top14Parasites": [
+      "pull"
+     ],
+     "objetsJourParasites": [],
+     "lieuJour": "interieur"
+    },
+    "seule:citations": {
+     "caracteres": 3635,
+     "octets": 3655,
+     "mots": 631,
+     "motsLus": 627,
+     "pleins": 462,
+     "connus": 376,
+     "couverture": 0.8138528138528138,
+     "porteurs": 44,
+     "porteursDistincts": 36,
+     "tuiles": 3,
+     "objets": 6,
+     "parasites": 0,
+     "exemplesParasites": [],
+     "top14Parasites": [
+      "pull"
+     ],
+     "objetsJourParasites": [],
+     "lieuJour": "interieur"
+    },
+    "seule:signatures": {
+     "caracteres": 3410,
+     "octets": 3427,
+     "mots": 590,
+     "motsLus": 596,
+     "pleins": 436,
+     "connus": 355,
+     "couverture": 0.8142201834862385,
+     "porteurs": 42,
+     "porteursDistincts": 35,
+     "tuiles": 3,
+     "objets": 6,
+     "parasites": 0,
+     "exemplesParasites": [],
+     "top14Parasites": [
+      "pull"
+     ],
+     "objetsJourParasites": [],
+     "lieuJour": "interieur"
+    },
+    "seule:adresses": {
+     "caracteres": 3786,
+     "octets": 3806,
+     "mots": 679,
+     "motsLus": 652,
+     "pleins": 480,
+     "connus": 385,
+     "couverture": 0.8020833333333334,
+     "porteurs": 43,
+     "porteursDistincts": 35,
+     "tuiles": 3,
+     "objets": 6,
+     "parasites": 0,
+     "exemplesParasites": [],
+     "top14Parasites": [],
+     "objetsJourParasites": [],
+     "lieuJour": "interieur"
+    },
+    "seule:code": {
+     "caracteres": 3779,
+     "octets": 3799,
+     "mots": 660,
+     "motsLus": 657,
+     "pleins": 487,
+     "connus": 393,
+     "couverture": 0.8069815195071869,
+     "porteurs": 45,
+     "porteursDistincts": 37,
+     "tuiles": 3,
+     "objets": 6,
+     "parasites": 0,
+     "exemplesParasites": [],
+     "top14Parasites": [
+      "pull"
+     ],
+     "objetsJourParasites": [],
+     "lieuJour": "interieur"
+    },
+    "seule:nombres": {
+     "caracteres": 3732,
+     "octets": 3752,
+     "mots": 657,
+     "motsLus": 652,
+     "pleins": 488,
+     "connus": 391,
+     "couverture": 0.8012295081967213,
+     "porteurs": 44,
+     "porteursDistincts": 36,
+     "tuiles": 3,
+     "objets": 6,
+     "parasites": 0,
+     "exemplesParasites": [],
+     "top14Parasites": [],
+     "objetsJourParasites": [],
+     "lieuJour": "interieur"
+    },
+    "seule:propres": {
+     "caracteres": 3681,
+     "octets": 3700,
+     "mots": 655,
+     "motsLus": 631,
+     "pleins": 467,
+     "connus": 377,
+     "couverture": 0.8072805139186295,
+     "porteurs": 44,
+     "porteursDistincts": 36,
+     "tuiles": 3,
+     "objets": 6,
+     "parasites": 0,
+     "exemplesParasites": [],
+     "top14Parasites": [
+      "pull"
+     ],
+     "objetsJourParasites": [],
+     "lieuJour": "interieur"
+    },
+    "seule:vides": {
+     "caracteres": 3083,
+     "octets": 3103,
+     "mots": 474,
+     "motsLus": 450,
+     "pleins": 360,
+     "connus": 262,
+     "couverture": 0.7277777777777777,
+     "porteurs": 45,
+     "porteursDistincts": 37,
+     "tuiles": 3,
+     "objets": 6,
+     "parasites": 0,
+     "exemplesParasites": [],
+     "top14Parasites": [
+      "pull"
+     ],
+     "objetsJourParasites": [],
+     "lieuJour": "interieur"
+    },
+    "net": {
+     "caracteres": 2267,
+     "octets": 2284,
+     "mots": 361,
+     "motsLus": 345,
+     "pleins": 271,
+     "connus": 199,
+     "couverture": 0.7343173431734318,
+     "porteurs": 41,
+     "porteursDistincts": 34,
+     "tuiles": 3,
+     "objets": 6,
+     "parasites": 0,
+     "exemplesParasites": [],
+     "top14Parasites": [],
+     "objetsJourParasites": [],
+     "lieuJour": "interieur"
+    }
+   },
+   "strategies": {
+    "a": {
+     "strategie": "(a) tous les passages",
+     "tuiles": 3,
+     "objetsParTuile": 2,
+     "sansObjet": 2,
+     "unOuMoins": 2,
+     "deuxOuMoins": 2,
+     "objetsDistincts": 6,
+     "lieux": {
+      "village": 1,
+      "interieur": 2
+     },
+     "evocation": {
+      "couverts": 2,
+      "total": 11,
+      "liste": [
+       "le propriétaire : radiateur, évier, fuite",
+       "l’anniversaire de Camille : pivoines, gâteau, restaurant"
+      ],
+      "tuilesQuiEvoquent": 1
+     },
+     "evocationPoses": {
+      "couverts": 2,
+      "total": 11,
+      "liste": [
+       "le propriétaire : radiateur, évier, fuite",
+       "l’anniversaire de Camille : pivoines, gâteau, restaurant"
+      ],
+      "tuilesQuiEvoquent": 1
+     },
+     "msPlan": 8.7,
+     "detail": [
+      {
+       "porteurs": 14,
+       "mots": [
+        "bike",
+        "shopping",
+        "coffee",
+        "phone",
+        "shop",
+        "metro",
+        "cat",
+        "illustration",
+        "tunnel",
+        "big",
+        "machine",
+        "quick",
+        "morning",
+        "flat"
+       ],
+       "objets": [],
+       "nObjets": 0,
+       "poses": [],
+       "lieu": "village",
+       "valence": 0.17,
+       "energie": -0.02,
+       "humeur": "doré",
+       "extrait": "morning ☕ coffee machine floor broken PR onboarding flow , love review before standup: qui"
+      },
+      {
+       "porteurs": 14,
+       "mots": [
+        "évier",
+        "radiateur",
+        "pâtissier",
+        "chauffe",
+        "citron",
+        "gâteau",
+        "fleur",
+        "restaurant",
+        "cuisine",
+        "anniversaire",
+        "table",
+        "belle",
+        "chambre",
+        "plombier"
+       ],
+       "objets": [
+        "gâteau→gâteau",
+        "évier→évier",
+        "citron→citron",
+        "fleur→fleur",
+        "table→table",
+        "cuisine→cuisine"
+       ],
+       "nObjets": 6,
+       "poses": [
+        "gâteau",
+        "évier",
+        "citron",
+        "fleur",
+        "cuisine"
+       ],
+       "lieu": "interieur",
+       "valence": 0.29,
+       "energie": 0.01,
+       "humeur": "doré",
+       "extrait": "Bonjour , le radiateur de la chambre ne chauffe plus depuis hier et il y a une petite fuit"
+      },
+      {
+       "porteurs": 14,
+       "mots": [
+        "shop",
+        "leaves",
+        "bike",
+        "wine",
+        "tree",
+        "room",
+        "dog",
+        "cat",
+        "illustration",
+        "little",
+        "big",
+        "work",
+        "autumn",
+        "need"
+       ],
+       "objets": [],
+       "nObjets": 0,
+       "poses": [],
+       "lieu": "interieur",
+       "valence": 0.23,
+       "energie": -0.12,
+       "humeur": "doré",
+       "extrait": "standup notes: , review, blocked copy empty basket state illustration team needs brief au"
+      }
+     ]
+    },
+    "b": {
+     "strategie": "(b) une tuile par jour",
+     "tuiles": 1,
+     "objetsParTuile": 1,
+     "sansObjet": 0,
+     "unOuMoins": 1,
+     "deuxOuMoins": 1,
+     "objetsDistincts": 1,
+     "lieux": {
+      "interieur": 1
+     },
+     "evocation": {
+      "couverts": 1,
+      "total": 11,
+      "liste": [
+       "le propriétaire : radiateur, évier, fuite"
+      ],
+      "tuilesQuiEvoquent": 1
+     },
+     "evocationPoses": {
+      "couverts": 1,
+      "total": 11,
+      "liste": [
+       "le propriétaire : radiateur, évier, fuite"
+      ],
+      "tuilesQuiEvoquent": 1
+     },
+     "msPlan": 3.1,
+     "detail": [
+      {
+       "porteurs": 14,
+       "mots": [
+        "bike",
+        "shop",
+        "cat",
+        "illustration",
+        "évier",
+        "leaves",
+        "radiateur",
+        "pâtissier",
+        "shopping",
+        "big",
+        "coffee",
+        "phone",
+        "wine",
+        "chauffe"
+       ],
+       "objets": [
+        "évier→évier"
+       ],
+       "nObjets": 1,
+       "poses": [
+        "évier"
+       ],
+       "lieu": "interieur",
+       "valence": 0.3,
+       "energie": -0.03,
+       "humeur": "doré",
+       "extrait": "morning ☕ coffee machine floor broken PR onboarding flow , love review before standup: qui"
+      }
+     ],
+     "top14": [
+      "bike",
+      "shop",
+      "cat",
+      "illustration",
+      "évier",
+      "leaves",
+      "radiateur",
+      "pâtissier",
+      "shopping",
+      "big",
+      "coffee",
+      "phone",
+      "wine",
+      "chauffe"
+     ]
+    },
+    "c": {
+     "strategie": "(c) au plus 3 tuiles, les plus riches",
+     "tuiles": 3,
+     "objetsParTuile": 2,
+     "sansObjet": 2,
+     "unOuMoins": 2,
+     "deuxOuMoins": 2,
+     "objetsDistincts": 6,
+     "lieux": {
+      "village": 1,
+      "interieur": 2
+     },
+     "evocation": {
+      "couverts": 2,
+      "total": 11,
+      "liste": [
+       "le propriétaire : radiateur, évier, fuite",
+       "l’anniversaire de Camille : pivoines, gâteau, restaurant"
+      ],
+      "tuilesQuiEvoquent": 1
+     },
+     "evocationPoses": {
+      "couverts": 2,
+      "total": 11,
+      "liste": [
+       "le propriétaire : radiateur, évier, fuite",
+       "l’anniversaire de Camille : pivoines, gâteau, restaurant"
+      ],
+      "tuilesQuiEvoquent": 1
+     },
+     "msPlan": 8.9,
+     "detail": [
+      {
+       "porteurs": 14,
+       "mots": [
+        "bike",
+        "shopping",
+        "coffee",
+        "phone",
+        "shop",
+        "metro",
+        "cat",
+        "illustration",
+        "tunnel",
+        "big",
+        "machine",
+        "quick",
+        "morning",
+        "flat"
+       ],
+       "objets": [],
+       "nObjets": 0,
+       "poses": [],
+       "lieu": "village",
+       "valence": 0.17,
+       "energie": -0.02,
+       "humeur": "doré",
+       "extrait": "morning ☕ coffee machine floor broken PR onboarding flow , love review before standup: qui"
+      },
+      {
+       "porteurs": 14,
+       "mots": [
+        "évier",
+        "radiateur",
+        "pâtissier",
+        "chauffe",
+        "citron",
+        "gâteau",
+        "fleur",
+        "restaurant",
+        "cuisine",
+        "anniversaire",
+        "table",
+        "belle",
+        "chambre",
+        "plombier"
+       ],
+       "objets": [
+        "gâteau→gâteau",
+        "évier→évier",
+        "citron→citron",
+        "fleur→fleur",
+        "table→table",
+        "cuisine→cuisine"
+       ],
+       "nObjets": 6,
+       "poses": [
+        "gâteau",
+        "évier",
+        "citron",
+        "fleur",
+        "cuisine"
+       ],
+       "lieu": "interieur",
+       "valence": 0.29,
+       "energie": 0.01,
+       "humeur": "doré",
+       "extrait": "Bonjour , le radiateur de la chambre ne chauffe plus depuis hier et il y a une petite fuit"
+      },
+      {
+       "porteurs": 14,
+       "mots": [
+        "shop",
+        "leaves",
+        "bike",
+        "wine",
+        "tree",
+        "room",
+        "dog",
+        "cat",
+        "illustration",
+        "little",
+        "big",
+        "work",
+        "autumn",
+        "need"
+       ],
+       "objets": [],
+       "nObjets": 0,
+       "poses": [],
+       "lieu": "interieur",
+       "valence": 0.23,
+       "energie": -0.12,
+       "humeur": "doré",
+       "extrait": "standup notes: , review, blocked copy empty basket state illustration team needs brief au"
+      }
+     ],
+     "gardes": [
+      0,
+      1,
+      2
+     ]
+    },
+    "e": {
+     "strategie": "(e) au plus 3 tuiles, riches et variées",
+     "tuiles": 3,
+     "objetsParTuile": 2,
+     "sansObjet": 2,
+     "unOuMoins": 2,
+     "deuxOuMoins": 2,
+     "objetsDistincts": 6,
+     "lieux": {
+      "village": 1,
+      "interieur": 2
+     },
+     "evocation": {
+      "couverts": 2,
+      "total": 11,
+      "liste": [
+       "le propriétaire : radiateur, évier, fuite",
+       "l’anniversaire de Camille : pivoines, gâteau, restaurant"
+      ],
+      "tuilesQuiEvoquent": 1
+     },
+     "evocationPoses": {
+      "couverts": 2,
+      "total": 11,
+      "liste": [
+       "le propriétaire : radiateur, évier, fuite",
+       "l’anniversaire de Camille : pivoines, gâteau, restaurant"
+      ],
+      "tuilesQuiEvoquent": 1
+     },
+     "msPlan": 9.6,
+     "detail": [
+      {
+       "porteurs": 14,
+       "mots": [
+        "bike",
+        "shopping",
+        "coffee",
+        "phone",
+        "shop",
+        "metro",
+        "cat",
+        "illustration",
+        "tunnel",
+        "big",
+        "machine",
+        "quick",
+        "morning",
+        "flat"
+       ],
+       "objets": [],
+       "nObjets": 0,
+       "poses": [],
+       "lieu": "village",
+       "valence": 0.17,
+       "energie": -0.02,
+       "humeur": "doré",
+       "extrait": "morning ☕ coffee machine floor broken PR onboarding flow , love review before standup: qui"
+      },
+      {
+       "porteurs": 14,
+       "mots": [
+        "évier",
+        "radiateur",
+        "pâtissier",
+        "chauffe",
+        "citron",
+        "gâteau",
+        "fleur",
+        "restaurant",
+        "cuisine",
+        "anniversaire",
+        "table",
+        "belle",
+        "chambre",
+        "plombier"
+       ],
+       "objets": [
+        "gâteau→gâteau",
+        "évier→évier",
+        "citron→citron",
+        "fleur→fleur",
+        "table→table",
+        "cuisine→cuisine"
+       ],
+       "nObjets": 6,
+       "poses": [
+        "gâteau",
+        "évier",
+        "citron",
+        "fleur",
+        "cuisine"
+       ],
+       "lieu": "interieur",
+       "valence": 0.29,
+       "energie": 0.01,
+       "humeur": "doré",
+       "extrait": "Bonjour , le radiateur de la chambre ne chauffe plus depuis hier et il y a une petite fuit"
+      },
+      {
+       "porteurs": 14,
+       "mots": [
+        "shop",
+        "leaves",
+        "bike",
+        "wine",
+        "tree",
+        "room",
+        "dog",
+        "cat",
+        "illustration",
+        "little",
+        "big",
+        "work",
+        "autumn",
+        "need"
+       ],
+       "objets": [],
+       "nObjets": 0,
+       "poses": [],
+       "lieu": "interieur",
+       "valence": 0.23,
+       "energie": -0.12,
+       "humeur": "doré",
+       "extrait": "standup notes: , review, blocked copy empty basket state illustration team needs brief au"
+      }
+     ],
+     "gardes": [
+      0,
+      1,
+      2
+     ]
+    },
+    "d": {
+     "strategie": "(d) une tuile par source (mail / web)",
+     "tuiles": 2,
+     "objetsParTuile": 2.5,
+     "sansObjet": 0,
+     "unOuMoins": 1,
+     "deuxOuMoins": 1,
+     "objetsDistincts": 5,
+     "lieux": {
+      "interieur": 2
+     },
+     "evocation": {
+      "couverts": 3,
+      "total": 11,
+      "liste": [
+       "le propriétaire : radiateur, évier, fuite",
+       "l’anniversaire de Camille : pivoines, gâteau, restaurant",
+       "Londres à Noël, le chien de Jess"
+      ],
+      "tuilesQuiEvoquent": 2
+     },
+     "evocationPoses": {
+      "couverts": 3,
+      "total": 11,
+      "liste": [
+       "le propriétaire : radiateur, évier, fuite",
+       "l’anniversaire de Camille : pivoines, gâteau, restaurant",
+       "Londres à Noël, le chien de Jess"
+      ],
+      "tuilesQuiEvoquent": 2
+     },
+     "msPlan": 6,
+     "detail": [
+      {
+       "porteurs": 14,
+       "mots": [
+        "bike",
+        "shop",
+        "cat",
+        "illustration",
+        "évier",
+        "leaves",
+        "radiateur",
+        "coffee",
+        "wine",
+        "chauffe",
+        "metro",
+        "cuisine",
+        "machine",
+        "flat"
+       ],
+       "objets": [
+        "évier→évier"
+       ],
+       "nObjets": 1,
+       "poses": [
+        "évier"
+       ],
+       "lieu": "interieur",
+       "valence": 0.22,
+       "energie": -0.03,
+       "humeur": "doré",
+       "extrait": "morning ☕ coffee machine floor broken PR onboarding flow , love review before standup: qui"
+      },
+      {
+       "porteurs": 14,
+       "mots": [
+        "pâtissier",
+        "shopping",
+        "big",
+        "phone",
+        "citron",
+        "gâteau",
+        "tree",
+        "room",
+        "dog",
+        "fleur",
+        "tunnel",
+        "restaurant",
+        "little",
+        "anniversaire"
+       ],
+       "objets": [
+        "gâteau→gâteau",
+        "citron→citron",
+        "fleur→fleur",
+        "dog→hot-dog"
+       ],
+       "nObjets": 4,
+       "poses": [
+        "gâteau",
+        "citron",
+        "fleur",
+        "dog"
+       ],
+       "lieu": "interieur",
+       "valence": 0.3,
+       "energie": -0.04,
+       "humeur": "doré",
+       "extrait": "detailed feedback. agree basket summary crowded mobile, moved delivery options separate st"
+      }
+     ],
+     "sources": [
+      "web",
+      "mail"
+     ]
+    },
+    "aBrut": {
+     "strategie": "(a) tous les passages, texte brut",
+     "tuiles": 3,
+     "objetsParTuile": 2,
+     "sansObjet": 2,
+     "unOuMoins": 2,
+     "deuxOuMoins": 2,
+     "objetsDistincts": 6,
+     "lieux": {
+      "village": 1,
+      "interieur": 2
+     },
+     "evocation": {
+      "couverts": 2,
+      "total": 11,
+      "liste": [
+       "le propriétaire : radiateur, évier, fuite",
+       "l’anniversaire de Camille : pivoines, gâteau, restaurant"
+      ],
+      "tuilesQuiEvoquent": 1
+     },
+     "evocationPoses": {
+      "couverts": 2,
+      "total": 11,
+      "liste": [
+       "le propriétaire : radiateur, évier, fuite",
+       "l’anniversaire de Camille : pivoines, gâteau, restaurant"
+      ],
+      "tuilesQuiEvoquent": 1
+     },
+     "msPlan": 0,
+     "detail": [
+      {
+       "porteurs": 14,
+       "mots": [
+        "bike",
+        "pull",
+        "shopping",
+        "coffee",
+        "phone",
+        "shop",
+        "metro",
+        "cat",
+        "example",
+        "illustration",
+        "client",
+        "tunnel",
+        "big",
+        "machine"
+       ],
+       "objets": [],
+       "nObjets": 0,
+       "poses": [],
+       "lieu": "village",
+       "valence": 0.19,
+       "energie": 0.02,
+       "humeur": "doré",
+       "extrait": "morning all ☕ the coffee machine on the 3rd floor is broken again PR for the new onboardin"
+      },
+      {
+       "porteurs": 14,
+       "mots": [
+        "évier",
+        "radiateur",
+        "pâtissier",
+        "chauffe",
+        "citron",
+        "gâteau",
+        "fleur",
+        "restaurant",
+        "cuisine",
+        "anniversaire",
+        "table",
+        "belle",
+        "chambre",
+        "plombier"
+       ],
+       "objets": [
+        "gâteau→gâteau",
+        "évier→évier",
+        "citron→citron",
+        "fleur→fleur",
+        "table→table",
+        "cuisine→cuisine"
+       ],
+       "nObjets": 6,
+       "poses": [
+        "gâteau",
+        "évier",
+        "citron",
+        "fleur",
+        "cuisine"
+       ],
+       "lieu": "interieur",
+       "valence": 0.29,
+       "energie": 0.01,
+       "humeur": "doré",
+       "extrait": "Bonjour Monsieur Petit, le radiateur de la chambre ne chauffe plus depuis hier et il y a u"
+      },
+      {
+       "porteurs": 14,
+       "mots": [
+        "shop",
+        "leaves",
+        "bike",
+        "wine",
+        "iphone",
+        "tree",
+        "room",
+        "dog",
+        "cat",
+        "illustration",
+        "little",
+        "big",
+        "work",
+        "autumn"
+       ],
+       "objets": [],
+       "nObjets": 0,
+       "poses": [],
+       "lieu": "interieur",
+       "valence": 0.23,
+       "energie": -0.13,
+       "humeur": "doré",
+       "extrait": "standup notes: DES-412 done, DES-415 in review, blocked on copy for the empty basket state"
+      }
+     ]
+    }
+   },
+   "ton": {
+    "valence": 0.3,
+    "energie": -0.03,
+    "humeur": "doré",
+    "heure": null
+   },
+   "msParTuileTout": 3.22,
+   "msOuvertureParTuile": 0.04,
+   "croissance": {
+    "saisies": 11,
+    "tuilesFinales": 3,
+    "passagesRecalcules": 14
+   },
+   "filet": {
+    "brut": {
+     "self": [],
+     "other": [],
+     "soft": []
+    },
+    "net": {
+     "self": [],
+     "other": [],
+     "soft": []
+    }
+   }
+  }
+ },
+ "essais": {
+  "base": {
+   "texte": "Ce matin, un café sur le balcon, puis le marché sous la pluie avec mon fils.",
+   "mots": [
+    "balcon",
+    "pluie",
+    "café",
+    "matin",
+    "marché",
+    "fils"
+   ],
+   "objets": [
+    "café→café",
+    "marché→marché"
+   ],
+   "lieu": "village",
+   "tuiles": 1,
+   "humeur": "neutre"
+  },
+  "bruits": {
+   "lien (URL)": {
+    "extrait": "https://www.leboncoin.fr/recherche?category=55&text=velo%2020%20pouces&locations",
+    "motsConnus": [
+     "https",
+     "www",
+     "recherche",
+     "category",
+     "text",
+     "pouces",
+     "locations",
+     "lyon"
+    ],
+    "porteurs": [],
+    "motsAjoutes": [
+     "category",
+     "pouce",
+     "location",
+     "www",
+     "https",
+     "lyon",
+     "recherche",
+     "text"
+    ],
+    "motsPerdus": [],
+    "objetsAjoutes": [],
+    "objetsPerdus": [],
+    "lieu": "village",
+    "humeur": "doré",
+    "porteursSeul": 0
+   },
+   "adresses de courriel": {
+    "extrait": "marc.dubois@rhone-express.example, yves.legoff29@orange.example",
+    "motsConnus": [
+     "marc",
+     "dubois",
+     "example",
+     "yves",
+     "orange",
+     "example"
+    ],
+    "porteurs": [
+     "orange"
+    ],
+    "motsAjoutes": [
+     "orange",
+     "example",
+     "dubois",
+     "yves",
+     "marc"
+    ],
+    "motsPerdus": [],
+    "objetsAjoutes": [
+     "orange→orange"
+    ],
+    "objetsPerdus": [],
+    "lieu": "village",
+    "humeur": "doré",
+    "porteursSeul": 1
+   },
+   "nombres, dates, références": {
+    "extrait": "Commande n° BC-2026-0917 du 05/10/2026 : 3 palettes, 14h30, 2 340,00 € TTC, tél.",
+    "motsConnus": [
+     "commande",
+     "palettes"
+    ],
+    "porteurs": [],
+    "motsAjoutes": [
+     "palettes",
+     "commande"
+    ],
+    "motsPerdus": [],
+    "objetsAjoutes": [],
+    "objetsPerdus": [],
+    "lieu": "village",
+    "humeur": "neutre",
+    "porteursSeul": 0
+   },
+   "signature": {
+    "extrait": "Cordialement, Nadia Benali Responsable logistique Ardoise Mobilier 12 rue des T",
+    "motsConnus": [
+     "cordialement",
+     "nadia",
+     "responsable",
+     "logistique",
+     "ardoise",
+     "mobilier",
+     "rue",
+     "villeurbanne",
+     "www",
+     "example",
+     "envoyé",
+     "iphone"
+    ],
+    "porteurs": [
+     "rue",
+     "iphone"
+    ],
+    "motsAjoutes": [
+     "iphone",
+     "example",
+     "ardoise",
+     "rue",
+     "villeurbanne",
+     "nadia",
+     "logistique",
+     "mobilier"
+    ],
+    "motsPerdus": [],
+    "objetsAjoutes": [],
+    "objetsPerdus": [],
+    "lieu": "village",
+    "humeur": "doré",
+    "porteursSeul": 2
+   },
+   "mention légale": {
+    "extrait": "Ce message et ses pièces jointes sont confidentiels et destinés exclusivement à ",
+    "motsConnus": [
+     "message",
+     "pièces",
+     "jointes",
+     "confidentiels",
+     "destinés",
+     "exclusivement",
+     "destinataires",
+     "reçu",
+     "message",
+     "erreur",
+     "merci",
+     "détruire",
+     "avertir"
+    ],
+    "porteurs": [
+     "pièce"
+    ],
+    "motsAjoutes": [
+     "pièce",
+     "jointes",
+     "confidentiel",
+     "destinataire",
+     "avertir",
+     "message",
+     "détruire",
+     "exclusivement"
+    ],
+    "motsPerdus": [],
+    "objetsAjoutes": [],
+    "objetsPerdus": [],
+    "lieu": "interieur",
+    "humeur": "doré",
+    "porteursSeul": 1
+   },
+   "citation (réponse)": {
+    "extrait": "Le lun. 5 oct. 2026 à 07:58, Marc Dubois <marc.dubois@rhone-express.example> a é",
+    "motsConnus": [
+     "oct",
+     "marc",
+     "dubois",
+     "marc",
+     "dubois",
+     "example",
+     "écrit",
+     "bonjour",
+     "nadia",
+     "camion",
+     "tonnes",
+     "tombé",
+     "panne",
+     "hier",
+     "soir",
+     "garage",
+     "mercredi",
+     "mieux",
+     "marc",
+     "dubois",
+     "transports",
+     "rhône",
+     "express",
+     "exploitation"
+    ],
+    "porteurs": [
+     "écrit",
+     "camion",
+     "tonnes",
+     "soir",
+     "garage",
+     "express"
+    ],
+    "motsAjoutes": [
+     "garage",
+     "camion",
+     "tonnes",
+     "express",
+     "soir",
+     "dubois",
+     "écrit",
+     "example",
+     "marc"
+    ],
+    "motsPerdus": [
+     "fils"
+    ],
+    "objetsAjoutes": [
+     "camion→camion"
+    ],
+    "objetsPerdus": [],
+    "lieu": "village",
+    "humeur": "neutre",
+    "porteursSeul": 6
+   },
+   "code": {
+    "extrait": "```js const panier = document.querySelector(\".cart\"); for (let i = 0; i < items.",
+    "motsConnus": [
+     "const",
+     "panier",
+     "document",
+     "cart",
+     "for",
+     "let",
+     "items",
+     "total",
+     "items",
+     "price",
+     "return",
+     "total"
+    ],
+    "porteurs": [
+     "panier"
+    ],
+    "motsAjoutes": [
+     "panier",
+     "item",
+     "cart",
+     "price",
+     "let",
+     "const",
+     "return",
+     "total"
+    ],
+    "motsPerdus": [],
+    "objetsAjoutes": [
+     "panier→panier"
+    ],
+    "objetsPerdus": [],
+    "lieu": "interieur",
+    "humeur": "neutre",
+    "porteursSeul": 1
+   },
+   "formule de tableur": {
+    "extrait": "=RECHERCHEV(A2;Stock!A:D;4;FAUX)",
+    "motsConnus": [
+     "stock",
+     "faux"
+    ],
+    "porteurs": [],
+    "motsAjoutes": [
+     "stock",
+     "faux"
+    ],
+    "motsPerdus": [],
+    "objetsAjoutes": [],
+    "objetsPerdus": [],
+    "lieu": "village",
+    "humeur": "neutre",
+    "porteursSeul": 0
+   },
+   "phrase anglaise": {
+    "extrait": "I think the meeting is at the office with the team, and we should really bring s",
+    "motsConnus": [
+     "think",
+     "the",
+     "meeting",
+     "the",
+     "office",
+     "with",
+     "the",
+     "team",
+     "and",
+     "should",
+     "really",
+     "bring",
+     "something",
+     "for",
+     "the",
+     "party"
+    ],
+    "porteurs": [
+     "office"
+    ],
+    "motsAjoutes": [
+     "office",
+     "really",
+     "bring",
+     "should",
+     "something",
+     "think",
+     "meeting",
+     "party"
+    ],
+    "motsPerdus": [],
+    "objetsAjoutes": [],
+    "objetsPerdus": [],
+    "lieu": "village",
+    "humeur": "doré",
+    "porteursSeul": 1
+   },
+   "clavardage": {
+    "extrait": "mdr jsp stp ouais grave lol ok",
+    "motsConnus": [
+     "ouais",
+     "grave",
+     "lol"
+    ],
+    "porteurs": [
+     "grave"
+    ],
+    "motsAjoutes": [
+     "grave",
+     "lol",
+     "ouais"
+    ],
+    "motsPerdus": [],
+    "objetsAjoutes": [],
+    "objetsPerdus": [],
+    "lieu": "village",
+    "humeur": "neutre",
+    "porteursSeul": 1
+   }
+  }
+ },
+ "stockage": {
+  "tuileWebp": 231429,
+  "tuileJpeg": 324739,
+  "source": "peinture.json (mesuré)",
+  "parPersona": {
+   "bureau": {
+    "joursActifs": 230,
+    "page": 12954,
+    "lecture": 5461,
+    "a": {
+     "tuilesJour": 10,
+     "tuilesAn": 2300,
+     "moWebpAn": 507.6,
+     "moJpegAn": 712.3,
+     "moLecturesAn": 12,
+     "moPagesAn": 2.8
+    },
+    "b": {
+     "tuilesJour": 1,
+     "tuilesAn": 230,
+     "moWebpAn": 50.8,
+     "moJpegAn": 71.2,
+     "moLecturesAn": 1.2,
+     "moPagesAn": 2.8
+    },
+    "c": {
+     "tuilesJour": 3,
+     "tuilesAn": 690,
+     "moWebpAn": 152.3,
+     "moJpegAn": 213.7,
+     "moLecturesAn": 3.6,
+     "moPagesAn": 2.8
+    },
+    "d": {
+     "tuilesJour": 2,
+     "tuilesAn": 460,
+     "moWebpAn": 101.5,
+     "moJpegAn": 142.5,
+     "moLecturesAn": 2.4,
+     "moPagesAn": 2.8
+    },
+    "e": {
+     "tuilesJour": 3,
+     "tuilesAn": 690,
+     "moWebpAn": 152.3,
+     "moJpegAn": 213.7,
+     "moLecturesAn": 3.6,
+     "moPagesAn": 2.8
+    }
+   },
+   "etudiant": {
+    "joursActifs": 280,
+    "page": 5634,
+    "lecture": 5863,
+    "a": {
+     "tuilesJour": 3,
+     "tuilesAn": 840,
+     "moWebpAn": 185.4,
+     "moJpegAn": 260.1,
+     "moLecturesAn": 4.7,
+     "moPagesAn": 1.5
+    },
+    "b": {
+     "tuilesJour": 1,
+     "tuilesAn": 280,
+     "moWebpAn": 61.8,
+     "moJpegAn": 86.7,
+     "moLecturesAn": 1.6,
+     "moPagesAn": 1.5
+    },
+    "c": {
+     "tuilesJour": 3,
+     "tuilesAn": 840,
+     "moWebpAn": 185.4,
+     "moJpegAn": 260.1,
+     "moLecturesAn": 4.7,
+     "moPagesAn": 1.5
+    },
+    "d": {
+     "tuilesJour": 2,
+     "tuilesAn": 560,
+     "moWebpAn": 123.6,
+     "moJpegAn": 173.4,
+     "moLecturesAn": 3.1,
+     "moPagesAn": 1.5
+    },
+    "e": {
+     "tuilesJour": 3,
+     "tuilesAn": 840,
+     "moWebpAn": 185.4,
+     "moJpegAn": 260.1,
+     "moLecturesAn": 4.7,
+     "moPagesAn": 1.5
+    }
+   },
+   "retraitee": {
+    "joursActifs": 200,
+    "page": 7598,
+    "lecture": 5467,
+    "a": {
+     "tuilesJour": 7,
+     "tuilesAn": 1400,
+     "moWebpAn": 309,
+     "moJpegAn": 433.6,
+     "moLecturesAn": 7.3,
+     "moPagesAn": 1.4
+    },
+    "b": {
+     "tuilesJour": 1,
+     "tuilesAn": 200,
+     "moWebpAn": 44.1,
+     "moJpegAn": 61.9,
+     "moLecturesAn": 1,
+     "moPagesAn": 1.4
+    },
+    "c": {
+     "tuilesJour": 3,
+     "tuilesAn": 600,
+     "moWebpAn": 132.4,
+     "moJpegAn": 185.8,
+     "moLecturesAn": 3.1,
+     "moPagesAn": 1.4
+    },
+    "d": {
+     "tuilesJour": 2,
+     "tuilesAn": 400,
+     "moWebpAn": 88.3,
+     "moJpegAn": 123.9,
+     "moLecturesAn": 2.1,
+     "moPagesAn": 1.4
+    },
+    "e": {
+     "tuilesJour": 3,
+     "tuilesAn": 600,
+     "moWebpAn": 132.4,
+     "moJpegAn": 185.8,
+     "moLecturesAn": 3.1,
+     "moPagesAn": 1.4
+    }
+   },
+   "anglais": {
+    "joursActifs": 230,
+    "page": 4568,
+    "lecture": 4991,
+    "a": {
+     "tuilesJour": 3,
+     "tuilesAn": 690,
+     "moWebpAn": 152.3,
+     "moJpegAn": 213.7,
+     "moLecturesAn": 3.3,
+     "moPagesAn": 1
+    },
+    "b": {
+     "tuilesJour": 1,
+     "tuilesAn": 230,
+     "moWebpAn": 50.8,
+     "moJpegAn": 71.2,
+     "moLecturesAn": 1.1,
+     "moPagesAn": 1
+    },
+    "c": {
+     "tuilesJour": 3,
+     "tuilesAn": 690,
+     "moWebpAn": 152.3,
+     "moJpegAn": 213.7,
+     "moLecturesAn": 3.3,
+     "moPagesAn": 1
+    },
+    "d": {
+     "tuilesJour": 2,
+     "tuilesAn": 460,
+     "moWebpAn": 101.5,
+     "moJpegAn": 142.5,
+     "moLecturesAn": 2.2,
+     "moPagesAn": 1
+    },
+    "e": {
+     "tuilesJour": 3,
+     "tuilesAn": 690,
+     "moWebpAn": 152.3,
+     "moJpegAn": 213.7,
+     "moLecturesAn": 3.3,
+     "moPagesAn": 1
+    }
+   }
+  }
+ }
+}

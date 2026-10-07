@@ -1,0 +1,61 @@
+{
+  "manifest_version": 3,
+  "name": "Le chemin — glaneur (spike de faisabilité)",
+  "short_name": "Glaneur",
+  "version": "0.2.0",
+  "description": "Spike : les écrits banals de la journée, tapés dans n’importe quelle page, font pousser le chemin — sur cet ordinateur seulement. Aucune requête réseau, jamais.",
+  "permissions": ["storage"],
+  "incognito": "not_allowed",
+
+  "background": {
+    "service_worker": "fond.js",
+    "scripts": ["fond.js"]
+  },
+
+  "action": {
+    "default_title": "Le chemin : glaneur",
+    "default_popup": "popup.html"
+  },
+
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "exclude_matches": [
+        "https://chtabay.github.io/archipel/chemin/*",
+        "http://127.0.0.1/chemin/*",
+        "http://127.0.0.1/*/chemin/*",
+        "http://localhost/chemin/*",
+        "http://localhost/*/chemin/*"
+      ],
+      "js": ["glaneur.js"],
+      "run_at": "document_start",
+      "all_frames": true,
+      "match_about_blank": true,
+      "match_origin_as_fallback": true
+    },
+    {
+      "matches": [
+        "https://chtabay.github.io/archipel/chemin/*",
+        "http://127.0.0.1/chemin/*",
+        "http://127.0.0.1/*/chemin/*",
+        "http://localhost/chemin/*",
+        "http://localhost/*/chemin/*"
+      ],
+      "js": ["pont.js"],
+      "run_at": "document_start",
+      "all_frames": false
+    }
+  ],
+
+  "content_security_policy": {
+    "extension_pages": "default-src 'self'; connect-src 'none'; img-src 'self' data: blob:; object-src 'none'"
+  },
+
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "glaneur-chemin@faisabilite.invalid",
+      "strict_min_version": "128.0",
+      "data_collection_permissions": { "required": ["none"] }
+    }
+  }
+}

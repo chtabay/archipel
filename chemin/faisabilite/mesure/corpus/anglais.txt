@@ -1,0 +1,82 @@
+# Persona : Sam, 34 ans, designer britannique installé à Paris, dans une start-up où l’on travaille en anglais. Il écrit
+# surtout en anglais (Slack, courriels, recherches), un peu en français (propriétaire, belle-famille). Journée : lundi 5 octobre 2026.
+# Tout est inventé.
+### chat | 08:34 | Slack | #design
+morning all ☕ the coffee machine on the 3rd floor is broken again
+PR for the new onboarding flow is up, would love a review before standup: https://github.example/acme-app/web/pull/1842
+quick question for @tom: do we keep the illustration of the girl with the umbrella on the welcome screen or swap it for the cat?
+```css
+.onboarding-card { display: flex; gap: 16px; border-radius: 12px; }
+.onboarding-card img { width: 100%; height: auto; }
+```
+### mail | 09:16 | Gmail (pro) | Re: Design review - checkout redesign
+Hi Priya,
+
+Thanks for the detailed feedback. I agree the basket summary is too crowded on mobile, so I've moved the delivery options into a separate step and made the "Pay now" button sticky at the bottom. I also replaced the generic shopping cart icon with a small paper bag, which tested better in the last round.
+Could we do the review on Wednesday at 3pm instead of tomorrow? I'd like to run two more user tests first.
+
+Best,
+Sam
+--
+Sam Carter | Senior Product Designer
+Acme App · 12 rue de la Folie-Méricourt, 75011 Paris
++33 6 39 98 45 67 | sam@acme-app.example
+
+On Fri, 2 Oct 2026 at 18:03, Priya Shah <priya.shah@client.example> wrote:
+> Hi Sam,
+> Overall the checkout redesign looks great. Two concerns: the basket summary feels crowded on small screens,
+> and the cart icon looks a bit generic. Can we review tomorrow at 10?
+> Cheers,
+> Priya
+### recherche | 10:02 | Google | 
+figma auto layout wrap
+best running routes paris buttes chaumont
+flat bike tyre repair near me
+### chat | 11:05 | Slack | DM Tom
+lunch at the lebanese place at 12:30?
+sure. btw my bike got a flat tyre this morning, had to take the metro, total chaos
+oh no. there's a repair shop on rue Oberkampf, they're quick
+cool thanks, I'll drop it there tonight
+### mail | 12:41 | Gmail (pro) | User interviews - key insights (round 3)
+Hi team,
+
+Quick summary of this morning's interviews (5 participants):
+- Most people order groceries on their phone while cooking, one hand busy, so the big buttons really matter.
+- Two participants use the app on the train during their commute and lose connection in the tunnels, we need offline drafts.
+- One older participant asked her granddaughter for help to find the promo code field. We should make it visible.
+- Everyone loved the photos of the fresh vegetables and the bakery section, nobody understood the "smart basket" label.
+
+Full notes and recordings are in the research folder: https://drive.example/research/round-3
+Let's discuss at Thursday's crit.
+
+Sam
+### chat | 14:03 | WhatsApp Web | M. Petit (propriétaire)
+Bonjour Monsieur Petit, le radiateur de la chambre ne chauffe plus depuis hier et il y a une petite fuite sous l'évier de la cuisine. Seriez-vous disponible jeudi pour passer, ou envoyer le plombier ? Merci beaucoup, bonne journée.
+### mail | 15:02 | Gmail (perso) | Samedi soir
+Chère Martine,
+
+Je voulais vous dire que pour l'anniversaire de Camille samedi, j'ai réservé une table dans le petit restaurant italien près du canal, à 20h. Je vais acheter des pivoines, ses fleurs préférées, et un gâteau au citron chez le pâtissier. Est-ce que vous et Bernard voulez venir pour le dessert ? Ce serait une belle surprise pour elle.
+Pardon pour mon français, je fais des progrès !
+Bises,
+Sam
+### chat | 16:10 | Slack | #squad-checkout
+standup notes: DES-412 done, DES-415 in review, blocked on copy for the empty basket state
+also the illustration team needs the brief for the autumn campaign, leaves, pumpkins, warm sweaters, that kind of mood
+### recherche | 17:28 | Google | 
+peonies delivery paris saturday
+cat sitter paris 11e weekend
+### chat | 18:32 | WhatsApp Web | Camille
+leaving work now, need anything from the shop?
+we're out of milk and bread
+and wine for tonight? 🍷
+ok, also dropping the bike at the repair shop on the way
+love you x
+### mail | 21:04 | Gmail (perso) | autumn in Paris
+Hey Jess,
+
+So good to hear from you! Autumn has properly arrived here, the chestnut trees along the canal are turning gold and I went running in the rain this morning before work, which was either brave or stupid. Work is busy but fun, we are redesigning the whole checkout and I spend my days drawing baskets and paper bags.
+We're thinking of coming to London for Christmas, maybe the week before, if your spare room is free? I'd love to see the little one and walk your dog on the Heath again.
+Big hugs to you both,
+Sam
+
+Sent from my iPhone

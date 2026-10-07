@@ -1,0 +1,192 @@
+{
+ "date": "2026-10-07T21:54:57.425Z",
+ "navigateur": "141.0.7390.37",
+ "gl": "--use-gl=angle --use-angle=swiftshader --enable-unsafe-swiftshader --ignore-gpu-blocklist",
+ "demo": {
+  "msOuverture": 15019,
+  "tuiles": 31,
+  "proches": 2,
+  "peintes": 2,
+  "finsMs": [
+   16113,
+   27465
+  ],
+  "intervallesMs": [
+   11352
+  ],
+  "carnet": [
+   {
+    "cle": "1:avn8qvwxgegm",
+    "octets": 210822,
+    "type": "image/webp"
+   },
+   {
+    "cle": "1:dgevori4s5b5",
+    "octets": 221298,
+    "type": "image/webp"
+   }
+  ],
+  "estimation": {
+   "usage": 5876484,
+   "quota": 954414578,
+   "detail": {
+    "caches": 5365935,
+    "indexedDB": 507071,
+    "serviceWorkerRegistrations": 3478
+   }
+  }
+ },
+ "corpus": [
+  {
+   "nom": "bureau (b) la journée en une tuile",
+   "lieu": "interieur",
+   "objets": [
+    "camion→camion",
+    "chaise→chaise",
+    "armoire→armoire",
+    "table→table",
+    "chêne→arbre",
+    "lampe→lampadaire"
+   ],
+   "items": 18,
+   "ms3d": 290.29999999981374,
+   "msAquarelle": 11774.299999999814,
+   "msWebp": 235.90000000037253,
+   "msTotal": 12300.5,
+   "webp": 230340,
+   "webpType": "image/webp",
+   "jpeg": 319855,
+   "png": 2690568,
+   "image": "/tmp/claude-0/-home-user-archipel/ca878779-6fe8-5843-a58b-670f13bb21f0/scratchpad/tuiles/bureau-b-la-journ-e-en-une-tuile.jpg"
+  },
+  {
+   "nom": "etudiant (b) la journée en une tuile",
+   "lieu": "interieur",
+   "objets": [
+    "pizza→pizza",
+    "pain→pain",
+    "oignon→oignon",
+    "boulangerie→pain",
+    "renne→renne",
+    "poubelle→poubelle"
+   ],
+   "items": 21,
+   "ms3d": 183.09999999962747,
+   "msAquarelle": 11378.200000000186,
+   "msWebp": 225.79999999981374,
+   "msTotal": 11787.099999999627,
+   "webp": 229810,
+   "webpType": "image/webp",
+   "jpeg": 317774,
+   "png": 2691870,
+   "image": "/tmp/claude-0/-home-user-archipel/ca878779-6fe8-5843-a58b-670f13bb21f0/scratchpad/tuiles/etudiant-b-la-journ-e-en-une-tuile.jpg"
+  },
+  {
+   "nom": "retraitee (b) la journée en une tuile",
+   "lieu": "champs",
+   "objets": [
+    "crêpes→crêpes",
+    "pomme→pomme",
+    "charrette→charrette",
+    "feuilles→herbe",
+    "figuier→arbre"
+   ],
+   "items": 37,
+   "ms3d": 130.29999999981374,
+   "msAquarelle": 11446.700000000186,
+   "msWebp": 229.8999999994412,
+   "msTotal": 11806.899999999441,
+   "webp": 249800,
+   "webpType": "image/webp",
+   "jpeg": 343614,
+   "png": 2729477,
+   "image": "/tmp/claude-0/-home-user-archipel/ca878779-6fe8-5843-a58b-670f13bb21f0/scratchpad/tuiles/retraitee-b-la-journ-e-en-une-tuile.jpg"
+  },
+  {
+   "nom": "anglais (b) la journée en une tuile",
+   "lieu": "interieur",
+   "objets": [
+    "évier→évier"
+   ],
+   "items": 13,
+   "ms3d": 130.70000000018626,
+   "msAquarelle": 11337.5,
+   "msWebp": 253.59999999962747,
+   "msTotal": 11721.799999999814,
+   "webp": 215438,
+   "webpType": "image/webp",
+   "jpeg": 306654,
+   "png": 2625323,
+   "image": "/tmp/claude-0/-home-user-archipel/ca878779-6fe8-5843-a58b-670f13bb21f0/scratchpad/tuiles/anglais-b-la-journ-e-en-une-tuile.jpg"
+  },
+  {
+   "nom": "bureau (a) passage 1",
+   "lieu": "interieur",
+   "objets": [
+    "camion→camion",
+    "chaise→chaise",
+    "lampe→lampadaire",
+    "carton→carton",
+    "cuisine→évier"
+   ],
+   "items": 17,
+   "ms3d": 121.20000000018626,
+   "msAquarelle": 11317.900000000373,
+   "msWebp": 231.3999999994412,
+   "msTotal": 11670.5,
+   "webp": 220436,
+   "webpType": "image/webp",
+   "jpeg": 313660,
+   "png": 2645598,
+   "image": "/tmp/claude-0/-home-user-archipel/ca878779-6fe8-5843-a58b-670f13bb21f0/scratchpad/tuiles/bureau-a-passage-1.jpg"
+  },
+  {
+   "nom": "bureau (a) passage 4",
+   "lieu": "village",
+   "objets": [
+    "gâteau→gâteau",
+    "fraise→fraise",
+    "fleur→fleur",
+    "verre→verre",
+    "cadeau→cadeau",
+    "poterie→jarre"
+   ],
+   "items": 19,
+   "ms3d": 181.70000000018626,
+   "msAquarelle": 11717.400000000373,
+   "msWebp": 223.79999999981374,
+   "msTotal": 12122.900000000373,
+   "webp": 242748,
+   "webpType": "image/webp",
+   "jpeg": 346877,
+   "png": 2728774,
+   "image": "/tmp/claude-0/-home-user-archipel/ca878779-6fe8-5843-a58b-670f13bb21f0/scratchpad/tuiles/bureau-a-passage-4.jpg"
+  }
+ ],
+ "tailles": {
+  "webp": {
+   "n": 6,
+   "moyenne": 231429,
+   "min": 215438,
+   "max": 249800
+  },
+  "jpeg": {
+   "n": 6,
+   "moyenne": 324739,
+   "min": 306654,
+   "max": 346877
+  },
+  "png": {
+   "n": 6,
+   "moyenne": 2685268,
+   "min": 2625323,
+   "max": 2729477
+  }
+ },
+ "temps": {
+  "premiereMs": 12301,
+  "suivantesMoyenneMs": 11822
+ },
+ "erreurs": [],
+ "requetesDehors": []
+}
