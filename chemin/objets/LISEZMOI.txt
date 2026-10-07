@@ -1,9 +1,21 @@
-Les objets du chemin : des modèles 3D de Kenney (www.kenney.nl), sous licence Creative Commons Zero (CC0 1.0),
-libres de droits, sans obligation de citer. Merci à lui.
+Les objets du chemin : des modèles 3D libres de droits, sous licence Creative Commons Zero (CC0 1.0), sans obligation
+de citer. Merci à leurs auteurs.
 
-Collections : furniture-kit, nature-kit, city-kit-suburban, city-kit-commercial, food-kit, car-kit, watercraft-kit,
-holiday-kit, survival-kit, fantasy-town-kit, cube-pets, mini-characters, mini-market, pirate-kit, train-kit.
+- Kenney (www.kenney.nl) : furniture-kit, nature-kit, city-kit-suburban, city-kit-commercial, city-kit-industrial, food-kit,
+  car-kit, watercraft-kit, holiday-kit, survival-kit, fantasy-town-kit, cube-pets, mini-characters, mini-market, mini-arcade,
+  mini-skate, pirate-kit, train-kit, space-kit, coaster-kit, racing-kit, toy-car-kit, platformer-kit, retro-urban-kit.
+- Kay Lousberg, les KayKit (kaylousberg.itch.io) : les collections kaykit-*.
+- Quaternius (quaternius.com) : les collections q-* (cuisine, intérieurs, meubles, survie, bâtiments, navires, désert,
+  cultures, nature, transports), quaternius-farm et textured-buildings.
+- Sur OpenGameArt.org : savane et tropiques (hreikin, 3D Toolkit) ; mali (m7600) ; maya (titaniumfalcon, sanja, yd) ;
+  vehicules (ipoly3d, weirdybeardyman, clint-bellanger, tehbucket, rgsdev) ; objets-oga (drummyfish, clint-bellanger,
+  mixazzz, noway).
+- archipel : les choses de L’archipel, sur ce même site, exportées par ../outils/archipel.mjs.
+- poses : des gens et des bêtes figés dans un instant d’une de leurs animations, par ../outils/poser.mjs, d’après
+  ../outils/poses.json : les personnages, les animaux, les dinosaures et la Universal Animation Library de Quaternius ; les
+  aventuriers et leurs animations des KayKit ; les mini-characters et les cube-pets de Kenney.
 
-Chaque modèle a été allégé (soudure, quantification, compression meshopt) par ../outils/alleger.mjs ; la palette de
-chaque collection reste à part, dans Textures/colormap.png. Le catalogue, ../catalogue.json, dit pour chacun ses mots,
-son rôle, ses lieux et sa taille réelle.
+Les modèles venus d’ailleurs que Kenney ont été convertis par ../outils/blender-glb.py et ../outils/normaliser.mjs. Chaque
+modèle a été allégé (soudure, quantification, compression meshopt) par ../outils/alleger.mjs ; les images de chaque
+collection restent à part, dans son Textures/. Le catalogue, ../catalogue.json, dit pour chacun ses mots, son rôle, ses
+lieux et sa taille réelle.

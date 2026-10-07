@@ -73,7 +73,7 @@ Avant de dormir, j’ai écrit une lettre à ma mère, sur le bureau, avec un st
 
   // 2. le découpage, dans la page : une page courte reste entière ; les dates, les séparateurs coupent
   const d = await p.evaluate(async () => {
-    const { decouper } = await import('./sens.js?v=3'), S = window.chemin.S;
+    const { decouper } = await import('./sens.js?v=4'), S = window.chemin.S;
     return {
       court: decouper(S, 'Café au soleil sur le balcon, le chat dort sur le canapé.').length, vide: decouper(S, '  \n ').length,
       dates: decouper(S, 'Lundi 3 mars\n\nRéveil difficile, métro bondé, bureau, réunion.\n\nMardi 4 mars\n\nRien.\n\nMercredi 5 mars\n\nForêt, champignons, mousse.').map(x => x.titre),
@@ -84,6 +84,24 @@ Avant de dormir, j’ai écrit une lettre à ma mère, sur le bureau, avec un st
   });
   verifier(d.court === 1 && d.vide === 0 && d.lignes === 1 && d.verne === 1, 'une page courte, même sans ponctuation, ou avec « M. Fogg », reste d’un seul tenant ; un texte vide ne fait rien');
   verifier(d.dates.join(' | ') === 'Lundi 3 mars | Mardi 4 mars | Mercredi 5 mars' && d.separateur === 2, `les dates et les séparateurs coupent : un jour, un passage, même vide (${d.dates.join(', ')})`);
+
+  // 2 bis. au-delà des choses : un verbe conjugué trouve sa pose, le temps qu’il fait change le ciel, les mots mènent ailleurs
+  const v = await p.evaluate(async () => {
+    const { lirePage, objetsDeLaPage, lieuDeLaPage } = await import('./sens.js?v=4'), { climatDe, planifier } = await import('./monde.js?v=3'), S = window.chemin.S, F = window.chemin.F;
+    const lire = t => { const l = lirePage(S, t), o = objetsDeLaPage(S, l); return { l, o, mots: l.mots.map(x => x.m), lieu: lieuDeLaPage(l, o) }; };
+    const mer = lire('Une baleine au loin, des mouettes dans le ciel, et nous avons nagé.');
+    const plan = planifier({ i: 0, date: '2026-07-01', lieu: 'rivage', objets: mer.o, climat: climatDe(mer.l) }, null, F, new Map());
+    const champs = planifier({ i: 1, date: '2026-07-02', lieu: 'champs', objets: mer.o, climat: climatDe(mer.l) }, null, F, new Map());
+    return { dormi: lire('Hier soir, j’ai dormi longtemps.').mots, marche: lire('J’ai marché jusqu’au marché.').mots, lit: lire('Il lit dans son lit.').mots,
+      pluie: climatDe(lire('Il pleut, une averse, nous sommes trempés.').l).meteo, neige: climatDe(lire('Il neigeait, des flocons partout.').l),
+      nuit: climatDe(lire('La nuit, les étoiles.').l).meteo, desert: lire('Le désert, le sable, les dunes, un chameau près de l’oasis.').lieu,
+      ciel: plan.items.filter(it => it.vol).map(it => it.id), eau: plan.items.filter(it => it.eau).map(it => it.id), eauAuxChamps: champs.items.filter(it => it.eau).length };
+  });
+  verifier(v.dormi.includes('dormir') && v.marche.includes('marcher') && v.marche.includes('marché') && v.lit.includes('lire') && v.lit.includes('lit'),
+    `un verbe conjugué compte par son infinitif ; « marché » et « lit » restent des noms, sauf après un auxiliaire ou un pronom (${v.marche.join(', ')} ; ${v.lit.join(', ')})`);
+  verifier(v.pluie[0] >= .5 && v.neige.meteo[1] >= .5 && v.nuit[3] === 1, `le temps qu’il fait vient des mots : la pluie, la neige, la nuit (${v.pluie} · ${v.neige.meteo} · ${v.nuit})`);
+  verifier(v.desert === 'desert', 'les mots mènent ailleurs : le sable, les dunes et le chameau font le désert');
+  verifier(v.ciel.some(id => /mouette/.test(id)) && v.eau.some(id => /whale/.test(id)) && !v.eauAuxChamps, `au bord de l’eau, les mouettes volent et la baleine nage (${v.ciel.concat(v.eau).join(', ')}) ; loin de l’eau, pas de baleine`);
 
   // 3. la première page : gardée sur le téléphone, une tuile de plus, peinte
   await p.fill('#page', PAGE); await p.click('#garder');

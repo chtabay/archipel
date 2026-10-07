@@ -4,7 +4,7 @@
 // passage et sa tonalité. Les vecteurs viennent de fastText, alignés et réduits : voir outils/sens.py.
 
 export const D = 96, PORTEURS = 14; // un passage, une tuile : environ 14 mots porteurs
-export const LECTURE = 2; // la version de la lecture d’un passage : on l’augmente quand un même passage se lirait autrement
+export const LECTURE = 3; // la version de la lecture d’un passage : on l’augmente quand un même passage se lirait autrement
 const IMAGE = Math.round(.55 * 255); // un mot fait une image s’il est à plus de 0,55 d’un objet
 const SEUIL = .7; // un objet vient sur la tuile si son score dépasse 0,7 : son nom est tout près d’un mot du passage
 const ECHELLE = 127 * 127; // les vecteurs sont quantifiés sur un octet, de longueur 127
@@ -23,6 +23,14 @@ c d j l m n s t qu jusqu lorsqu puisqu quelqu aujourd hui oui non ah oh eh bon b
 même mêmes tel telle tels telles leur cette fois chose choses truc trucs gens jour journée temps moment coup peu
 chemin`.split(/\s+/)); // le chemin est toujours là : le mot n’y ajoute rien
 const QUAND = { matin: 'matin', aube: 'matin', réveil: 'matin', midi: 'midi', soir: 'soir', crépuscule: 'soir', nuit: 'nuit', minuit: 'nuit', étoiles: 'nuit', lune: 'nuit' };
+// le temps qu’il fait : des mots, et leurs formes ; deux mentions suffisent pour que le ciel change tout à fait
+const METEO = Object.fromEntries(Object.entries({
+  pluie: 'pluie pluies pleut pleuvait pleuvoir pleuvra plu averse averses bruine crachin giboulée giboulées trempé trempée trempés mouillé mouillée parapluie flaque flaques',
+  orage: 'orage orages orageux tonnerre éclair éclairs foudre tempête tempêtes',
+  neige: 'neige neiges neigeait neiger neigé neigeux enneigé enneigée flocon flocons poudreuse verglas givre gel gelé gelée bonhomme-de-neige',
+  brume: 'brume brumes brumeux brumeuse brouillard brouillards embrumé embrumée',
+  soleil: 'soleil ensoleillé ensoleillée chaleur chaud chaude canicule brûlant brûlante radieux radieuse lumineux',
+}).map(([k, v]) => [k, new Set(v.split(/\s+/))]));
 
 // Les champs de la vie ordinaire : quelques mots chacun, le reste vient des voisins dans l’espace des vecteurs
 export const CHAMPS = {
@@ -40,9 +48,14 @@ export const CHAMPS = {
   repos: 'dormir rêve sommeil repos calme silence lenteur paresse',
   peine: 'deuil mort perdre absence manque pleurer tristesse chagrin',
   voyage: 'voyage train gare avion valise départ vacances route hôtel',
+  desert: 'désert sable dune dunes oasis chameau sahara aride cactus',
+  savane: 'savane afrique safari lion girafe éléphant zèbre brousse',
+  tropiques: 'jungle tropiques tropical palmier cocotier bananier exotique lagon perroquet',
+  montagne: 'montagne montagnes sommet neige ski altitude glacier chalet alpes',
 };
 // les lieux du chemin, et les champs qui y mènent
-export const LIEUX = { interieur: ['maison', 'repos', 'creation', 'famille'], village: ['ville', 'travail', 'amis'], foret: ['nature', 'peine'], champs: ['campagne', 'amour', 'corps'], rivage: ['mer', 'voyage'] };
+export const LIEUX = { interieur: ['maison', 'repos', 'creation', 'famille'], village: ['ville', 'travail', 'amis'], foret: ['nature', 'peine'], champs: ['campagne', 'amour', 'corps'], rivage: ['mer', 'voyage'],
+  desert: ['desert'], savane: ['savane'], tropiques: ['tropiques'], montagne: ['montagne'] };
 const TON = {
   plus: 'heureux heureuse joie content contente bonheur rire sourire beau doux merci plaisir chance réussi',
   moins: 'triste peine pleurer seul seule mal douleur peur colère angoisse perdu fatigue lourd',
@@ -50,15 +63,16 @@ const TON = {
   lent: 'calme lent paisible doux repos silence tranquille sieste lenteur',
 };
 
-export const FICHIERS_SENS = ['sens/mots.txt?v=3', 'sens/vecteurs.bin?v=3', 'sens/objets.bin?v=3', 'sens/images.bin?v=2', 'catalogue.json?v=3'];
+export const FICHIERS_SENS = ['sens/mots.txt?v=4', 'sens/vecteurs.bin?v=4', 'sens/objets.bin?v=4', 'sens/images.bin?v=3', 'catalogue.json?v=4', 'sens/formes.txt?v=1'];
 export async function chargerSens(base = './') {
   const lire = (f, comment) => fetch(new URL(f, new URL(base, location.href))).then(r => { if (!r.ok) throw new Error(`${f} : ${r.status}`); return r[comment](); });
-  const [mots, V, O, I, catalogue] = await Promise.all(FICHIERS_SENS.map((f, n) => lire(f, ['text', 'arrayBuffer', 'arrayBuffer', 'arrayBuffer', 'json'][n])));
-  return preparer(mots, V, O, catalogue, I);
+  const [mots, V, O, I, catalogue, formes] = await Promise.all(FICHIERS_SENS.map((f, n) => lire(f, ['text', 'arrayBuffer', 'arrayBuffer', 'arrayBuffer', 'json', 'text'][n])));
+  return preparer(mots, V, O, catalogue, I, formes);
 }
-export function preparer(mots, V, O, catalogue, I) { // aussi pour les essais, hors du navigateur
+export function preparer(mots, V, O, catalogue, I, formes = '') { // aussi pour les essais, hors du navigateur
   const liste = mots.split('\n').filter(Boolean), index = new Map(liste.map((m, i) => [m, i]));
-  const S = { liste, index, V: new Int8Array(V), O: new Int8Array(O), I: new Uint8Array(I), catalogue, proche: new Float32Array(liste.length).fill(NaN) };
+  const S = { liste, index, V: new Int8Array(V), O: new Int8Array(O), I: new Uint8Array(I), catalogue, proche: new Float32Array(liste.length).fill(NaN), formes: new Map() };
+  for (const l of formes.split('\n')) { const [f, lemme, ambigu] = l.split(' '), i = index.get(lemme); if (f && i != null) S.formes.set(f, { i, ambigu: !!ambigu }); } // « dormi » : dormir
   if (S.O.length !== catalogue.length * D) throw new Error('le catalogue et ses vecteurs ne correspondent pas');
   if (S.I.length !== liste.length || S.V.length !== liste.length * D) throw new Error('les mots et leurs vecteurs ne correspondent pas');
   const N = catalogue.length; S.OT = new Float32Array(D * N); // les objets, rangés axe par axe : un mot se compare à tous d’un seul passage
@@ -86,20 +100,30 @@ export function porteur(S, i) {
 // les mots du texte qui comptent, par leur numéro dans le vocabulaire. Un pluriel compte par son singulier s’il fait une
 // meilleure image : « vaches » trouve la vache. Un mot composé inconnu ne compte pas : ses morceaux trompent plus qu’ils
 // n’aident (« nique » dans « pique-nique »)
+// Un verbe conjugué compte par son infinitif, s’il fait une image : « j’ai dormi » trouve le dormeur. Une forme qui est
+// aussi un nom, comme « marché » ou « lit », n’est un verbe qu’après un auxiliaire ou un pronom : « j’ai marché », « il lit ».
+const SUJETS = new Set('je j tu il elle on nous vous ils elles me m te t se s en ai as a avons avez ont avais avait avions aviez avaient eu aurai auras aura aurons aurez auront aurais aurait suis es est sommes êtes sont étais était étions étiez étaient'.split(' '));
 function* jetons(S, texte) {
+  let avant = '';
   for (const m of mots(texte)) {
+    const sujet = SUJETS.has(avant); avant = m;
     if (m.length < 3 || VIDES.has(m)) continue;
     let i = S.index.get(m);
-    if (m.length > 4 && /[sx]$/.test(m)) { const j = S.index.get(m.slice(0, -1)); if (j != null && (i == null || S.I[j] > S.I[i])) i = j; }
+    const f = S.formes?.get(m);
+    if (f && (!f.ambigu || sujet) && !VIDES.has(S.liste[f.i]) && (i == null || f.ambigu || S.I[f.i] > S.I[i])) i = f.i;
+    else if (m.length > 4 && /[sx]$/.test(m)) { const j = S.index.get(m.slice(0, -1)); if (j != null && (i == null || S.I[j] > S.I[i])) i = j; }
     if (i != null) yield [m, i];
   }
 }
 
-// Lire un passage : ses mots porteurs, son contexte, ses champs, sa tonalité, son heure
+// Lire un passage : ses mots porteurs, son contexte, ses champs, sa tonalité, son heure, le temps qu’il fait
 export function lirePage(S, texte) {
   const brut = mots(texte), n = new Map();
-  let heure = null;
-  for (const m of brut) if (QUAND[m]) heure = QUAND[m];
+  let heure = null; const meteo = {};
+  for (const m of brut) {
+    if (QUAND[m]) heure = QUAND[m];
+    for (const [k, l] of Object.entries(METEO)) if (l.has(m)) meteo[k] = Math.min(1, (meteo[k] || 0) + .5);
+  }
   for (const [, i] of jetons(S, texte)) n.set(i, (n.get(i) || 0) + 1);
   const liste = [...n].map(([i, k]) => ({ i, k, poids: (1 + Math.log(k)) * Math.log(1 + i / 60) * (porteur(S, i) ? 1 : .3) })); // les porteurs d’abord ; les autres, s’il en manque
   const choisis = liste.sort((a, b) => b.poids - a.poids).slice(0, PORTEURS);
@@ -114,7 +138,7 @@ export function lirePage(S, texte) {
     for (const x of pris) { s += 2.5 * x.p * (scal(S.V, x.i, S.ton[a]) - scal(S.V, x.i, S.ton[b])); t += x.p; }
     return Math.max(-1, Math.min(1, s / Math.max(2, t)));
   };
-  return { mots: pris, contexte: ctx, champs, valence: axe('plus', 'moins'), energie: axe('vif', 'lent'), heure };
+  return { mots: pris, contexte: ctx, champs, valence: axe('plus', 'moins'), energie: axe('vif', 'lent'), heure, meteo };
 }
 
 // Les objets les plus proches des mots du passage, au-dessus d’un seuil ; un objet vu récemment est moins probable.

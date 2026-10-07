@@ -2,11 +2,11 @@
 // choisissent le lieu, les objets et le temps qu’il fait. Une page courte fait une tuile ; un long texte, un roman collé
 // d’un coup, se découpe en passages d’environ 14 mots porteurs, une tuile chacun. Les pages restent ici ; rien ne part.
 
-import { chargerSens, decouper, lirePage, candidats, objetsDeLaPage, lieuDeLaPage, LECTURE } from './sens.js?v=3';
-import { familles, planifier, climatDe, Atelier, Modeles, LARGE, HAUT, MARGE, MOTEUR } from './monde.js?v=2';
-import { demo } from './demo.js?v=1';
+import { chargerSens, decouper, lirePage, candidats, objetsDeLaPage, lieuDeLaPage, LECTURE } from './sens.js?v=4';
+import { familles, planifier, climatDe, Atelier, Modeles, LARGE, HAUT, MARGE, MOTEUR } from './monde.js?v=3';
+import { demo } from './demo.js?v=2';
 import * as carnet from './carnet.js?v=1';
-import { peindreFrise } from '../aquarelle.js?v=2';
+import { peindreFrise } from '../aquarelle.js?v=3';
 import { LEX, HUMANS } from '../contenu.js?v=2';
 
 const $ = s => document.querySelector(s);
@@ -18,7 +18,8 @@ const dates = new Map(), quand = d => { // « 7 octobre », et l’année si ce 
   if (!dates.has(d)) { const x = new Date(`${d}T12:00:00`); dates.set(d, x.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', ...(x.getFullYear() !== new Date().getFullYear() && { year: 'numeric' }) })); }
   return dates.get(d);
 };
-const LIEUX = { interieur: 'à la maison', village: 'au village', foret: 'en forêt', champs: 'dans les champs', rivage: 'au bord de l’eau' };
+const LIEUX = { interieur: 'à la maison', village: 'au village', foret: 'en forêt', champs: 'dans les champs', rivage: 'au bord de l’eau', desert: 'dans le désert',
+  savane: 'dans la savane', tropiques: 'sous les tropiques', montagne: 'en montagne' };
 const dit = t => { $('#dit').textContent = t; };
 const souffle = () => new Promise(r => setTimeout(r, 0));
 const empreinte = s => { let a = 0xdeadbeef, b = 0x41c6ce57; for (let i = 0; i < s.length; i++) { const c = s.charCodeAt(i); a = Math.imul(a ^ c, 2654435761); b = Math.imul(b ^ c, 1597334677); } a = Math.imul(a ^ (a >>> 16), 2246822507) ^ Math.imul(b ^ (b >>> 13), 3266489909); b = Math.imul(b ^ (b >>> 16), 2246822507) ^ Math.imul(a ^ (a >>> 13), 3266489909); return (b >>> 0).toString(36) + (a >>> 0).toString(36); };
@@ -163,7 +164,7 @@ async function file() { // une tuile à la fois, la plus proche du milieu de l�
   enCours = false; file();
 }
 async function peindre(k) {
-  const vue = await atelier.tuile(plans, k), jour = j => { const p = plans[Math.max(0, Math.min(plans.length - 1, j))]; return { x: (j + .5) * LARGE, teinte: p.climat.teinte, ciel: p.climat.ciel }; };
+  const vue = await atelier.tuile(plans, k), jour = j => { const p = plans[Math.max(0, Math.min(plans.length - 1, j))]; return { x: (j + .5) * LARGE, teinte: p.climat.teinte, ciel: p.climat.ciel, meteo: p.climat.meteo, astres: p.climat.astres }; };
   const peinte = await peindreFrise(vue, { graine: 7, decalage: [k * LARGE - MARGE, 0], jours: [jour(k - 1), jour(k), jour(k + 1)] });
   const c = el('canvas', { width: LARGE, height: HAUT }); c.getContext('2d').drawImage(peinte, MARGE, 0, LARGE, HAUT, 0, 0, LARGE, HAUT);
   for (const x of [peinte, vue.image, vue.silhouette]) x.width = x.height = 0; // la mémoire, tout de suite
