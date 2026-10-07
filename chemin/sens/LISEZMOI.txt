@@ -1,0 +1,13 @@
+Les vecteurs du sens sont dérivés des vecteurs de mots alignés de fastText (Facebook AI Research) :
+https://fasttext.cc/docs/en/aligned-vectors.html — P. Bojanowski, E. Grave, A. Joulin, T. Mikolov, « Enriching Word
+Vectors with Subword Information », 2017 ; A. Joulin, P. Bojanowski, T. Mikolov, H. Jégou, E. Grave, « Loss in
+Translation: Learning Bilingual Word Mapping with a Retrieval Criterion », 2018.
+Ils sont distribués sous licence Creative Commons Attribution - Partage dans les mêmes conditions 3.0 (CC BY-SA 3.0) ;
+les fichiers de ce dossier, qui en sont tirés, le sont aussi.
+
+mots.txt : les 40 000 mots français les plus fréquents, un par ligne, du plus fréquent au moins fréquent.
+vecteurs.bin : leurs vecteurs, réduits à 96 dimensions par une analyse en composantes principales, ramenés à une
+longueur 1 et quantifiés sur un octet signé (× 127), à la suite.
+objets.bin : de même, le vecteur de chaque objet du catalogue, dans l’ordre de ../catalogue.json, tiré de ses mots
+anglais : français et anglais vivent dans le même espace.
+Voir ../outils/sens.py.
