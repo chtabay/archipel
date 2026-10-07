@@ -4,7 +4,8 @@
 import { SUBJECTS, QUESTIONS, KEYS, BASE, LEX, HUMANS } from './contenu.js?v=2';
 import { graines, quadDe, nomDe, phrasesDe, casesDe, sujetLabel, listeDe, listeGraines, FAMILLES, ESPECES, NOMS } from './grammaire.js?v=5';
 import { nouvelleIle, deriver, resume, forme, depuisForme, archipelInvente, ileInventee, BIOMES, BIOME_IDS, biomeDe } from './ile.js?v=13';
-import { Vue3D, Ilot3D, apercu, disponible, ECH_ARCH, ILE_INTRO, JEU, ecart } from './monde.js?v=26';
+import { Vue3D, Ilot3D, apercu, disponible, ECH_ARCH, ILE_INTRO, JEU, ecart } from './monde.js?v=27';
+import { peindre, legender } from './aquarelle.js?v=1';
 import { lireArchipel, poserIle, deplacerIle, retirerIle, nouveauJeton, partagerIle, voirIle, relierIle, couperRoute, lireRoutes, voisines, nouveauCode } from './serveur.js?v=3';
 import { musique } from './musique.js?v=2';
 import { lire } from './lexique.js?v=2';
@@ -273,6 +274,7 @@ const ICONES_OUTILS = {
   routes: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="17.5" r="2"/><circle cx="19" cy="6.5" r="2"/><path d="M7 16.4c3.6-2.4 6.3-2.3 7.3-5.5.5-1.7 1.5-2.8 2.8-3.4" stroke-dasharray="2.2 2.4"/></svg>',
   confiees: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 18.5c1.2-.7 2.4-.7 3.6 0M17.9 18.5c1.2-.7 2.4-.7 3.6 0"/><path d="M3.2 16.2c.5-1.5 1.4-2.3 2.5-2.3s2 .8 2.5 2.3M15.8 16.2c.5-1.5 1.4-2.3 2.5-2.3s2 .8 2.5 2.3"/><path d="M6.5 10.5c3-4.5 8-4.5 11 0" stroke-dasharray="1.4 2.2"/></svg>',
   intro: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10-6.5z"/></svg>',
+  carte: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="5" width="19" height="14" rx="1.8"/><path d="M15 8.2h3.3v3.6H15z"/><path d="M5.3 15.6c1.3-.9 2.7-.9 4 0s2.7.9 4 0"/><path d="M6 12.6c.8-1.6 2.2-2.4 3.8-2.4"/></svg>',
 };
 function outil(icone, texte, dit, fn, id = null) { // une ligne : son icône, ce qu’elle fait ; à droite, un nombre s’il sert
   const b = el('button', { type: 'button', className: 'outil' });
@@ -289,6 +291,7 @@ function outilsIle() { // ses outils à elle ; puis ceux de l’archipel, s’il
     ici.push(ile.depots.length ? outil(ICONES_OUTILS.changer, 'Changer d’île', '', changerSheet) : outil(ICONES_OUTILS.paysage, 'Choisir le paysage', '', paysageSheet));
     if (iles.length) ici.push(outil(ICONES_OUTILS.avant, 'Tes îles d’avant', String(iles.length), ilesSheet), outil(ICONES_OUTILS.relier, partenaire(ile) ? 'Sa voisine' : 'Relier', '', relierSheet));
   }
+  if (vue) ici.push(outil(ICONES_OUTILS.carte, 'Carte postale', '', carteSheet)); // peinte ici, depuis la vue en 3D
   if (mine && ile.depots.length && !ile.archipel && ile.proposer !== true) la.push(outil(ICONES_OUTILS.mettre, 'Mettre dans l’archipel', '', envoyerSheet, 'mettre-ici')); // la proposition est passée : l’archipel reste à portée
   const n = x.archipel?.routes?.length || 0, att = x.routesEnAttente?.length || 0;
   if (n || att || x.archipel?.code) la.push(outil(ICONES_OUTILS.routes, 'Ses routes', n ? String(n) : att ? `${att} en attente` : '', () => routesSheet(x), 'les-routes')); // un lien ouvert : ses routes, et de quoi tout couper
@@ -1399,6 +1402,51 @@ function ilesSheet() {
   })));
   body.append(footRow(quiet('revenir', closeSheet)));
   openSheet(body);
+}
+
+// La carte postale : l’île qu’on regarde, peinte à l’aquarelle sur ce téléphone, du côté où on la regarde ; à hauteur d’île,
+// ou d’en haut. Elle reste ici : on l’envoie, ou on l’enregistre, d’un geste. Son nom n’y est écrit que si on le demande.
+const FICHIER_CARTE = 'carte-postale-archipel.jpg';
+function carteSheet() {
+  const x = regard || ile, nom = nomIle(x), cadre = el('figure', { className: 'carte-postale' }), image = el('img', { alt: `${nom}, peinte à l’aquarelle` }), etat = el('p', { className: 'tiny' });
+  etat.setAttribute('role', 'status');
+  const [rang, avecNom] = checkRow('Écrire son nom sur la carte', false);
+  const peintes = new Map(); let cote = 'bas', fichier = null, url = null, ferme = false;
+  const partageable = (() => { try { return !!navigator.canShare?.({ files: [new File([''], FICHIER_CARTE, { type: 'image/jpeg' })] }); } catch { return false; } })(); // envoyer une image : pas partout
+  const envoyer = bouton('Envoyer la carte', async () => { try { await navigator.share({ files: [fichier] }); note('carte postale : envoyée'); } catch { /* le partage a été fermé */ } });
+  const garder = el('a', { className: partageable ? 'quiet' : 'btn', textContent: partageable ? 'l’enregistrer' : 'Enregistrer la carte', download: FICHIER_CARTE });
+  garder.addEventListener('click', () => note('carte postale : enregistrée'));
+  const gestes = el('p', { className: 'partage-gestes' }, ...(partageable ? [envoyer] : []), garder);
+  const pret = oui => { envoyer.disabled = !oui; if (!oui) garder.removeAttribute('href'); gestes.classList.toggle('attend', !oui); for (const b of vues.children) b.disabled = !oui; };
+  const legende = () => legender(peintes.get(cote), avecNom.checked ? nom : '').toBlob(b => {
+    if (ferme || !b) return;
+    if (url) URL.revokeObjectURL(url);
+    fichier = new File([b], FICHIER_CARTE, { type: 'image/jpeg' }); url = URL.createObjectURL(b);
+    image.src = url; garder.href = url; cadre.replaceChildren(image); pret(true);
+  }, 'image/jpeg', .9);
+  const montrer = async () => {
+    if (peintes.has(cote)) return legende();
+    pret(false); cadre.replaceChildren(el('p', { textContent: 'Le pinceau passe…' })); etat.textContent = '';
+    try {
+      const photo = vue.photo({ paysage: cote === 'bas' });
+      if (!photo) throw new Error('pas de vue de l’île');
+      const p = await peindre(photo, x.seed);
+      if (ferme) return;
+      peintes.set(cote, p); legende();
+    } catch (e) { console.warn(e); if (!ferme) { cadre.replaceChildren(); etat.textContent = 'Le pinceau ne passe pas sur cet appareil.'; } }
+  };
+  const vues = el('div', { className: 'vues-carte' }, ...[['bas', 'À hauteur d’île'], ['haut', 'D’en haut']].map(([k, t]) => {
+    const b = el('button', { type: 'button', textContent: t }); b.setAttribute('aria-pressed', String(k === cote));
+    b.addEventListener('click', () => { if (k === cote) return; cote = k; for (const c of vues.children) c.setAttribute('aria-pressed', String(c === b)); montrer(); });
+    return b;
+  }));
+  vues.setAttribute('role', 'group'); vues.setAttribute('aria-label', 'La vue');
+  avecNom.addEventListener('change', () => { if (peintes.has(cote)) legende(); });
+  note('geste : carte postale');
+  openSheet(el('div', {}, el('h2', { textContent: 'Une carte postale' }),
+    el('p', { className: 'intro', textContent: 'Ton île, peinte à l’aquarelle, du côté où tu la regardes. Elle reste sur ce téléphone, sauf si tu l’envoies.' }),
+    vues, cadre, rang, gestes, etat, footRow(quiet('revenir', closeSheet))), () => { ferme = true; if (url) URL.revokeObjectURL(url); });
+  montrer();
 }
 
 /* ───────── L’installer ───────── */

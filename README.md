@@ -35,6 +35,15 @@ Une nouvelle île peut se poser à côté d’une île d’avant : **par un pont
 - **Ce que les autres voient** : deux îles voisines, rien de plus. Le pont, les noms et le lien restent sur le téléphone : le pont n’est dessiné que sur celui-ci. Mais qui reconnaît l’une pourra deviner que l’autre est à la même personne : la feuille le dit avant tout geste, et la feuille du partage aussi.
 - **Sa voisine**, sous la vue : la relier autrement, à une autre, ou la détacher, avec une seconde touche ; détachée, elle reste où elle est dans l’archipel. Tout couper l’emmène ailleurs : elle n’est alors plus à côté de ses voisines.
 
+## La carte postale
+
+Sous la vue de l’île, « Carte postale » la peint à l’aquarelle, sur le téléphone, du côté où on la regarde. Deux vues : **à hauteur d’île**, de près, à 5° au-dessus de l’eau, sous son ciel ; ou **d’en haut**, l’île au milieu du papier. La peinture se fait en deux passes, dans `aquarelle.js` :
+
+- **Les aplats.** Une photo de la vue en 3D, sans ce qui passe (nuages, oiseaux, scintillements), est simplifiée en aplats, avec un filtre de Kuwahara à huit secteurs : chaque point prend la couleur du secteur le plus uni autour de lui, et les bords restent nets. Les bords tremblent un peu, comme à main levée.
+- **Le pigment.** Plus sombre au bord des aplats, là où l’eau a séché ; inégal par grandes taches ; déposé dans le creux du grain du papier. Le lavis s’arrête en bord irrégulier, net par endroits, fondu ailleurs. D’en haut, il suit l’île, à quelque distance de son rivage, grâce à sa silhouette ; à hauteur d’île, il suit le bord de la carte. Le ciel garde des nuages réservés, blancs, gris par-dessous, plus lourds sous un ciel sombre ; la mer prend des reflets couchés, et quelques éclats de papier vers le large.
+
+La carte fait 1500 × 1000 points. « L’archipel » est écrit en bas à droite ; son nom, en bas à gauche, seulement si on le demande. Le même bruit, tiré de la graine de l’île, la peint de la même façon d’une fois à l’autre. Elle reste sur le téléphone : on l’envoie avec le partage du téléphone, quand il sait envoyer une image, ou on l’enregistre. Rien ne part sans ce geste. Sans 3D, pas de carte postale.
+
 ## L’installer comme une app
 
 Le site s’installe sur l’écran d’accueil, et s’ouvre alors en plein écran, comme une app, même sans réseau. Sur l’île, un lien discret, « installer l’app », paraît quand le navigateur le permet, et le menu **Plus** y mène toujours : sur Android et sur ordinateur, il ouvre la proposition du navigateur ; sur iPhone, il explique le bouton Partager de Safari, puis « Sur l’écran d’accueil ». Rien ne surgit tout seul au milieu d’un dépôt.
@@ -147,6 +156,7 @@ Une île de l’archipel peut se relier à d’autres, par des routes sur l’ea
 - La seule requête vers l’extérieur va au serveur de l’archipel : pour le lire quand on le regarde, pour y mettre, faire grandir ou retirer son île, et pour ses routes. Sans cookie ni adresse d’origine. Les routes d’une île ne se lisent que si elle a un lien ouvert ou des routes.
 - Le code d’un lien vit derrière un `#` : le serveur des pages ne le reçoit jamais. Son code QR est dessiné sur le téléphone, sans aucun service extérieur. Comme tout serveur, il voit passer l’adresse IP de la requête dans ses journaux ; la base, elle, ne la garde pas.
 - Ce qu’on dépose reste sur le téléphone, sans chiffrement, comme le nom de ses îles. Le texte y est lu, pour y trouver des sujets, et n’en sort jamais.
+- La carte postale est peinte sur le téléphone. Elle n’en sort que si on l’envoie ou l’enregistre, sans son nom sauf si on le demande.
 
 ## Sécurité et solidité
 
@@ -174,15 +184,16 @@ Une île de l’archipel peut se relier à d’autres, par des routes sur l’ea
 | `lexique.js` | Les mots qui font pousser un sujet ou donnent une sensation, lus sur l’appareil |
 | `biomes.js` | Les paysages : couleurs, essences, maisons, cultures, décor, la vie qui s’y promène |
 | `ile.js` | La carte, les quartiers, l’île recalculée depuis ses dépôts, sa forme partagée, les îles inventées de l’intro |
-| `monde.js` | Le relief, la mer, le ciel, la lumière, la caméra, l’île et ses voisines, les ponts, l’archipel, l’intro, l’îlot, les aperçus |
+| `monde.js` | Le relief, la mer, le ciel, la lumière, la caméra, l’île et ses voisines, les ponts, la photo pour la carte postale, l’archipel, l’intro, l’îlot, les aperçus |
 | `modeles.js` | Les choses en 3D, leurs formes, leurs états, le petit décor |
 | `vie.js` | La vie qui ne dit rien : les bêtes du paysage et leurs allées et venues, les oiseaux du ciel et leur vol |
+| `aquarelle.js` | La carte postale : la photo de l’île, peinte à l’aquarelle sur le téléphone, puis légendée |
 | `outils.js` | Les nombres stables et le mélange des couleurs |
 | `vendor/` | three.js 0.186, réduit aux pièces utilisées, et qrcode-generator 2.0.4, pour le code du lien d’une île (licences MIT) |
 | `fonts/` | Nunito (licence SIL OFL 1.1) |
 | `404.html` | Page introuvable ; les anciennes adresses des maquettes et de `limbes/` mènent à l’accueil |
 | `base/archipel.sql` | La base de l’archipel partagé, telle qu’elle est dans le projet de Pyramides : les îles, les liens et les routes, puis le déplacement d’une île |
-| `tests/` | Les tests, dans Chromium avec une 3D logicielle : le parcours, l’intro, le retour, la stabilité, l’archipel partagé, les routes entre les îles, le nom des îles, les îles côte à côte, l’installation, la musique, le menu Plus. Ils parlent à un faux serveur, en mémoire, jamais à la vraie base |
+| `tests/` | Les tests, dans Chromium avec une 3D logicielle : le parcours, l’intro, le retour, la stabilité, l’archipel partagé, les routes entre les îles, le nom des îles, les îles côte à côte, la carte postale, l’installation, la musique, le menu Plus. Ils parlent à un faux serveur, en mémoire, jamais à la vraie base |
 | `package.json` | Seulement pour les tests ; le site n’a besoin de rien |
 | `.nojekyll` | Sert les fichiers tels quels sur GitHub Pages |
 

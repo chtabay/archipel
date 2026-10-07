@@ -15,6 +15,7 @@ const YS = .82, MARGE = 2.5, ECH = 1.35, NIV = .02, lerp = (a, b, t) => a + (b -
 const pop = (t, T) => { if (t == null || reduit) return 1; const p = Math.max(0, Math.min(1, (T - t) / .7)) - 1; return 1 + 2.7 * p * p * p + 1.7 * p * p; };
 const tirer = (table, r) => { const tot = table.reduce((s, [, w]) => s + w, 0); let t = r * tot; for (const [k, w] of table) { if (t < w) return k; t -= w; } return table[0]?.[0]; };
 const mobile = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
+const sous = o => { o.userData.sousEau = true; return o; }, passe = (o, ciel = false) => { o.userData.horsCarte = ciel ? 'haut' : 'toujours'; return o; }; // pour la carte postale : ce qui est sous l’eau ; ce qui n’y figure pas, ou pas vu d’en haut
 function liberer(racine) { racine.traverse(o => { if (o.isLight) o.shadow?.dispose?.(); /* la carte d’ombre du soleil */ if (o.geometry && !o.geometry._partage) o.geometry.dispose(); const ms = Array.isArray(o.material) ? o.material : o.material ? [o.material] : []; for (const m of ms) if (!m._partage) { m.map?.dispose?.(); m.dispose(); } }); }
 
 export function disponible() { try { const gl = document.createElement('canvas').getContext('webgl2') || document.createElement('canvas').getContext('webgl'); gl?.getExtension('WEBGL_lose_context')?.loseContext(); return !!gl; } catch { return false; } } // le contexte d’essai est rendu aussitôt
@@ -308,7 +309,7 @@ function ileStatique(d, part = .5, R = 2, fond = null) { // une île entière en
 function ileRiche(d, fond) { // l’île qu’on approche dans l’archipel : construite comme dans sa vue, décor entier, choses animées
   const B = biomeDe(d.ile.biome), h = relief(d.m, B), eau = eauDe(d.climat, B), b = new Bati(d.ile.seed % 997 + 1), anims = [];
   const dessous = sol3d(b, d.m, B, fond, 3, occlusionDe(d), true); decor3d(b, d.m, B, 1, occupees(d));
-  const grp = new THREE.Group(); grp.add(b.maillage(), dessous);
+  const grp = new THREE.Group(); grp.add(b.maillage(), sous(dessous));
   const v = vie(d, B, h); grp.add(v.grp); anims.push(...v.anims); // la vie qui ne dit rien
   for (const a of d.assets) {
     const r = modeleChose(a, B, a.v ?? hash(`${a.key}:${d.ile.seed}`), { eauHex: eau }), [x, y, z] = posTuile(h, a.tile, a.espece === 'barque');
@@ -433,7 +434,7 @@ export class Vue3D {
     this.distIle = fit(e, e * .62); this.distArch = fit(L * 1.2 + 4, (P * 1.24 + 4) * Math.sin(.72));
     if (this.mode === 'ile' && !this.zoomManuel) this.orbite.but.dist = this.distIle;
   }
-  vider() { if (this.scene) { liberer(this.scene); this.scene.background?.dispose?.(); } this.scene = new THREE.Scene(); this.anims = []; this.objets = new Map(); this.routes = this.pontons = this.clePontons = this.voisins = this.cleVoisines = this.ponts = null; this.animsRoutes = []; this.animsVoisins = []; }
+  vider() { if (this.scene) { liberer(this.scene); this.scene.background?.dispose?.(); } this.scene = new THREE.Scene(); this.anims = []; this.objets = new Map(); this.routes = this.pontons = this.clePontons = this.voisins = this.cleVoisines = this.listeVoisines = this.ponts = null; this.animsRoutes = []; this.animsVoisins = []; }
 
   montrerIle(d, opts = {}) {
     const B = biomeDe(d.ile.biome), eau = eauDe(d.climat, B), cle = `${d.ile.id}:${d.ile.seed}:${d.ile.biome}:${d.climat}:${d.ile.depots.length}`;
@@ -447,9 +448,9 @@ export class Vue3D {
     const T = teintes(d.climat, B), D = this.distIle || 20;
     s.background = fondCiel(d.climat); s.fog = new THREE.Fog(T.brume, D * (d.climat === 'ED' ? 1.1 : 1.5), D * (d.climat === 'ED' ? 3.6 : 4.8));
     const astre = soleil(s, d.climat, 9);
-    s.add(fondMarin(T)); this.eau = mer(T); s.add(this.eau);
+    s.add(sous(fondMarin(T))); this.eau = sous(mer(T)); s.add(this.eau);
     const b = new Bati(d.ile.seed % 997 + 1), dessous = sol3d(b, d.m, B, fondIle(T), 3, occlusionDe(d), true), h = relief(d.m, B); decor3d(b, d.m, B, 1, occupees(d));
-    const terrain = b.maillage(); terrain.castShadow = true; s.add(terrain, dessous);
+    const terrain = b.maillage(); terrain.castShadow = true; s.add(terrain, sous(dessous));
     const v = vie(d, B, h); s.add(v.grp); this.anims.push(...v.anims); // la vie qui ne dit rien
     for (const a of d.assets) {
       const r = modeleChose(a, B, a.v ?? hash(`${a.key}:${d.ile.seed}`), { eauHex: eau }), [x, y, z] = posTuile(h, a.tile, a.espece === 'barque'); // v : la variante reçue avec la forme, pour une île venue d’ailleurs
@@ -459,15 +460,73 @@ export class Vue3D {
       if (a.espece === 'barque') { const o = r.objet; this.anims.push(T => { o.position.y = Math.sin(T * 1.3 + x) * .02; o.rotation.z = Math.sin(T * 1.1 + z) * .04; }); }
     }
     if (d.phareTile) { const p = modelePhare(), [x, y, z] = posTuile(h, d.phareTile); p.objet.position.set(x, y, z); p.objet.userData.ech = ECH; p.objet.traverse(o => { o.userData.key = 'phare'; }); s.add(p.objet); this.objets.set('phare', p.objet); this.anims.push(...p.anims); }
-    const nu = nuages(4, d.climat === 'ED' || d.climat === 'AD', 12, d.ile.seed % 7); s.add(nu.grp); this.anims.push(nu.anim);
-    if (cl.oiseaux) { const c = ciel(B.oiseaux, { rayon: 6.5, haut: 3.4, h, soleil: astre.position.clone().normalize(), graine: d.ile.seed }); s.add(c.grp); this.anims.push(...c.anims); } // le ciel du paysage, s’il est clair
-    const sc = scintillements(16, 12); s.add(sc.grp); this.anims.push(sc.anim);
-    for (let k = 0; k < 3; k++) { const far = ileStatique(deriver({ id: `loin${k}`, seed: d.ile.seed + 101 * (k + 1), biome: d.ile.biome, depots: [] }, { pleine: true }), .3, 2, fondUni(T)), an = 2.2 + k * 1.3; far.position.set(Math.cos(an) * (30 + k * 8), 0, Math.sin(an) * (30 + k * 8)); far.scale.setScalar(.6); s.add(far); } // d’autres îles, au loin
-    this.anneau = new THREE.Mesh(new THREE.TorusGeometry(.5, .025, 4, 32), new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: .9 })); this.anneau.rotation.x = Math.PI / 2; this.anneau.visible = false; s.add(this.anneau);
+    const nu = nuages(4, d.climat === 'ED' || d.climat === 'AD', 12, d.ile.seed % 7); s.add(passe(nu.grp)); this.anims.push(nu.anim);
+    if (cl.oiseaux) { const c = ciel(B.oiseaux, { rayon: 6.5, haut: 3.4, h, soleil: astre.position.clone().normalize(), graine: d.ile.seed }); s.add(passe(c.grp)); this.anims.push(...c.anims); } // le ciel du paysage, s’il est clair
+    const sc = scintillements(16, 12); s.add(passe(sc.grp)); this.anims.push(sc.anim);
+    for (let k = 0; k < 3; k++) { const far = ileStatique(deriver({ id: `loin${k}`, seed: d.ile.seed + 101 * (k + 1), biome: d.ile.biome, depots: [] }, { pleine: true }), .3, 2, fondUni(T)), an = 2.2 + k * 1.3; far.position.set(Math.cos(an) * (30 + k * 8), 0, Math.sin(an) * (30 + k * 8)); far.scale.setScalar(.6); s.add(passe(far, true)); } // d’autres îles, au loin
+    this.anneau = new THREE.Mesh(new THREE.TorusGeometry(.5, .025, 4, 32), new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: .9 })); this.anneau.rotation.x = Math.PI / 2; this.anneau.visible = false; s.add(passe(this.anneau));
     this.orbite.limites = { elev: [.2, 1.1], dist: [4.5, 34] }; this.orbite.auto = true;
     if (premiere) { this.zoomManuel = false; this.redim(); Object.assign(this.orbite.but, { elev: .56, dist: this.distIle }); this.orbite.but.cible.set(0, cibleY, 0); this.orbite.dist = this.distIle * 1.25; this.orbite.cible.set(0, cibleY, 0); }
   }
   tourner() { this.orbite.but.azim += Math.PI / 2; this.orbite.repos = 0; }
+  // La carte postale : l’île du côté où on la regarde. Vue d’en haut, au milieu de l’image, avec de la mer autour ; ou bien à
+  // hauteur d’île, de près, à 5° au-dessus de l’eau, sous le ciel, avec les îles au loin. Sans ce qui passe : nuages, oiseaux,
+  // scintillements, l’anneau du choix ; les nuages seront peints. Puis sa silhouette, blanche sur noir et en petit : ce qui
+  // dépasse de l’eau, pour que le lavis de la mer s’arrête autour d’elle, et que la mer seule prenne les reflets. Le rendu de
+  // la vue sert le temps de ces deux images, puis elle reprend.
+  photo({ larg = 1500, haut = 1000, paysage = false } = {}) {
+    if (this.mode !== 'ile' || !this.scene) return null;
+    const s = this.scene, r = this.rendu, cam = new THREE.PerspectiveCamera(30, larg / haut, .1, 400), caches = [], pr = r.getPixelRatio();
+    const cacher = o => { if (o.visible) { o.visible = false; caches.push(o); } };
+    const copie = (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; c.getContext('2d').drawImage(this.canvas, 0, 0, w, h); return c; }; // dans la même tâche que le rendu : l’image est encore là
+    const fond = s.background, brume = s.fog, blanc = new THREE.MeshBasicMaterial({ color: '#ffffff', fog: false, toneMapped: false }), mat = this.eau?.material, lisse = mat?.roughness;
+    try {
+      s.traverse(o => { const h = o.userData.horsCarte; if (h === 'toujours' || (h && !paysage)) cacher(o); });
+      if (mat && !paysage) mat.roughness = 1; // d’en haut, sans le reflet du soleil sur l’eau : il ferait une tache dans le lavis
+      const el = this.cadrerCarte(cam, paysage);
+      r.setPixelRatio(1); r.setSize(larg, haut, false); r.render(s, cam);
+      const image = copie(larg, haut);
+      s.traverse(o => { if (o.userData.sousEau || o.isSprite) cacher(o); });
+      s.background = new THREE.Color('#000000'); s.fog = null; s.overrideMaterial = blanc;
+      const w = Math.round(larg / 8), h = Math.round(haut / 8);
+      r.setSize(w, h, false); r.render(s, cam);
+      const climat = this.d.climat, horizon = .5 + .5 * Math.tan(el) / Math.tan(cam.fov * Math.PI / 360); // où passe l’horizon, de bas en haut
+      return { image, silhouette: copie(w, h), paysage, horizon, sombre: climat === 'ED' || climat === 'AD' };
+    } finally {
+      s.overrideMaterial = null; s.background = fond; s.fog = brume; blanc.dispose(); if (mat) mat.roughness = lisse;
+      for (const o of caches) o.visible = true;
+      r.setPixelRatio(pr); r.setSize(this.canvas.clientWidth || 300, this.canvas.clientHeight || 300, false); r.render(s, this.camera); // la vue, aussitôt, à sa taille, sans toucher au zoom
+    }
+  }
+  cadrerCarte(cam, paysage = false) { // l’île et ses voisines, du côté où on regarde : d’un peu plus haut, avec de la mer autour ; ou à 5°, de près, sous le ciel
+    const o = this.orbite, el = paysage ? 5 * Math.PI / 180 : Math.max(.5, Math.min(.9, o.elev + .1)), az = o.azim, pts = [], c = new THREE.Vector3();
+    const [lx, ly] = paysage ? [1, .9] : [.78, .7]; // la fenêtre où tient l’île
+    const ile = (m, dx, dz) => { // un cercle autour de la terre, au ras de l’eau et à hauteur d’arbre
+      let cx = 0, cz = 0, n = 0, R = 0;
+      for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) if (m.land[i * N + j]) { cx += i + .5; cz += j + .5; n++; }
+      if (!n) { cx = cz = N / 2; n = 1; } else { cx /= n; cz /= n; }
+      for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) if (m.land[i * N + j]) R = Math.max(R, Math.hypot(i + .5 - cx, j + .5 - cz));
+      for (let k = 0; k < 24; k++) { const a = k / 24 * Math.PI * 2; for (const y of [0, 1.3]) pts.push(new THREE.Vector3(cx - N / 2 + dx + Math.cos(a) * (R + 1), y, cz - N / 2 + dz + Math.sin(a) * (R + 1))); }
+    };
+    ile(this.d.m, 0, 0);
+    for (const v of this.listeVoisines || []) ile(v.d.m, Math.cos(v.angle) * v.t, Math.sin(v.angle) * v.t);
+    for (const p of pts) c.add(p); c.divideScalar(pts.length); c.y = paysage ? .4 : .3;
+    let D = 30;
+    const poser = () => { const k = Math.cos(el); cam.position.set(c.x + Math.sin(az) * k * D, c.y + Math.sin(el) * D, c.z + Math.cos(az) * k * D); cam.lookAt(c); cam.updateMatrixWorld(); };
+    const boite = () => { let x0 = 9, x1 = -9, y0 = 9, y1 = -9; for (const p of pts) { const v = p.clone().project(cam); if (Math.abs(v.z) > 1) return [-9, 9, -9, 9]; x0 = Math.min(x0, v.x); x1 = Math.max(x1, v.x); y0 = Math.min(y0, v.y); y1 = Math.max(y1, v.y); } return [x0, x1, y0, y1]; };
+    const tan = Math.tan(cam.fov * Math.PI / 360), droite = new THREE.Vector3(), haut = new THREE.Vector3();
+    for (let tour = 0; tour < 3; tour++) { // la distance où tout tient dans la fenêtre ; puis on recentre
+      let lo = 2, hi = 300;
+      for (let i = 0; i < 26; i++) { D = (lo + hi) / 2; poser(); const [x0, x1, y0, y1] = boite(); if ((x1 - x0) / 2 < lx && (y1 - y0) / 2 < ly) hi = D; else lo = D; }
+      D = hi; poser();
+      const [x0, x1, y0, y1] = boite();
+      droite.setFromMatrixColumn(cam.matrixWorld, 0); haut.setFromMatrixColumn(cam.matrixWorld, 1);
+      c.addScaledVector(droite, (x0 + x1) / 2 * D * tan * cam.aspect);
+      if (!paysage) c.addScaledVector(haut, (y0 + y1) / 2 * D * tan); // à hauteur d’île, la caméra reste à 5° au-dessus du milieu de l’île
+    }
+    poser();
+    return el;
+  }
   choisir(cle) {
     this.sel = cle; const o = cle ? this.objets.get(cle) : null;
     this.anneau.visible = !!o; if (o) this.anneau.position.set(o.position.x, o.position.y + .03, o.position.z);
@@ -590,7 +649,7 @@ export class Vue3D {
     if (sillage.length) {
       const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(sillage, 3));
       const m = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ color: '#fffaf0', transparent: true, opacity: .75, depthWrite: false, side: THREE.DoubleSide }));
-      m.name = 'sillage'; m.renderOrder = 2; grp.add(m);
+      m.name = 'sillage'; m.renderOrder = 2; grp.add(sous(m));
     }
     this.pontons = grp; this.scene.add(grp);
   }
@@ -600,7 +659,7 @@ export class Vue3D {
     if (this.mode !== 'ile' || !this.d) return;
     const cle = liste.map(v => `${v.cle}:${v.d.m.taille}:${v.d.assets.length}:${v.angle.toFixed(3)}:${v.t.toFixed(2)}:${v.pont ? 1 : 0}`).join('|');
     if (cle === (this.cleVoisines ?? '')) return;
-    this.cleVoisines = cle;
+    this.cleVoisines = cle; this.listeVoisines = liste;
     if (this.voisins) { this.scene.remove(this.voisins); liberer(this.voisins); this.voisins = null; }
     this.animsVoisins = [];
     const base = Math.max(this.d.m.rayon * 2 - .2, 4.6), ids = liste.map(v => v.cle).join('|'); // avec une voisine, la vue recule un peu, pour en montrer le rivage

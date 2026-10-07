@@ -16,7 +16,7 @@ const cocherPuisPoser = async (p, cas) => { // une case, les questions jusqu’a
 };
 // où est l’île d’aujourd’hui, et où elle devrait être : à côté de sa voisine, à la distance que leurs formes demandent
 const place = p => p.evaluate(async () => {
-  const { ecart, JEU, ECH_ARCH } = await import('./monde.js?v=26'), { deriver } = await import('./ile.js?v=13'), A = window.archipel, x = A.ile, v = x.voisine, P = v && A.iles.find(y => y.id === v.ile);
+  const { ecart, JEU, ECH_ARCH } = await import('./monde.js?v=27'), { deriver } = await import('./ile.js?v=13'), A = window.archipel, x = A.ile, v = x.voisine, P = v && A.iles.find(y => y.id === v.ile);
   if (!P) return null;
   const t = ecart(deriver(P).m, deriver(x).m, v.angle, JEU[v.mode]) * ECH_ARCH;
   return { mode: v.mode, angle: v.angle, t, attendu: [P.archipel.x + Math.cos(v.angle) * t, P.archipel.z + Math.sin(v.angle) * t], ici: x.archipel?.id ? [x.archipel.x, x.archipel.z] : null, P: [P.archipel.x, P.archipel.z] };

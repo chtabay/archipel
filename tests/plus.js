@@ -77,7 +77,7 @@ const sonore = p => p.evaluate(() => window.archipel.musique.etat());
       return { deborde: document.documentElement.scrollWidth - innerWidth, pleine: btn.width >= nav.getBoundingClientRect().width - 1, textes: lignes.map(l => l.querySelector('.outil-texte').textContent), cartes: nav.querySelectorAll('.outils').length,
         entiers: lignes.every(l => { const t = l.querySelector('.outil-texte'); return t.scrollWidth <= t.clientWidth + 1; }), hauteurs: lignes.map(l => Math.round(l.getBoundingClientRect().height)) };
     });
-    verifier(o.deborde <= 0 && o.pleine && o.entiers && o.hauteurs.every(h => h >= 44 && h <= 48) && o.cartes === 2 && o.textes.join(' · ') === 'Renommer · Changer d’île · Mettre dans l’archipel', `à 320 px, les outils de l’île tiennent, très compacts : ${o.textes.join(' · ')} ; une ligne chacun, entière, de ${o.hauteurs[0]} px, assez pour le doigt`);
+    verifier(o.deborde <= 0 && o.pleine && o.entiers && o.hauteurs.every(h => h >= 44 && h <= 48) && o.cartes === 2 && o.textes.join(' · ') === 'Renommer · Changer d’île · Carte postale · Mettre dans l’archipel', `à 320 px, les outils de l’île tiennent, très compacts : ${o.textes.join(' · ')} ; une ligne chacun, entière, de ${o.hauteurs[0]} px, assez pour le doigt`);
     await p.evaluate(() => { const n = document.querySelector('#app .actions'); scrollTo(0, n.getBoundingClientRect().top + scrollY - 120); }); await p.waitForTimeout(200);
     await p.screenshot({ path: path.join(OUT, '320-outils.png') });
     await c.close(); }
