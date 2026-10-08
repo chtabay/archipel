@@ -25,7 +25,8 @@ s’en souvienne au moment de construire. Les essais et les mesures sont dans le
 ## Où et comment ça se voit
 
 - **La frise dans chaque nouvel onglet**, en grand, sans champ de recherche (la barre d’adresse garde le
-  curseur), avec les raccourcis des sites les plus visités dessous. La tuile du jour en icône de l’extension.
+  curseur), avec, en option, les raccourcis des sites les plus visités dessous. La tuile du jour en icône de
+  l’extension, en option aussi (à seize pixels, une aquarelle est une tache ; l’icône est fixe par défaut).
   Sur Firefox, le paysage du jour en fond de barre. Un panneau latéral à la demande. Pas de bandeau en haut des pages.
 - **L’ajout d’une tuile est l’événement.** Elle arrive au bout du chemin, révélée au pinceau. On n’anime que la
   nouveauté ; le reste reste calme (nuages lents, lumière de l’heure).
@@ -36,8 +37,10 @@ s’en souvienne au moment de construire. Les essais et les mesures sont dans le
 ## La dose : 14 mots porteurs par tuile, pour le moment
 
 - Les écrits du jour s’accumulent dans une tuile ouverte ; à **14 mots porteurs**, la dose du chemin
-  d’aujourd’hui, elle se ferme, se peint, et arrive. Une tuile fermée ne se repeint jamais. À minuit, la tuile
-  ouverte se ferme, même incomplète. Une dose à 28 a été envisagée, et reste possible plus tard.
+  d’aujourd’hui, elle se ferme, se peint, et arrive. Une tuile fermée ne se relit jamais ; sa peinture est refaite
+  une seule fois, sans animation, quand sa voisine de droite arrive (les tuiles se raccordent sans couture). À
+  minuit, la tuile ouverte se ferme si elle a au moins quatre porteurs. Une dose à 28 a été envisagée, et reste
+  possible plus tard.
 - Mesuré sur les quatre journées inventées de `mesure/corpus/`, texte nettoyé :
 
   | Journée | mots à soi | tuiles à 14 | tuiles à 28 |
@@ -48,6 +51,8 @@ s’en souvienne au moment de construire. Les essais et les mesures sont dans le
   | surtout en anglais (Sam) | 361 | 3 | 1 |
 
 - Les tuiles du journal gardent leur étiquette, pour se distinguer des tuiles des écrits.
+
+Le plan de construction est dans `PLAN.md` ; il précise ces choix après relecture critique.
 
 ## Recommandations non encore tranchées
 
