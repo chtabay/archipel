@@ -85,6 +85,7 @@ body.deroule .frise { position: fixed; z-index: 20; top: 0; left: 0; width: 100%
 .blocs { display: grid; gap: .55rem; margin: 0 0 .7rem; }
 .blocs:empty { display: none; }
 .bloc { padding: .6rem .85rem .2rem; border: 1px solid var(--ligne); border-radius: .8rem; background: #fbf7ee; }
+.bloc.glane { border-style: dashed; }
 .bloc.en-cours { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-doux); }
 .bloc .heure { margin: 0 0 .1rem; color: var(--pale); font-size: .8rem; font-weight: 700; }
 .bloc .texte { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }

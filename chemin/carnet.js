@@ -26,7 +26,7 @@ const magasin = async (nom, mode = 'readonly') => { const db = await ouvrir(); i
 
 // une page : sa date, son texte, et ses blocs s’il y en a, écrits à des heures différentes ; leur texte bout à bout est celui de la page
 const valide = p => p && typeof p.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(p.date) && typeof p.texte === 'string';
-const enBlocs = b => (Array.isArray(b) && b.length && b.every(x => typeof x?.texte === 'string') ? b.map(x => ({ heure: typeof x.heure === 'string' ? x.heure : '', texte: x.texte })) : null);
+const enBlocs = b => (Array.isArray(b) && b.length && b.every(x => typeof x?.texte === 'string') ? b.map(x => ({ heure: typeof x.heure === 'string' ? x.heure : '', texte: x.texte, ...(x.source === 'glane' && { source: 'glane' }) })) : null); // source : « glane », un écrit glané ailleurs par l’extension
 const propre = p => { const blocs = enBlocs(p.blocs); return blocs ? { date: p.date, texte: p.texte, blocs } : { date: p.date, texte: p.texte }; };
 const ancien = () => { try { const p = JSON.parse(localStorage.getItem(VIEUX) || '[]'); return Array.isArray(p) ? p.filter(valide) : []; } catch { return []; } };
 export async function lirePages() {

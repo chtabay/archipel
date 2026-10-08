@@ -316,8 +316,9 @@ function montrerPage() { // le jour montré, aujourd’hui ou celui d’une tuil
     if (r && r[0] < f && r[1] > d) { const a = Math.max(r[0], d) - d, z = Math.min(r[1], f) - d; texte.append(b.texte.slice(0, a), el('mark', { textContent: b.texte.slice(a, z) }), b.texte.slice(z)); }
     else texte.textContent = b.texte;
     const long = b.texte.length > 600, ouvert = !!texte.firstElementChild, gestes = el('p', { className: 'gestes-bloc' });
-    const bloc = el('article', { className: ['bloc', long && 'long', ouvert && 'ouvert', edition?.date === jour && edition.i === i && 'en-cours'].filter(Boolean).join(' ') },
-      ...(b.heure ? [el('p', { className: 'heure', textContent: aLHeure(b.heure) })] : []), texte, gestes);
+    const glane = b.source === 'glane', heure = [aLHeure(b.heure), glane && 'écrit ailleurs'].filter(Boolean).join(' · '); // glané par l’extension, dans une page du navigateur
+    const bloc = el('article', { className: ['bloc', long && 'long', ouvert && 'ouvert', glane && 'glane', edition?.date === jour && edition.i === i && 'en-cours'].filter(Boolean).join(' ') },
+      ...(heure ? [el('p', { className: 'heure', textContent: heure })] : []), texte, gestes);
     if (long) gestes.append(el('button', { type: 'button', className: 'lien', textContent: ouvert ? 'Replier' : 'Lire tout', onclick: e => { e.target.textContent = bloc.classList.toggle('ouvert') ? 'Replier' : 'Lire tout'; } }));
     if (!edition) gestes.append(el('button', { type: 'button', className: 'lien', textContent: 'Modifier', ariaLabel: b.heure ? `Modifier le bloc de ${aLHeure(b.heure)}` : 'Modifier ce bloc', onclick: () => modifier(jour, i) }));
     return bloc;
@@ -367,10 +368,19 @@ function preparerEcriture() {
   montrerPage();
 }
 
+// Un bloc est arrivé d’ailleurs (l’extension du navigateur a glané un écrit) : relire le carnet, et aller au bout du chemin
+async function rafraichir() {
+  if (enDemo || !S) return;
+  pages = (await carnet.lirePages()).map(enBlocs);
+  dit('Un écrit de plus : le chemin s’allonge…');
+  if (await calculer((n, t) => dit(`Le texte se lit : ${n} passages sur ${t}`))) { montrer(); allerA(); dit('Un écrit de plus. Le chemin s’allonge.'); }
+  if (!edition) montrerPage();
+}
+
 /* ───────── Hors ligne : le service worker garde l’app et les objets déjà vus ───────── */
 
 function garderHorsLigne() {
-  if (!('serviceWorker' in navigator)) return;
+  if (!('serviceWorker' in navigator) || !/^https?:$/.test(location.protocol)) return; // dans l’extension, pas de service worker à la page
   navigator.serviceWorker.register('sw.js').then(() => navigator.serviceWorker.ready)
     .then(r => r.active?.postMessage({ type: 'garder', urls: performance.getEntriesByType('resource').map(e => e.name) }))
     .catch(() => {}); // sans service worker, l’app marche pareil, en ligne
@@ -387,6 +397,6 @@ function garderHorsLigne() {
     pret = premiere;
   } catch (e) { console.error(e); dit('Le chemin ne s’ouvre pas sur cet appareil.'); }
   await intro.quand(pret);
-  window.chemin = { get plans() { return plans; }, get passages() { return passages; }, get pages() { return pages; }, get tuiles() { return tuiles; }, S, F, atelier, carnet }; // pour les essais
+  window.chemin = { get plans() { return plans; }, get passages() { return passages; }, get pages() { return pages; }, get tuiles() { return tuiles; }, S, F, atelier, carnet, rafraichir }; // pour les essais, et pour l’extension
   if (document.readyState === 'complete') garderHorsLigne(); else addEventListener('load', garderHorsLigne);
 })();

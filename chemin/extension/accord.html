@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Le chemin : l’accord</title>
+  <link rel="stylesheet" href="accord.css">
+</head>
+<body>
+<main>
+  <h1>Ce que tu écris fait pousser le chemin</h1>
+  <p>Si tu dis oui, cette extension lit ce que <strong>tu tapes toi-même</strong> dans les zones de texte des pages : un courriel, un message, une note. Quand tu quittes la zone, ou que tu envoies, elle garde ce que tu as ajouté, comme un bloc de plus dans la page du jour de ton chemin.</p>
+  <ul>
+    <li><strong>Jamais :</strong> les mots de passe, les cartes, les codes reçus par SMS, les identifiants, les adresses, ce que tu colles, ce que tu cites d’un autre. Ni en navigation privée, ni sur l’archipel.</li>
+    <li><strong>Les recherches :</strong> seulement sur les moteurs que tu choisis plus bas.</li>
+    <li><strong>Où ça va :</strong> dans le carnet du chemin, sur cet ordinateur, dans ce navigateur. Rien ne part, jamais : l’extension ne fait aucune requête vers l’extérieur, et ses règles de sécurité le lui interdisent.</li>
+    <li><strong>Ce que tu vois :</strong> le chemin dans chaque nouvel onglet, et sous la frise, la page du jour, où chaque écrit glané se relit, se modifie, s’efface.</li>
+  </ul>
+  <p class="doux">Le chemin de cet ordinateur n’est pas celui de ton téléphone : ils ne se parlent pas, puisque rien ne part.</p>
+  <p class="gestes"><button type="button" id="oui">Oui, lire ce que j’écris</button><button type="button" id="non">Non</button></p>
+  <p id="dit" class="doux" role="status"></p>
+
+  <section id="reglages" hidden>
+    <h2>Les réglages</h2>
+    <p><label><input type="checkbox" id="pause"> En pause : rien n’est lu, jusqu’à ce que je décoche</label></p>
+    <p><label for="exclus">Les sites où ne jamais lire, un par ligne</label><br><textarea id="exclus" rows="5" spellcheck="false"></textarea></p>
+    <p><label for="recherches">Les moteurs de recherche où ce que je cherche compte, un par ligne</label><br><textarea id="recherches" rows="4" spellcheck="false"></textarea></p>
+    <p><button type="button" id="garder">Garder les réglages</button></p>
+    <h2>Tout effacer</h2>
+    <p>Le chemin de ce navigateur, ses pages, ses tuiles, et les réglages. Pour de bon.</p>
+    <p><button type="button" id="effacer" class="grave">Tout effacer</button></p>
+  </section>
+</main>
+<script src="accord.js"></script>
+</body>
+</html>
