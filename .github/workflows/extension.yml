@@ -1,0 +1,34 @@
+# L’extension du chemin : fabriquée par GitHub à chaque changement, pour qu’on n’ait rien à installer sur son ordinateur.
+# Sur une branche de travail, le zip est une pièce jointe de l’exécution (onglet Actions, connecté à GitHub).
+# Sur main, il est aussi publié dans la version « extension-essai », téléchargeable par un lien, pour les personnes invitées.
+name: Extension
+on:
+  push:
+    paths: ['chemin/**', 'aquarelle.js', 'outils.js', 'contenu.js', 'fonts/**', 'icones/**', '.github/workflows/extension.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  fabriquer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node chemin/extension/fabriquer.js
+      - run: cd chemin/extension/dist && zip -qr ../chemin-extension.zip . && ls -la ../chemin-extension.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: chemin-extension
+          path: chemin/extension/chemin-extension.zip
+          retention-days: 30
+      - if: github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: extension-essai
+          name: Le chemin, l’extension (essai)
+          prerelease: true
+          body: "L’extension du chemin, fabriquée depuis main. Dézipper, puis dans Chrome ou Edge : chrome://extensions, mode développeur, « Charger l’extension non empaquetée », le dossier dézippé. Dans Firefox : about:debugging, « Charger un module temporaire », le fichier manifest.json."
+          files: chemin/extension/chemin-extension.zip
