@@ -261,12 +261,14 @@ Avant de dormir, j’ai écrit une lettre à ma mère, sur le bureau, avec un st
   await q3.screenshot({ path: path.join(OUT, 'ligne-claire.png') });
   await q3.selectOption('#style', 'croquis'); const croquis = await empreinte();
   await q3.screenshot({ path: path.join(OUT, 'croquis.png') });
+  await q3.selectOption('#style', 'enfant'); const enfant = await empreinte();
+  await q3.screenshot({ path: path.join(OUT, 'dessin-enfant.png') });
   await q3.selectOption('#style', 'aquarelle'); const retour = await empreinte();
   await q3.reload(); await attendre(q3, () => q3.evaluate(() => document.querySelector('#intro').hidden && window.chemin?.tuiles.length > 2), 60000);
   await q3.selectOption('#style', 'croquis'); await q3.reload(); await attendre(q3, () => q3.evaluate(() => document.querySelector('#intro').hidden && window.chemin?.tuiles.length > 2), 60000);
   const garde = await q3.evaluate(() => ({ style: window.chemin.style, choix: document.querySelector('#style').value, dit: document.querySelector('#dit').textContent }));
-  verifier(aqua.k === ligne.k && ligne.k === croquis.k && new Set([aqua.h, ligne.h, croquis.h]).size === 3 && ligne.source === 'pinceau' && croquis.source === 'pinceau' && /:ligne:/.test(ligne.cle) && /:croquis:/.test(croquis.cle),
-    `la même tuile, peinte de trois façons : aquarelle, ligne claire, croquis (${[aqua, ligne, croquis].map(x => x.source).join(', ')})`);
+  verifier(aqua.k === ligne.k && ligne.k === croquis.k && croquis.k === enfant.k && new Set([aqua.h, ligne.h, croquis.h, enfant.h]).size === 4 && [ligne, croquis, enfant].every(x => x.source === 'pinceau') && /:ligne:/.test(ligne.cle) && /:croquis:/.test(croquis.cle) && /:enfant:/.test(enfant.cle),
+    `la même tuile, peinte de quatre façons : aquarelle, ligne claire, croquis, dessin d’enfant (${[aqua, ligne, croquis, enfant].map(x => x.source).join(', ')})`);
   verifier(retour.h === aqua.h && retour.source === 'carnet' && garde.style === 'croquis' && garde.choix === 'croquis', `revenir à l’aquarelle la rend telle quelle, du carnet ; le pinceau choisi reste d’une visite à l’autre (${garde.style})`);
   await cp.close();
 

@@ -6,7 +6,7 @@ import { chargerSens, decouper, lirePage, candidats, objetsDeLaPage, lieuDeLaPag
 import { familles, planifier, climatDe, Atelier, Modeles, LARGE, HAUT, MARGE, MOTEUR } from './monde.js?v=4';
 import { demo } from './demo.js?v=2';
 import * as carnet from './carnet.js?v=2';
-import { peindreFrise } from '../aquarelle.js?v=4';
+import { peindreFrise } from '../aquarelle.js?v=5';
 import { LEX, HUMANS } from '../contenu.js?v=2';
 
 const $ = s => document.querySelector(s);
@@ -100,7 +100,7 @@ const relire = v => ({ lecture: { ...v.l, contexte: Float32Array.from(v.l.contex
 const signe = p => (p ? JSON.stringify([p.i, p.date, p.lieu, p.saison, p.climat, p.items, p.piece, p.sol, p.fond]) : '');
 const cle = k => `${MOTEUR}${style === 'aquarelle' ? '' : ':' + style}:${empreinte(`${signe(plans[k - 1])}|${signe(plans[k])}|${signe(plans[k + 1])}`)}`;
 // le pinceau : aquarelle, ligne claire ou croquis ; choisi sous la frise, gardé sur ce téléphone
-const PINCEAUX = { aquarelle: 'Aquarelle', ligne: 'Ligne claire', croquis: 'Croquis' };
+const PINCEAUX = { aquarelle: 'Aquarelle', ligne: 'Ligne claire', croquis: 'Croquis', enfant: 'Dessin d’enfant' };
 let style = (() => { try { const s = localStorage.getItem('chemin:style'); return PINCEAUX[s] ? s : 'aquarelle'; } catch { return 'aquarelle'; } })();
 
 /* ───────── La frise : une tuile par passage, peinte quand elle approche, gardée une fois peinte ───────── */
@@ -243,7 +243,7 @@ function preparerParcours() {
   $('#style').value = style;
   $('#style').addEventListener('change', e => { // un autre pinceau : les tuiles se repeignent, ou reviennent du carnet si elles l’ont déjà été
     style = PINCEAUX[e.target.value] ? e.target.value : 'aquarelle'; try { localStorage.setItem('chemin:style', style); } catch { /* sans effet */ }
-    const c = centre(); montrer(); auCentre(c); dit(`Le pinceau change : ${PINCEAUX[style].toLowerCase()}.`);
+    const c = centre(); montrer(); auCentre(c); dit(`Le pinceau change : ${PINCEAUX[style].toLowerCase().replace('dessin d’enfant', 'un dessin d’enfant')}.`);
   });
   $('#debut').addEventListener('click', () => { frise.scrollLeft = 0; });
   $('#fin').addEventListener('click', () => allerA());
