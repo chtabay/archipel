@@ -278,8 +278,15 @@ function preparerParcours() {
 
 /* ───────── La page d’un jour, sous la frise : ses blocs, chacun à son heure ; aujourd’hui, un bloc de plus ───────── */
 
-// une page : ses blocs ; son texte, qui fait les tuiles, les met bout à bout, comme des paragraphes
-const joindre = (date, blocs) => ({ date, blocs, texte: blocs.map(b => b.texte).join('\n\n') });
+// une page : ses blocs ; son texte, qui fait les tuiles, les met bout à bout, comme des paragraphes. Entre une suite de
+// recherches (glanées sur un moteur par l’extension) et le reste, une coupe que le découpage respecte : courtes et denses,
+// les recherches font leurs tuiles à elles, au lieu de se fondre dans celles des courriels
+const COUPE = '\n\n* * *\n\n', genre = b => (b.recherche ? 'recherche' : 'texte');
+const joindre = (date, blocs) => {
+  let texte = ''; const debuts = []; // la place de chaque bloc dans le texte de la page
+  blocs.forEach((b, i) => { if (i) texte += genre(b) !== genre(blocs[i - 1]) ? COUPE : '\n\n'; debuts.push(texte.length); texte += b.texte; });
+  return { date, blocs, texte, debuts };
+};
 const enBlocs = p => joindre(p.date, p.blocs?.length ? p.blocs : [{ heure: '', texte: p.texte }]); // une page d’avant les blocs : un seul, sans heure
 const maintenant = () => { const d = new Date(); return `${deux(d.getHours())}:${deux(d.getMinutes())}`; };
 const aLHeure = h => (h ? `${+h.slice(0, 2)} h ${h.slice(3, 5)}` : '');
@@ -314,7 +321,7 @@ function montrerPage() { // le jour montré, aujourd’hui ou celui d’une tuil
   $('#retour').hidden = jour === auj;
   let o = 0;
   $('#blocs').replaceChildren(...(page?.blocs || []).map((b, i) => {
-    const d = o, f = o + b.texte.length, texte = el('p', { className: 'texte' }); o = f + 2; // la place du bloc dans le texte de la page
+    const d = page.debuts ? page.debuts[i] : o, f = d + b.texte.length, texte = el('p', { className: 'texte' }); o = f + 2; // la place du bloc dans le texte de la page
     if (r && r[0] < f && r[1] > d) { const a = Math.max(r[0], d) - d, z = Math.min(r[1], f) - d; texte.append(b.texte.slice(0, a), el('mark', { textContent: b.texte.slice(a, z) }), b.texte.slice(z)); }
     else texte.textContent = b.texte;
     const long = b.texte.length > 600, ouvert = !!texte.firstElementChild, gestes = el('p', { className: 'gestes-bloc' });
@@ -358,7 +365,7 @@ function preparerEcriture() {
     if (enDemo) page = changer(pages.find(p => p.date === jour));
     else { try { page = await carnet.modifierPage(jour, changer); } catch { garde = false; page = changer(pages.find(p => p.date === jour)); } }
     const i = pages.findIndex(p => p.date === jour), blocs = page?.blocs || [];
-    if (!page) { if (i >= 0) pages.splice(i, 1); } else if (i < 0) pages.push(page); else pages[i] = page;
+    if (!page) { if (i >= 0) pages.splice(i, 1); } else if (i < 0) pages.push(enBlocs(page)); else pages[i] = enBlocs(page);
     pages.sort((a, b) => a.date.localeCompare(b.date));
     if (premiere && !enDemo) carnet.proteger();
     edition = cible = null; vu = blocs.length && jour !== aujourdhui() ? jour : null; zone.value = e ? brouillon : ''; brouillon = ''; montrerPage(); // une page partie : retour à aujourd’hui

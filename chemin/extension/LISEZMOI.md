@@ -1,6 +1,6 @@
 # Le chemin, l’extension de navigateur
 
-Le chemin tel quel, dans chaque nouvel onglet, plus un glaneur : ce qu’on écrit soi-même dans les pages de la journée
+Le chemin tel quel, d’un clic sur l’icône, plus un glaneur : ce qu’on écrit soi-même dans les pages de la journée
 devient un bloc de plus dans la page du jour, et le chemin s’allonge. Rien ne part de l’ordinateur.
 
 - `manifest.json` : Manifest V3, Chrome et Firefox. Les règles de sécurité n’autorisent que les fichiers de l’extension

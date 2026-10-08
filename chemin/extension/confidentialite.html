@@ -24,7 +24,7 @@
   <p>Rien, tant que tu n’as pas dit oui sur l’écran de l’accord, qui s’ouvre à l’installation. Si tu dis oui, elle lit ce que <strong>tu tapes toi-même</strong> dans les zones de texte des pages : un courriel, un message, une note. Quand tu quittes la zone, ou que tu envoies, elle garde ce que tu as ajouté, comme un bloc de plus dans la page du jour de ton chemin. Elle ne suit pas les touches : elle compare la zone à l’entrée et à la sortie, et ne garde que la différence.</p>
   <ul>
     <li><strong>Jamais :</strong> les mots de passe, les cartes bancaires, les codes reçus par SMS, les identifiants, les adresses, l’objet et les destinataires d’un courriel, ce que tu colles, ce que tu cites d’un autre, le code dans un éditeur.</li>
-    <li><strong>Les recherches :</strong> seulement sur les moteurs que tu as choisis dans les réglages. Ailleurs, une boîte de recherche n’est pas lue.</li>
+    <li><strong>Les recherches :</strong> seulement sur les moteurs que tu as choisis dans les réglages, lues dans l’adresse de la page de résultats. Ailleurs, une boîte de recherche n’est jamais lue.</li>
     <li><strong>Jamais non plus :</strong> en navigation privée, sur les sites que tu as exclus (d’office : les impôts, la santé, l’archipel), et quand l’extension est en pause.</li>
     <li><strong>Pas lu du tout :</strong> le reste de la page, ce que les autres écrivent, les sites visités, les adresses des pages.</li>
   </ul>
@@ -41,7 +41,7 @@
   <p>Tout cela vit dans le stockage que le navigateur réserve à l’extension (IndexedDB et <code>storage.local</code>), sans chiffrement particulier, comme le reste du profil.</p>
 
   <h2>Qui peut le voir</h2>
-  <p>Toute personne qui ouvre ce profil de navigateur sur cet ordinateur : elle voit le chemin dans le nouvel onglet, et la page du jour dessous. Si l’ordinateur est partagé, un profil à soi, ou un verrou de session, protège le chemin comme le reste.</p>
+  <p>Toute personne qui ouvre ce profil de navigateur sur cet ordinateur : elle voit le chemin d’un clic sur l’icône, et la page du jour dessous. Si l’ordinateur est partagé, un profil à soi, ou un verrou de session, protège le chemin comme le reste.</p>
 
   <h2>Effacer</h2>
   <ul>
@@ -55,7 +55,6 @@
     <li><strong>Lire et modifier les données sur tous les sites</strong> (<code>&lt;all_urls&gt;</code>) : on écrit partout, et l’extension ne sait pas d’avance où ; elle lit ce que tu tapes dans n’importe quelle page, et pose l’encart au coin des sites choisis. Le script de lecture n’est branché qu’après l’accord, et débranché en pause.</li>
     <li><strong>scripting</strong> : brancher ou débrancher ce script.</li>
     <li><strong>storage</strong> et <strong>unlimitedStorage</strong> : garder les pages et les tuiles peintes, qui prennent de la place.</li>
-    <li><strong>Le nouvel onglet</strong> : le chemin s’y affiche.</li>
   </ul>
   <p>L’extension ne charge aucun code venu d’ailleurs : tout est dans son paquet.</p>
 

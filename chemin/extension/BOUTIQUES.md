@@ -27,7 +27,7 @@ arrive que par le lien. La relecture, elle, est la même que pour une fiche publ
 
 Trois, dans cet ordre, en 1280×800 :
 
-1. **Le nouvel onglet** : la frise en grand, et dessous, la page du jour avec un bloc marqué « écrit ailleurs ». C’est
+1. **Le chemin** : la frise en grand, et dessous, la page du jour avec un bloc marqué « écrit ailleurs ». C’est
    l’extension entière en une image.
 2. **L’accord** : l’écran du oui, tel qu’il s’ouvre à l’installation, avec la liste des « jamais ». Les relecteurs y
    voient le consentement avant toute lecture.
@@ -43,7 +43,7 @@ six au plus) et à Firefox (1280×800 recommandé).
 À mettre dans `description` du manifeste ; Chrome et Edge le reprennent tel quel, et il sert aussi de résumé sur Firefox.
 
 ```
-Ce que tu écris dans la journée fait pousser un chemin à l’aquarelle, dans chaque nouvel onglet. Rien ne part de cet ordinateur.
+Ce que tu écris dans la journée fait pousser un chemin à l’aquarelle, d’un clic sur son icône. Rien ne part de cet ordinateur.
 ```
 
 128 caractères, comptés.
@@ -54,7 +54,7 @@ Le même texte pour les trois boutiques. Edge demande entre 250 et 10 000 caract
 les autres du texte brut : coller tel quel.
 
 ```
-Le chemin est un journal qui se peint tout seul. Chaque page devient un bout de chemin, à l’aquarelle, et le chemin s’allonge de jour en jour. L’extension le met dans chaque nouvel onglet, et y ajoute un glaneur : ce que tu écris toi-même dans la journée, un courriel, un message, une note, devient un bloc de plus dans la page du jour, et le chemin pousse. Sans rien faire.
+Le chemin est un journal qui se peint tout seul. Chaque page devient un bout de chemin, à l’aquarelle, et le chemin s’allonge de jour en jour. L’extension l’ouvre d’un clic sur son icône, le montre au coin des sites que tu choisis, et y ajoute un glaneur : ce que tu écris toi-même dans la journée, un courriel, un message, une note, devient un bloc de plus dans la page du jour, et le chemin pousse. Sans rien faire.
 
 Rien ne part de cet ordinateur. L’extension n’a pas de serveur, ne fait aucune requête vers l’extérieur, et ses règles de sécurité le lui interdisent. Tout reste dans ce navigateur, et « Tout effacer » efface tout, pour de bon.
 
@@ -62,7 +62,7 @@ Ce qu’elle lit : seulement ce que tu tapes toi-même dans les zones de texte d
 
 Ce qu’elle ne lit jamais : les mots de passe, les cartes bancaires, les codes reçus par SMS, les identifiants, les adresses, l’objet et les destinataires d’un courriel, ce que tu colles, ce que tu cites d’un autre. Rien en navigation privée. Rien sur les sites que tu exclus (d’office : les impôts, la santé). Les recherches, seulement sur les moteurs que tu choisis.
 
-Ce que tu vois : le chemin dans chaque nouvel onglet ; sous la frise, la page du jour, où chaque écrit glané se relit, se modifie, s’efface. Sur les sites que tu choisis (les moteurs de recherche, d’office), un petit encart au coin de la page montre les dernières tuiles ; une croix le replie. Une pause, dans les réglages, arrête tout le temps qu’on veut.
+Ce que tu vois : le chemin, d’un clic sur l’icône ; sous la frise, la page du jour, où chaque écrit glané se relit, se modifie, s’efface. Sur les sites que tu choisis (les moteurs de recherche, d’office), un petit encart au coin de la page montre les dernières tuiles ; une croix le replie. Une pause, dans les réglages, arrête tout le temps qu’on veut.
 
 C’est un essai, fait par une personne, pas une entreprise. Le code est public : https://github.com/chtabay/archipel, dossier chemin/extension. Le chemin existe aussi comme app, sur le téléphone : https://chtabay.github.io/archipel/chemin/ ; les deux ne se parlent pas, puisque rien ne part.
 ```
@@ -93,7 +93,7 @@ C’est un essai, fait par une personne, pas une entreprise. Le code est public 
 **Finalité unique (*Single purpose description*)**
 
 ```
-Tenir un journal du jour, peint à l’aquarelle, dans le nouvel onglet : ce que la personne écrit elle-même dans les pages (courriels, messages, notes) devient des blocs de la page du jour, gardés dans le navigateur seulement, et le chemin s’allonge.
+Tenir un journal du jour, peint à l’aquarelle, ouvert d’un clic sur l’icône : ce que la personne écrit elle-même dans les pages (courriels, messages, notes) devient des blocs de la page du jour, gardés dans le navigateur seulement, et le chemin s’allonge.
 ```
 
 **La justification de chaque permission** (un champ par permission ; les permissions d’hôte ont leur propre champ,
@@ -165,7 +165,7 @@ La même adresse va aussi dans la page « Account » du tableau de bord : les de
 ### L’onglet « Test instructions »
 
 ```
-Pas de compte à créer, pas de serveur. 1) À l’installation, l’écran de l’accord s’ouvre : cliquer « Oui, lire ce que j’écris » (Chrome demande l’accès aux sites). 2) Sur duckduckgo.com ou qwant.com (moteurs choisis d’office), taper une recherche de deux mots ou plus, Entrée. Ou, sur n’importe quel site, écrire au moins quatre mots dans un champ de commentaire, puis cliquer ailleurs. 3) Ouvrir un nouvel onglet : le chemin s’affiche ; sous la frise, la page du jour contient l’écrit, marqué « écrit ailleurs », et l’icône porte le nombre d’écrits du jour. 4) L’icône de l’extension ouvre l’accord et les réglages : la pause, les sites exclus, les moteurs, l’encart, « Tout effacer ». Aucune requête réseau : l’onglet Network des outils de développement reste vide, la CSP n’autorise que connect-src 'self'. Les modèles 3D (41 Mo, CC0) et les vecteurs de mots sont dans le paquet.
+Pas de compte à créer, pas de serveur. 1) À l’installation, l’écran de l’accord s’ouvre : cliquer « Oui, lire ce que j’écris » (Chrome demande l’accès aux sites). 2) Sur duckduckgo.com ou qwant.com (moteurs choisis d’office), taper une recherche de deux mots ou plus, Entrée. Ou, sur n’importe quel site, écrire au moins quatre mots dans un champ de commentaire, puis cliquer ailleurs. 3) Cliquer sur l’icône de l’extension : le chemin s’ouvre ; sous la frise, la page du jour contient l’écrit, marqué « écrit ailleurs », et l’icône porte le nombre d’écrits du jour. 4) L’icône de l’extension ouvre l’accord et les réglages : la pause, les sites exclus, les moteurs, l’encart, « Tout effacer ». Aucune requête réseau : l’onglet Network des outils de développement reste vide, la CSP n’autorise que connect-src 'self'. Les modèles 3D (41 Mo, CC0) et les vecteurs de mots sont dans le paquet.
 ```
 
 ### Si le relecteur préfère l’anglais
@@ -173,7 +173,7 @@ Pas de compte à créer, pas de serveur. 1) À l’installation, l’écran de l
 Les mêmes champs, pour coller à la place des français si une relecture le demande.
 
 ```
-Single purpose: A watercolour daily journal in the new tab: what the person writes themselves in web pages (emails, messages, notes) becomes blocks of today’s page, kept in the browser only, and the path grows.
+Single purpose: A watercolour daily journal opened from the toolbar icon: what the person writes themselves in web pages (emails, messages, notes) becomes blocks of today’s page, kept in the browser only, and the path grows.
 
 storage: Keeps the consent flag, the pause flag and the settings (excluded sites, search engines, sites with the inset), plus a fingerprint of the entry being written (not its text). storage.local only, nothing synced.
 
@@ -235,9 +235,10 @@ donc traité comme du code à soi, et doit se reconstruire à l’identique. À 
 
 - Le dépôt, sans `node_modules`, sans `dist`, avec `package-lock.json`.
 - Un `LISEZMOI` pour le relecteur, avec le système et les versions (le relecteur part d’Ubuntu 24.04, Node 24.14.0,
-  npm 11.9.0 ; dire si on a fait autrement), et toutes les commandes : `npm ci`, la commande esbuild qui produit
-  `three-chemin.min.js` depuis `three@0.186.1` (elle n’est pas dans le dépôt aujourd’hui, seulement nommée dans
-  `chemin/vendor/LISEZMOI.txt` : à écrire, avec la version d’esbuild épinglée), puis `node chemin/extension/fabriquer.js`.
+  npm 11.9.0 ; dire si on a fait autrement), et toutes les commandes : `cd chemin/outils/three && npm ci`, puis
+  `node chemin/outils/fabriquer-three.mjs`, qui refait `three-chemin.min.js` octet pour octet depuis `three@0.186.1` et
+  `esbuild@0.28.2` (épinglés dans `chemin/outils/three/package-lock.json` ; le sha256 est dans `chemin/vendor/LISEZMOI.txt`),
+  puis `node chemin/extension/fabriquer.js`. L’intégration continue vérifie la reproduction à chaque changement.
 - Le résultat doit être identique octet pour octet au paquet soumis. Les outils doivent être libres, pas en ligne.
 - Les 41 Mo de modèles 3D sont des données, pas du code ; leurs auteurs et licences (CC0) sont dans
   `chemin/objets/LISEZMOI.txt`, les vecteurs de fastText (CC BY-SA 3.0) dans `chemin/sens/`.
@@ -255,11 +256,11 @@ Le chemin est un journal local : ce que la personne écrit elle-même dans les p
 
 background : service_worker pour Chrome, scripts pour Firefox, dans le même manifeste. update_url : auto-distribution, le fichier de mises à jour est sur le site de l’extension, en HTTPS.
 
-Pour essayer : installer, dire oui, taper une recherche de deux mots sur duckduckgo.com (moteur choisi d’office) et Entrée, ou quatre mots dans un champ de commentaire n’importe où ; ouvrir un nouvel onglet : le bloc est dans la page du jour, marqué « écrit ailleurs ». L’icône ouvre les réglages et « Tout effacer ». Le code est public : https://github.com/chtabay/archipel, dossier chemin/extension. Politique : https://chtabay.github.io/archipel/chemin/extension/confidentialite.html
+Pour essayer : installer, dire oui, taper une recherche de deux mots sur duckduckgo.com (moteur choisi d’office) et Entrée, ou quatre mots dans un champ de commentaire n’importe où ; cliquer sur l’icône : le bloc est dans la page du jour, marqué « écrit ailleurs ». L’icône ouvre les réglages et « Tout effacer ». Le code est public : https://github.com/chtabay/archipel, dossier chemin/extension. Politique : https://chtabay.github.io/archipel/chemin/extension/confidentialite.html
 ```
 
 ```
-Le chemin is a local-only journal: what the person writes themselves in web pages (emails, messages, notes) becomes blocks of today’s page, painted as a watercolour path in the new tab. Everything stays in the extension’s own storage (IndexedDB, storage.local). No request ever leaves the computer: the CSP is connect-src 'self', and the only fetch calls in the code load the extension’s own files (word vectors, catalogue, 3D models). No account, no server.
+Le chemin is a local-only journal: what the person writes themselves in web pages (emails, messages, notes) becomes blocks of today’s page, painted as a watercolour path, opened from the toolbar icon. Everything stays in the extension’s own storage (IndexedDB, storage.local). No request ever leaves the computer: the CSP is connect-src 'self', and the only fetch calls in the code load the extension’s own files (word vectors, catalogue, 3D models). No account, no server.
 
 <all_urls>: people write everywhere, on sites unknown in advance. The content script (glaneur.js) is registered with scripting.registerContentScripts only after the person clicks “yes” on the consent screen (accord.html, opened on install), and unregistered while paused. It does not log keystrokes: it compares the text field on focus in and focus out. It skips sensitive fields (autocomplete, field names, forms with a password field), email subject and recipients, pasted or quoted text, search boxes outside the chosen engines, private browsing (incognito: not_allowed) and excluded sites. If the person revokes site access, the badge shows “!” and the consent page offers to grant it again.
 
@@ -267,7 +268,7 @@ Le chemin is a local-only journal: what the person writes themselves in web page
 
 background: service_worker for Chrome, scripts for Firefox, in the same manifest. update_url: self-distributed, the update manifest is on the extension’s site, over HTTPS.
 
-To test: install, click yes, type a two-word search on duckduckgo.com (a default chosen engine) and press Enter, or four words in any comment field; open a new tab: the block is in today’s page, marked “écrit ailleurs” (written elsewhere). The toolbar icon opens the settings and “Tout effacer” (erase everything). Source: https://github.com/chtabay/archipel, folder chemin/extension. Privacy policy: https://chtabay.github.io/archipel/chemin/extension/confidentialite.html
+To test: install, click yes, type a two-word search on duckduckgo.com (a default chosen engine) and press Enter, or four words in any comment field; click the toolbar icon: the block is in today’s page, marked “écrit ailleurs” (written elsewhere). The toolbar icon opens the settings and “Tout effacer” (erase everything). Source: https://github.com/chtabay/archipel, folder chemin/extension. Privacy policy: https://chtabay.github.io/archipel/chemin/extension/confidentialite.html
 ```
 
 ### La fiche, le jour où elle est répertoriée
@@ -277,7 +278,7 @@ To test: install, click yes, type a two-word search on duckduckgo.com (a default
 | Nom | Le chemin |
 | Résumé (250 caractères au plus) | voir ci-dessous |
 | Description | la description longue |
-| Catégories (deux au plus) | « Other », et « Appearance » pour le nouvel onglet ; la liste du jour n’a pas été vérifiée (non vérifié) |
+| Catégories (deux au plus) | « Other » ; la liste du jour n’a pas été vérifiée (non vérifié) |
 | Expérimentale | oui, le temps de l’essai |
 | Paiement requis | non |
 | Courriel d’assistance | à choisir : AMO en veut un (au minimum, dit la doc) |
@@ -287,12 +288,12 @@ To test: install, click yes, type a two-word search on duckduckgo.com (a default
 | Politique de confidentialité | un champ texte, pas une adresse : coller le texte court ci-dessous, et l’adresse de la page |
 | Icône | 64×64 et 32×32, PNG |
 | Captures | les trois, 1280×800 |
-| Plateformes | Windows, macOS, Linux (pas Android : le nouvel onglet n’y existe pas) |
+| Plateformes | Windows, macOS, Linux |
 
 Le résumé pour AMO :
 
 ```
-Un journal qui se peint tout seul, dans chaque nouvel onglet. Ce que tu écris toi-même dans la journée, un courriel, un message, une note, devient un bloc de la page du jour, et le chemin s’allonge à l’aquarelle. Rien ne part de cet ordinateur.
+Un journal qui se peint tout seul, d’un clic sur son icône. Ce que tu écris toi-même dans la journée, un courriel, un message, une note, devient un bloc de la page du jour, et le chemin s’allonge à l’aquarelle. Rien ne part de cet ordinateur.
 ```
 
 La politique, en texte court, pour le champ d’AMO :
@@ -318,7 +319,7 @@ Le Partner Center de Microsoft suit le même plan que Chrome : mêmes textes, m�
   https://chtabay.github.io/archipel/chemin/extension/confidentialite.html.
 - **Store listings**, pour la langue « Français » : la description longue (250 à 10 000 caractères), le logo 300×300
   (128×128 au minimum), les trois captures (640×480 ou 1280×800, six au plus), pas de vidéo, et les mots-clés (sept au
-  plus, 30 caractères chacun, 21 mots en tout) : `journal`, `aquarelle`, `nouvel onglet`, `écriture`, `carnet`, `chemin`,
+  plus, 30 caractères chacun, 21 mots en tout) : `journal`, `aquarelle`, `écriture`, `carnet`, `chemin`,
   `hors ligne`.
 - **Notes for certification** (à la soumission) : les instructions d’essai de la section Chrome, mot pour mot.
 - **La certification** prend jusqu’à sept jours ouvrés. Ensuite, le statut passe à *In the Store*.

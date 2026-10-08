@@ -1,7 +1,7 @@
 # À essayer à la main, avec tes comptes
 
 Ce que les essais automatiques ne peuvent pas faire : les vrais sites. Avec des contenus inventés, cocher ce qui arrive
-dans la page du jour (sous la frise, dans le nouvel onglet), et noter ce qui manque ou ce qui est de trop.
+dans la page du jour (sous la frise, d’un clic sur l’icône), et noter ce qui manque ou ce qui est de trop.
 
 ## Gmail
 
@@ -23,8 +23,9 @@ dans la page du jour (sous la frise, dans le nouvel onglet), et noter ce qui man
 ## Google
 
 - [ ] Depuis l’accueil, trois mots, Entrée : la recherche arrive.
-- [ ] Depuis la page de résultats, une autre recherche, Entrée : arrive-t-elle ?
-- [ ] Une suggestion choisie aux flèches : c’est la suggestion qui arrive, pas ce qu’on a tapé. À juger.
+- [ ] Depuis la page de résultats, une autre recherche, Entrée : elle arrive aussi (lue dans l’adresse).
+- [ ] Une suggestion choisie aux flèches ou à la souris : c’est la recherche faite qui arrive.
+- [ ] Les recherches font leurs tuiles à elles, à part des courriels.
 - [ ] Dans Gmail, Docs ou Agenda : rien de ce qui n’est pas un écrit n’arrive.
 
 ## ChatGPT et Claude

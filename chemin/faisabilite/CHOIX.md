@@ -24,7 +24,8 @@ s’en souvienne au moment de construire. Les essais et les mesures sont dans le
 
 ## Où et comment ça se voit
 
-- **La frise dans chaque nouvel onglet**, en grand, sans champ de recherche (la barre d’adresse garde le
+- *(Abandonné au premier essai, le 8 octobre : un chemin à chaque nouvel onglet est plus pénible qu’autre chose. Le chemin
+  s’ouvre d’un clic sur l’icône, et se montre au coin des sites choisis.)* ~~La frise dans chaque nouvel onglet~~, en grand, sans champ de recherche (la barre d’adresse garde le
   curseur), avec, en option, les raccourcis des sites les plus visités dessous. La tuile du jour en icône de
   l’extension, en option aussi (à seize pixels, une aquarelle est une tache ; l’icône est fixe par défaut).
   Sur Firefox, le paysage du jour en fond de barre. Un panneau latéral à la demande. Pas de bandeau en haut des pages.
@@ -51,6 +52,7 @@ s’en souvienne au moment de construire. Les essais et les mesures sont dans le
   | surtout en anglais (Sam) | 361 | 3 | 1 |
 
 - Les tuiles du journal gardent leur étiquette, pour se distinguer des tuiles des écrits.
+- Les recherches, courtes et denses, font leurs tuiles à elles : une coupe les sépare des courriels (8 octobre, après essai).
 
 Le plan de construction est dans `PLAN.md`. Pour l’essai, un écrit glané est un bloc de plus dans la page du
 jour, avec son heure, par la mécanique des blocs que le chemin a reçue le 8 octobre : la tuile qui se ferme pour

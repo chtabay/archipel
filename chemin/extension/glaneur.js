@@ -1,9 +1,10 @@
 // L’extension du chemin : le glaneur. Dans chaque cadre de chaque page, il regarde ce qu’on écrit soi-même dans les zones de
 // texte, et le confie au fond de l’extension, sur cet ordinateur. Rien ne part. Jamais : les mots de passe, les cartes, les
-// codes, les identifiants, les destinataires et les objets d’un courriel, les recherches (sauf la boîte de recherche des
-// moteurs qu’on a choisis), ce qu’on colle, ce qu’on cite. On ne suit pas les touches : on compare la zone à l’entrée et à la
-// sortie, et on ne garde que ce qui a été ajouté. Le fond ne branche ce script qu’après l’accord, et le débranche en pause ;
-// ici, on relit quand même les réglages.
+// codes, les identifiants, les destinataires et les objets d’un courriel, les boîtes de recherche, ce qu’on colle, ce qu’on
+// cite. On ne suit pas les touches : on compare la zone à l’entrée et à la sortie, et on ne garde que ce qui a été ajouté.
+// Sur un moteur de recherche choisi, la recherche se lit dans l’adresse de la page (q=…), à l’arrivée et à chaque changement
+// d’adresse : la page de résultats enchaîne les recherches sans se recharger. Le fond ne branche ce script qu’après
+// l’accord, et le débranche en pause ; ici, on relit quand même les réglages.
 (() => {
   if (globalThis.__glaneurChemin) return; globalThis.__glaneurChemin = true;
   const ext = globalThis.browser ?? globalThis.chrome;
@@ -28,7 +29,7 @@
     const avant = permis();
     reglages = { accord: r.accord === true, pause: r.pause === true, exclus: Array.isArray(r.exclus) ? r.exclus : [], recherches: Array.isArray(r.recherches) ? r.recherches : [], encart: Array.isArray(r.encart) ? r.encart : [] };
     if (permis() && !avant && courante) sessions.get(courante).avant = texte(courante); // le oui vaut pour la suite, pas pour ce qui est déjà tapé
-    encart();
+    encart(); recherche();
   }).catch(() => {});
   const permis = () => reglages.accord && !reglages.pause && !ext.extension?.inIncognitoContext && !sous(JAMAIS) && !sous(reglages.exclus);
   const moteur = () => reglages.recherches.some(h => host === h || host === `www.${h}`); // le moteur lui-même, pas mail.google.com
@@ -45,7 +46,7 @@
     const nom = dit(z), type = (z.getAttribute('type') || '').toLowerCase();
     if (AUTOCOMPLETE.test(z.getAttribute('autocomplete') || '') || SENSIBLE.test(nom) || ENTETE.test(nom) || z.closest(CODE)) return null;
     if (z.form?.querySelector('input[type=password]')) return null; // un formulaire de connexion
-    if (boiteDe(z)) return moteur() ? z : null; // une boîte de recherche : seulement sur un moteur choisi
+    if (boiteDe(z)) return null; // une boîte de recherche : jamais ; sur un moteur choisi, la recherche vient de l’adresse
     if (/^spinbutton$/i.test(z.getAttribute('role') || '') || (z.localName === 'input' && !['', 'text'].includes(type))) return null;
     return z;
   }
@@ -90,7 +91,7 @@
     s.colle = [];
     t = propre(t);
     if (s.rattrape) { t = propre(`${s.rattrape}\n${t}`); s.rattrape = ''; } // un écrit que le fond n’a pas pu prendre
-    if (mots(t) < (moteur() && boiteDe(z) ? MOTS_RECHERCHE : MOTS) || !permis()) return; // une recherche est courte ; un écrit, non
+    if (mots(t) < MOTS || !permis()) return;
     const envoi = { type: 'glane', fil: s.fil, texte: t };
     Promise.resolve().then(() => ext.runtime.sendMessage(envoi)).then(ok => { if (ok === false) s.rattrape = t; }).catch(() => { s.rattrape = t; });
   }
@@ -123,8 +124,20 @@
   };
   const cache = () => { if (document.hidden) cueillir(courante); };
 
+  // Sur un moteur choisi, ce qu’on a cherché est dans l’adresse (q=…) : à l’arrivée, et à chaque changement d’adresse, même sans
+  // rechargement. Une recherche est courte : deux mots suffisent. Le fond ne garde qu’une fois la même recherche le même jour.
+  let adresse = null;
+  function recherche() {
+    if (window !== top || !moteur() || !permis() || location.href === adresse) return;
+    adresse = location.href;
+    const q = (new URLSearchParams(location.search).get('q') || '').replace(/\s+/g, ' ').trim();
+    if (mots(q) < MOTS_RECHERCHE) return;
+    ext.runtime.sendMessage({ type: 'glane', texte: q, recherche: true }).catch(() => {});
+  }
+  setInterval(recherche, 1000); addEventListener('popstate', recherche); addEventListener('hashchange', recherche);
+
   // L’encart : sur les sites choisis, la frise du chemin, petite, au coin de la page, dans un cadre de l’extension. Elle se peint
-  // là comme dans le nouvel onglet ; une croix la replie, le temps de la session du navigateur.
+  // là comme dans son onglet ; une croix la replie, le temps de la session du navigateur.
   async function encart() {
     if (window !== top || !permis() || !sous(reglages.encart) || document.getElementById('chemin-encart')) return;
     const replie = await (ext.storage.session?.get('encartReplie').catch(() => ({})) ?? {});

@@ -14,7 +14,7 @@ const tour = f => (file = file.then(f, f)); // un écrit après l’autre : deux
 
 /* ───────── Un écrit de plus : un bloc dans la page du jour, ou la suite du bloc du même fil ───────── */
 
-async function ajouter({ fil, texte }) {
+async function ajouter({ fil, texte, recherche }) {
   texte = texte.trim(); if (!texte) return;
   const date = aujourdhui(), { fils = {} } = await ext.storage.local.get('fils'), f = typeof fil === 'string' && fils[fil];
   let bloc = null;
@@ -23,7 +23,7 @@ async function ajouter({ fil, texte }) {
     if (blocs.some(b => b.texte === texte)) return page; // le même écrit, deux fois le même jour : une fois suffit
     let i = -1;
     if (f && f.date === date && Date.now() - f.quand < FIL) i = blocs.findIndex(b => b.source === 'glane' && empreinte(b.texte) === f.bloc); // la suite d’un écrit en cours
-    if (i >= 0) blocs[i] = { ...blocs[i], texte: `${blocs[i].texte}${/[.!?…:\n]$/.test(blocs[i].texte) ? '\n' : ' '}${texte}` }; else blocs.push({ heure: maintenant(), texte, source: 'glane' });
+    if (i >= 0) blocs[i] = { ...blocs[i], texte: `${blocs[i].texte}${/[.!?…:\n]$/.test(blocs[i].texte) ? '\n' : ' '}${texte}` }; else blocs.push({ heure: maintenant(), texte, source: 'glane', ...(recherche === true && { recherche: true }) }); // une recherche : son bloc à elle
     bloc = i >= 0 ? blocs[i] : blocs[blocs.length - 1];
     return { date, blocs, texte: blocs.map(b => b.texte).join('\n\n') };
   });
@@ -52,7 +52,11 @@ ext.runtime.onMessage.addListener((m, expediteur, repondre) => {
     return true;
   }
 });
-ext.action.onClicked.addListener(() => ext.runtime.openOptionsPage()); // l’icône : l’accord et les réglages
+ext.action.onClicked.addListener(async () => { // l’icône : le chemin, dans son onglet, déjà ouvert s’il l’est
+  const url = ext.runtime.getURL('chemin/index.html');
+  try { const [t] = await ext.tabs.query({ url: `${url}*` }); if (t) { await ext.tabs.update(t.id, { active: true }); await ext.windows.update(t.windowId, { focused: true }); return; } } catch { /* sans la permission tabs : un onglet de plus */ }
+  ext.tabs.create({ url });
+});
 
 /* ───────── Le glaneur, branché après l’accord, débranché en pause ───────── */
 

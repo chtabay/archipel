@@ -33,6 +33,7 @@ const GARDER = {
   riche: 'Le soir tombait sur le village, une lanterne brûlait près du vieux puits de pierre.',
   chat: 'On se retrouve demain au marché avec les enfants vers dix heures.',
   recherche: 'recette tarte aux poires',
+  recherche2: 'horaires piscine municipale samedi',
   apres: 'Un héron s’est posé sur la barque, au bord de l’étang, sous la pluie fine.',
   lent: 'Le phare clignotait au loin pendant que les mouettes criaient sur le port.',
   ctrl: 'Bonjour Camille, je t’envoie les photos du jardin et de la vieille grange.',
@@ -84,7 +85,7 @@ const JAMAIS = {
     const p0 = await ctx.newPage(); await p0.goto(ORDINAIRE); await poser(p0, '#journal', JAMAIS.avant); await p0.close();
     verifier((await blocsDuJour()).length === 0, 'avant l’accord, un écrit ne fait rien');
     const onglet0 = await ctx.newPage(); await onglet0.goto(CHEMIN);
-    verifier(await onglet0.locator('.tete .accord a').count() === 1, 'sans accord, le nouvel onglet dit où le donner'); await onglet0.close();
+    verifier(await onglet0.locator('.tete .accord a').count() === 1 && await onglet0.locator('.tete .reglages a').count() === 1, 'sans accord, la page du chemin dit où le donner, et mène aux réglages'); await onglet0.close();
 
     // 2. l’accord, et le moteur de recherche d’essai parmi ceux qui comptent
     await reglage({ accord: true, pause: false, exclus: ['chtabay.github.io'], recherches: ['localhost'], encart: ['localhost'] });
@@ -123,7 +124,11 @@ const JAMAIS = {
     const m = await ctx.newPage(); await m.goto(MOTEUR); await m.waitForTimeout(300);
     await poser(m, '#a', JAMAIS.destinataires); await poser(m, '#objet', JAMAIS.objet); await poser(m, '#corps', JAMAIS.court); // sur ce même hôte, un courriel : rien de tout ça
     await taper(m, '#q', GARDER.recherche); await m.keyboard.press('Enter'); await m.waitForURL(/resultats\.html/); await m.waitForTimeout(300); await m.close();
-    verifier(await attendre(async () => (await blocsDuJour()).some(b => b.texte === GARDER.recherche)), 'sur un moteur choisi, la recherche est un bloc');
+    verifier(await attendre(async () => (await blocsDuJour()).some(b => b.texte === GARDER.recherche && b.recherche === true)), 'sur un moteur choisi, la recherche, lue dans l’adresse de la page de résultats, est un bloc marqué recherche');
+    // depuis la page de résultats, une autre recherche sans rechargement : l’adresse change, la recherche arrive
+    const m3 = await ctx.newPage(); await m3.goto(`${MOTEUR.replace('recherche.html', 'resultats.html')}?q=${encodeURIComponent(GARDER.recherche)}`); await m3.waitForTimeout(400);
+    await m3.evaluate(q => history.pushState({}, '', `?q=${encodeURIComponent(q)}`), GARDER.recherche2);
+    verifier(await attendre(async () => (await blocsDuJour()).some(b => b.texte === GARDER.recherche2)), 'une recherche de plus depuis la page de résultats, sans rechargement, arrive aussi'); await m3.close();
     blocs = await blocsDuJour(); const toutM = JSON.stringify(blocs);
     verifier(!toutM.includes('Inventée') && !toutM.includes('toiture') && !toutM.includes('ok merci'), 'sur ce moteur, ni les destinataires, ni l’objet, ni deux mots dans un corps de courriel');
     // 4 bis. l’encart : sur le moteur, la frise du chemin au coin de la page ; pas ailleurs ; la croix la replie pour la session
@@ -151,6 +156,7 @@ const JAMAIS = {
     verifier(vu.ailleurs === blocs.length && vu.accord === 0, `la page du jour montre ses ${blocs.length} blocs « écrits ailleurs », et plus le mot de l’accord`);
     for (const q of vu.plans) console.log(`    ${q.lieu} · ${q.objets.join(', ') || '—'}`);
     verifier(vu.plans.some(q => q.objets.length), 'les tuiles du jour ont des objets');
+    verifier(await onglet.evaluate(() => window.chemin.passages.filter(x => x.texte.includes('poires')).every(x => !x.texte.includes('rivière') && !x.texte.includes('gâteau'))), 'les recherches font leurs tuiles à elles, à part des courriels');
 
     // 6. un écrit arrive pendant que le chemin est ouvert : il se relit tout seul
     const p2 = await ctx.newPage(); await p2.goto(ORDINAIRE); await p2.waitForTimeout(300); await poser(p2, '#journal', GARDER.apres); await p2.close();
@@ -189,7 +195,7 @@ const JAMAIS = {
     await reglage({ accord: true, pause: false, exclus: ['chtabay.github.io'], recherches: ['localhost'] }); await attendre(branche);
     const p5 = await ctx.newPage(); await p5.goto(ORDINAIRE); await p5.waitForTimeout(300); await poser(p5, '#journal', GARDER.efface); await p5.close();
     verifier(await attendre(async () => (await blocsDuJour()).some(b => b.texte.includes('barque neuve'))), 'après tout effacer, un écrit fait de nouveau un bloc');
-    verifier(await sw.evaluate(() => chrome.action.onClicked.hasListeners()), 'l’icône de l’extension ouvre l’accord'); await accord.close();
+    verifier(await sw.evaluate(() => chrome.action.onClicked.hasListeners()), 'l’icône de l’extension ouvre le chemin'); await accord.close();
 
     // 9. rien n’est parti
     verifier(dehors.length === 0, `aucune requête vers l’extérieur${dehors.length ? ` (${dehors[0]})` : ''}`);
