@@ -2,8 +2,8 @@
 // choisissent le lieu, les objets et le temps qu’il fait. Une page courte fait une tuile ; un long texte, un roman collé
 // d’un coup, se découpe en passages d’environ 14 mots porteurs, une tuile chacun. Les pages restent ici ; rien ne part.
 
-import { chargerSens, decouper, lirePage, candidats, objetsDeLaPage, lieuDeLaPage, LECTURE } from './sens.js?v=4';
-import { familles, planifier, climatDe, Atelier, Modeles, LARGE, HAUT, MARGE, MOTEUR } from './monde.js?v=3';
+import { chargerSens, decouper, lirePage, candidats, objetsDeLaPage, lieuDeLaPage, LECTURE } from './sens.js?v=5';
+import { familles, planifier, climatDe, Atelier, Modeles, LARGE, HAUT, MARGE, MOTEUR } from './monde.js?v=4';
 import { demo } from './demo.js?v=2';
 import * as carnet from './carnet.js?v=2';
 import { peindreFrise } from '../aquarelle.js?v=3';
@@ -81,7 +81,7 @@ async function calculer(suivre = () => {}) {
     if (!l) { const lecture = lirePage(S, x.texte); l = { lecture, liste: candidats(S, lecture) }; lus.set(x.texte, l); nouvelles.push([cleLue(x.texte), ecrire(l)]); }
     const objets = objetsDeLaPage(S, l.lecture, { recents, jour: i, liste: l.liste });
     for (const o of objets) recents.set(o.objet.id, i);
-    const lieu = x.depart ? 'champs' : lieuDeLaPage(l.lecture, objets, veille?.lieu), jour = { i, date: x.date, lieu, objets, climat: climatDe(l.lecture) };
+    const lieu = x.depart ? 'champs' : lieuDeLaPage(l.lecture, objets, veille?.lieu), jour = { i, date: x.date, lieu, objets, climat: climatDe(l.lecture), horizon: l.lecture.horizon };
     veille = planifier(jour, veille, F, decor); veille.lecture = l.lecture; veille.objets = objets; veille.passage = x;
     faits.push(veille);
     if (i % 20 === 0) suivre(i, out.length);
@@ -97,7 +97,7 @@ const cleLue = texte => `${LECTURE}:${empreinte(texte)}:${texte.length}`;
 const ecrire = l => ({ l: { ...l.lecture, contexte: [...l.lecture.contexte] }, o: l.liste.map(o => [o.objet.id, o.brut, o.mot]) });
 const relire = v => ({ lecture: { ...v.l, contexte: Float32Array.from(v.l.contexte) }, liste: v.o.map(([id, brut, mot]) => ({ objet: F.parId.get(id), brut, mot })).filter(o => o.objet) });
 // la clé d’une tuile peinte : tout ce dont dépend sa peinture, elle et ses deux voisines, et la version du peintre
-const signe = p => (p ? JSON.stringify([p.i, p.date, p.lieu, p.saison, p.climat, p.items, p.piece, p.sol]) : '');
+const signe = p => (p ? JSON.stringify([p.i, p.date, p.lieu, p.saison, p.climat, p.items, p.piece, p.sol, p.fond]) : '');
 const cle = k => `${MOTEUR}:${empreinte(`${signe(plans[k - 1])}|${signe(plans[k])}|${signe(plans[k + 1])}`)}`;
 
 /* ───────── La frise : une tuile par passage, peinte quand elle approche, gardée une fois peinte ───────── */
