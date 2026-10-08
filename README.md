@@ -162,13 +162,14 @@ Une île de l’archipel peut se relier à d’autres, par des routes sur l’ea
 - **Les paysages.** La maison, le village, la forêt, les champs, le bord de l’eau ; et, quand les mots y mènent, le désert, la savane, la jungle des tropiques, la montagne. Des modèles venus d’ailleurs : un baobab et des acacias, des bananiers, une paillote, une mosquée de terre du Mali, une pyramide maya, un gong chinois, des sushis.
 - **Le lointain.** Entre le bout du sol et le ciel, des silhouettes pâlies par la distance : une lisière de forêt, des collines, des toits et un clocher, la mer jusqu’à l’horizon, des sommets avec leur neige. Le lieu les choisit, et les mots les appellent : « la mer au loin » dans une page de campagne met la mer à l’horizon, « les sommets » dressent des montagnes au fond. Des courbes continues sur toute la frise, fondues d’une tuile à l’autre : une montagne grandit sur deux ou trois tuiles, elle ne surgit pas.
 - **Des gens et des bêtes qui agissent.** Les verbes ont leurs images : une centaine de poses, figées dans les animations libres de leurs modèles. On marche, court, dort, lit, nage, danse, pêche, jardine, bricole, salue, applaudit ; on est triste ou joyeux. Le cheval galope, la vache broute, la baleine sort son dos de l’eau, l’aigle vole. Les métiers aussi : le médecin, la cuisinière, l’ouvrier, la grand-mère.
+- **Trois pinceaux.** Sous la frise, on choisit le pinceau, gardé sur le téléphone : l’aquarelle ; la ligne claire, des couleurs franches à plat et un trait noir de la même épaisseur partout, les nuages cernés ; le croquis, un crayon qui suit les bords d’une main qui tremble un peu, repasse une fois, hachure l’ombre, avec une teinte légère dessous. Les trois lisent la même scène, le même temps qu’il fait, et se fondent de la même façon d’un jour à l’autre. Chaque tuile peinte est gardée par pinceau : revenir à l’un les rend telles quelles.
 - **Le temps qu’il fait.** La nuit a ses étoiles et sa lune ; le grand soleil, son disque et sa chaleur ; la pluie tombe en filets fins, la neige en flocons de papier réservé, et blanchit le sol et les arbres ; la brume monte avec la distance ; l’orage assombrit tout. Ces filtres viennent des mots, et passent d’une tuile à l’autre sans à-coup.
 - **L’intro.** Le chemin se trace au pinceau pendant que le vocabulaire se charge, que le texte se lit et que la première tuile se peint. Un toucher, et on entre.
 - **Gardé.** Les tuiles peintes sont gardées ; une tuile ne se repeint que si elle ou ses voisines changent. Loin de l’écran, son image quitte la mémoire. La lecture de chaque passage est gardée aussi : un roman se rouvre sans tout relire. Le chemin a son propre service worker, qui garde l’app et les objets déjà vus, et ne touche qu’aux caches qui commencent par `chemin-` ; celui de l’archipel ignore le dossier `chemin/`.
 
 | Fichier | Rôle |
 | --- | --- |
-| `chemin/app.js` | L’intro, la frise, la peinture et la garde des tuiles, le parcours et le déroulé, la page du jour et ses blocs, la relecture |
+| `chemin/app.js` | L’intro, la frise, la peinture et la garde des tuiles, le pinceau, le parcours et le déroulé, la page du jour et ses blocs, la relecture |
 | `chemin/sens.js` | Le découpage, les mots porteurs, les objets les plus proches, les champs, le lieu, la tonalité, la météo, l’horizon |
 | `chemin/monde.js` | Le plan de chaque tuile, ses paysages, le sol, l’eau, le lointain, le ciel, les maisons ouvertes, le temps qu’il fait, le rendu en 3D |
 | `chemin/carnet.js` | Les pages, leurs blocs, et les tuiles peintes, dans le stockage du téléphone |
@@ -215,7 +216,7 @@ Une île de l’archipel peut se relier à d’autres, par des routes sur l’ea
 | `monde.js` | Le relief, la mer, le ciel, la lumière, la caméra, l’île et ses voisines, les ponts, la photo pour la carte postale, l’archipel, l’intro, l’îlot, les aperçus |
 | `modeles.js` | Les choses en 3D, leurs formes, leurs états, le petit décor |
 | `vie.js` | La vie qui ne dit rien : les bêtes du paysage et leurs allées et venues, les oiseaux du ciel et leur vol |
-| `aquarelle.js` | La carte postale : la photo de l’île, peinte à l’aquarelle sur le téléphone, puis légendée |
+| `aquarelle.js` | La carte postale : la photo de l’île, peinte à l’aquarelle sur le téléphone, puis légendée ; et les trois pinceaux de la frise du chemin |
 | `outils.js` | Les nombres stables et le mélange des couleurs |
 | `vendor/` | three.js 0.186, réduit aux pièces utilisées, et qrcode-generator 2.0.4, pour le code du lien d’une île (licences MIT) |
 | `fonts/` | Nunito (licence SIL OFL 1.1) |

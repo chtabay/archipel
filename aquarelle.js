@@ -144,6 +144,105 @@ void main() {
 }`;
 const PAPIER = [.957, .937, .894];
 
+// Ce que les trois pinceaux de la frise partagent : le ciel, le fondu d’un jour à l’autre, la clarté, le bord des aplats
+const COMMUN = `uniform sampler2D aplat, halo; uniform vec2 taille, decalage; uniform vec3 papier, jours; uniform vec4 ta, tb, tc, sa, sb, sc, ma, mb, mc, na, nb, nc, astre; varying vec2 uv;
+${BRUIT}
+float nuee(vec2 px) { vec2 q = vec2(px.x / 300., px.y / 95.); return fbm(q + 5.3) * .75 + vb(q * 3.1 + 9.) * .25; }
+vec4 suivre(vec4 a, vec4 b, vec4 c, float x) { return x < jours.y ? mix(a, b, clamp((x - jours.x) / (jours.y - jours.x), 0., 1.)) : mix(b, c, clamp((x - jours.y) / (jours.z - jours.y), 0., 1.)); }
+float lum(vec3 c) { return dot(c, vec3(.3, .59, .11)); }
+float ecart(vec2 q, vec2 o) { return length(texture2D(aplat, q + o).rgb - texture2D(aplat, q - o).rgb); } // la couleur change-t-elle de part et d’autre ?
+float bords(vec2 q, float r, vec2 e) { float b = 0.; for (int k = 0; k < 8; k++) { float a = float(k) * .3927; b = max(b, ecart(q, vec2(cos(a), sin(a)) * r * e)); } return b; } // dans toutes les directions : un trait d’une seule épaisseur`;
+
+// La ligne claire : des couleurs franches, à plat, et un trait noir de la même épaisseur partout ; les nuages cernés, pas de
+// grain, pas de bord de lavis. Le temps qu’il fait, en traits et en points.
+const LIGNE = `precision highp float;
+${COMMUN}
+void main() {
+  vec2 px = uv * taille + decalage, e = 1. / taille;
+  vec3 c = texture2D(aplat, uv).rgb;
+  vec2 h = texture2D(halo, uv).rg;
+  vec4 t = suivre(ta, tb, tc, px.x), s = suivre(sa, sb, sc, px.x), m = suivre(ma, mb, mc, px.x), n = suivre(na, nb, nc, px.x);
+  float trait = smoothstep(.06, .14, bords(uv, 2.2, e));
+  vec3 p = 1. - (1. - c) * .9; // des couleurs claires
+  p = mix(vec3(lum(p)), p, 1.18); // et franches
+  p = mix(p, vec3(lum(p)), t.w) * t.rgb; // la teinte du jour
+  p *= 1. - .12 * n.y; // l’orage assombrit
+  float vide = (1. - h.r) * (1. - h.g), ciel = vide * smoothstep(.35, .55, uv.y), haut = smoothstep(.55, .9, uv.y);
+  float nu = nuee(px), seuilN = .63 - .07 * haut, nuage = ciel * (1. - s.z) * smoothstep(seuilN - .004, seuilN + .004, nu);
+  float contourN = ciel * (1. - s.z) * smoothstep(.014, .004, abs(nu - seuilN)); // le nuage : blanc, cerné
+  p = mix(p, vec3(1.), nuage * .96);
+  p = mix(p, vec3(.72, .74, .8) * t.rgb, nuage * smoothstep(seuilN + .02, seuilN + .09, nuee(px + vec2(0., 30.))) * .5);
+  float eau = h.g * (1. - h.r), pres = 1. - smoothstep(.05, .6, uv.y);
+  float ondes = eau * smoothstep(.68, .74, fbm(vec2(px.x / 110., px.y / mix(2.4, 6.5, pres)) + 3.7)) * (1. - .6 * pres); // des reflets couchés
+  p = mix(p, vec3(1.), ondes * .55);
+  float da = length(px - astre.xy), disque = vide * smoothstep(astre.z + 1.5, astre.z - 1.5, da), cerne = vide * smoothstep(2.6, 1.2, abs(da - astre.z)); // le soleil, la lune : un disque cerné
+  if (astre.w > 1.5) p = mix(p, vec3(1., .93, .6), disque); else if (astre.w > .5) p = mix(p, vec3(.98, .97, .9), disque);
+  vec2 cs = floor(px / 11.), ps = (cs + .5 + (vec2(vb(cs * 3.71 + 1.3), vb(cs * 5.37 + 2.9)) - .5) * .7) * 11.;
+  float etoile = m.w * vide * smoothstep(.5, .78, uv.y) * step(.84, vb(cs * 7.31 + 3.7)) * smoothstep(2.2, 1., length(px - ps)) * (1. - disque);
+  p = mix(p, vec3(1., .98, .9), etoile);
+  float brume = m.z * (.15 + .6 * smoothstep(.12, .75, uv.y)); // la brume : les couleurs et le trait s’effacent au loin
+  p = mix(p, vec3(.93, .94, .96), brume);
+  vec2 rp = mat2(.966, -.259, .259, .966) * px; // la pluie : des traits fins en biais
+  float colonne = floor(rp.x / 11.), hz = vb(vec2(colonne * 1.731, 3.17)), longueur = 60. + 90. * vb(vec2(colonne * .37, 9.1));
+  float filet = smoothstep(1.1, .4, abs(fract(rp.x / 11.) - .5) * 11.) * step(.55, fract(rp.y / longueur + hz * 7.)) * step(.35, hz);
+  p = mix(p, vec3(.3, .36, .5), filet * m.x * .6);
+  vec2 cf = floor(px / 24.), pf = (cf + .5 + (vec2(vb(cf * 2.31 + 1.7), vb(cf * 4.13 + 7.9)) - .5) * .8) * 24.; // la neige : des points blancs
+  float flocon = step(.45, vb(cf * 9.71 + 4.3)) * smoothstep(3.4, 2., length(px - pf)) * m.y;
+  p = mix(p, vec3(1.), flocon);
+  float ligne = max(trait * (1. - .7 * brume), max(contourN * .8, cerne * (astre.w > .5 ? 1. : 0.)));
+  gl_FragColor = vec4(mix(p, vec3(.09, .09, .12), ligne), 1.);
+}`;
+
+// Le croquis : le crayon suit les bords, d’une main qui tremble un peu, repasse une fois ; il hachure l’ombre, en biais,
+// puis en croix, puis serré ; une teinte légère dessous, et le grain du papier. Le dessin s’arrête un peu avant le bord.
+const CROQUIS = `precision highp float;
+${COMMUN}
+float grain(vec2 p) { return vb(p / 3.1) * .6 + vb(p / 7.3 + 13.) * .4; }
+float hachure(vec2 px, vec2 dir, float pas, float tremble) { // des traits parallèles, au crayon, qui tremblent un peu et appuient inégalement
+  float u = dot(px, dir) / pas + (vb(px / 23.) - .5) * tremble, f = fract(u);
+  return smoothstep(.3, .18, abs(f - .5)) * (.6 + .4 * vb(vec2(dot(px, vec2(dir.y, -dir.x)) / 9., floor(u))));
+}
+void main() {
+  vec2 px = uv * taille + decalage, e = 1. / taille;
+  float g = grain(px), gx = grain(px + vec2(1., 0.)) - g, gy = grain(px + vec2(0., 1.)) - g;
+  vec2 q = uv + (vec2(fbm(px / 55. + 9.), fbm(px / 55. + 19.)) - .5) * 4. * e; // la main qui tremble un peu
+  vec3 c = texture2D(aplat, q).rgb;
+  vec2 h = texture2D(halo, uv).rg;
+  vec4 t = suivre(ta, tb, tc, px.x), s = suivre(sa, sb, sc, px.x), m = suivre(ma, mb, mc, px.x), n = suivre(na, nb, nc, px.x);
+  vec3 col = mix(c, vec3(lum(c)), t.w) * t.rgb; col *= 1. - .12 * n.y;
+  float v = lum(col), pression = .55 + .45 * vb(px / 9. + 2.);
+  float trait = smoothstep(.06, .16, bords(q, 1.8, e)) * pression, reprise = smoothstep(.09, .2, bords(q + vec2(2.5, -1.5) * e, 1.4, e)) * .4 * pression; // le trait, et sa reprise
+  float h1 = hachure(px, vec2(.7071, .7071), 8., .8) * smoothstep(.64, .46, v); // les hachures, dans l’ombre seulement
+  float h2 = hachure(px, vec2(-.6428, .766), 8., .8) * smoothstep(.42, .26, v);
+  float h3 = hachure(px, vec2(.9659, .2588), 6., .6) * smoothstep(.24, .1, v);
+  float hach = max(max(h1, h2), h3);
+  vec3 p = 1. - (1. - col) * .5; // une teinte légère
+  float vide = (1. - h.r) * (1. - h.g), ciel = vide * smoothstep(.35, .55, uv.y), haut = smoothstep(.55, .9, uv.y);
+  float nu = nuee(px), seuilN = .63 - .07 * haut, nuage = ciel * (1. - s.z) * smoothstep(seuilN - .01, seuilN + .01, nu);
+  float contourN = ciel * (1. - s.z) * smoothstep(.016, .005, abs(nu - seuilN)) * pression;
+  p = mix(p, vec3(1.), nuage * .9); hach *= 1. - nuage;
+  float eau = h.g * (1. - h.r), pres = 1. - smoothstep(.05, .6, uv.y);
+  float ondes = eau * hachure(px, vec2(0., 1.), 7., 1.2) * smoothstep(.42, .6, vb(vec2(px.x / 30., px.y / 7.) + 5.)) * (1. - .5 * pres); // l’eau : des traits couchés
+  float da = length(px - astre.xy), disque = vide * smoothstep(astre.z + 1.5, astre.z - 1.5, da), cerne = vide * smoothstep(2.4, 1., abs(da - astre.z)) * pression; // la lune, le soleil : un rond au crayon
+  if (astre.w > .5) { p = mix(p, vec3(1., .99, .95), disque); hach *= 1. - disque; }
+  vec2 cs = floor(px / 11.), ps = (cs + .5 + (vec2(vb(cs * 3.71 + 1.3), vb(cs * 5.37 + 2.9)) - .5) * .7) * 11.;
+  float etoile = m.w * vide * smoothstep(.5, .78, uv.y) * step(.84, vb(cs * 7.31 + 3.7)) * smoothstep(2.4, 1., length(px - ps)) * (1. - disque);
+  float brume = m.z * (.15 + .65 * smoothstep(.12, .75, uv.y)), loin = 1. - brume; // la brume efface le crayon au loin
+  vec2 rp = mat2(.966, -.259, .259, .966) * px; // la pluie : des traits fins en biais
+  float colonne = floor(rp.x / 12.), hz = vb(vec2(colonne * 1.731, 3.17)), longueur = 50. + 90. * vb(vec2(colonne * .37, 9.1));
+  float filet = smoothstep(1.2, .4, abs(fract(rp.x / 12.) - .5) * 12.) * step(.58, fract(rp.y / longueur + hz * 7.)) * step(.35, hz) * m.x;
+  vec2 cf = floor(px / 24.), pf = (cf + .5 + (vec2(vb(cf * 2.31 + 1.7), vb(cf * 4.13 + 7.9)) - .5) * .8) * 24.; // la neige : des points de papier
+  float flocon = step(.45, vb(cf * 9.71 + 4.3)) * smoothstep(3.6, 1.8, length(px - pf)) * m.y;
+  float cadre = smoothstep(0., .05, uv.y) * smoothstep(1., .95, uv.y); // le dessin s’arrête un peu avant le bord de la feuille
+  float encre = max(max(trait, reprise), max(max(hach * .8, ondes * .7), max(contourN * .6, max(cerne, filet * .5)))) * loin * cadre;
+  p = mix(p, vec3(.95, .95, .96), brume * .7);
+  p = mix(vec3(1.), p, cadre);
+  p = mix(p, vec3(.2, .19, .21), encre * (1. - .25 * g)); // le crayon accroche le grain
+  p = mix(p, vec3(1.), max(etoile, flocon)); // réservés
+  gl_FragColor = vec4(papier * (1. + (gx - gy) * .3) * p, 1.);
+}`;
+const PINCEAUX = { aquarelle: FRISE, ligne: LIGNE, croquis: CROQUIS };
+
 function hasard(graine) { // le bruit : des valeurs tirées d’une graine, pour que la même île, vue du même côté, donne la même carte
   let a = graine >>> 0 || 1; const d = new Uint8Array(256 * 256 * 4);
   for (let i = 0; i < d.length; i++) { a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; d[i] = (t ^ (t >>> 14)) & 255; }
@@ -245,10 +344,11 @@ export async function peindre(vue, graine = 1) {
 // petit. decalage : la place de la tuile dans toute la frise, en pixels. jours : la teinte de trois jours, la veille, le jour,
 // le lendemain, à leur place : [{ x, teinte: [r, g, b, gris], ciel: [lourd, ombre, voile], meteo: [pluie, neige, brume, nuit],
 // astres: [soleil, orage] }]. La nuit, une lune ; au grand soleil, le soleil : dans le ciel du jour, à une place tirée de la graine.
-export async function peindreFrise(vue, { graine = 1, decalage = [0, 0], jours }) {
+// style : le pinceau, aquarelle, ligne (claire) ou croquis.
+export async function peindreFrise(vue, { graine = 1, decalage = [0, 0], jours, style = 'aquarelle' }) {
   const W = vue.image.width, H = vue.image.height, j = jours[1], nuit = (j.meteo?.[3] || 0) >= .5, soleil = (j.astres?.[0] || 0) >= .5;
   const u = ((Math.sin((j.x + graine) * 12.9898) * 43758.5453) % 1 + 1) % 1, astre = nuit || soleil ? [j.x + (u - .5) * W * .45, H * (.84 + .05 * u), nuit ? 24 : 30, nuit ? 1 : 2] : [0, 0, 0, 0];
-  return passer(vue.image, masques(vue.silhouette), graine, FRISE, (gl, p) => {
+  return passer(vue.image, masques(vue.silhouette), graine, PINCEAUX[style] || FRISE, (gl, p) => {
     gl.uniform3f(gl.getUniformLocation(p, 'jours'), ...jours.map(j => j.x));
     ['ta', 'tb', 'tc'].forEach((n, i) => gl.uniform4f(gl.getUniformLocation(p, n), ...jours[i].teinte));
     ['sa', 'sb', 'sc'].forEach((n, i) => gl.uniform4f(gl.getUniformLocation(p, n), ...jours[i].ciel, 0));

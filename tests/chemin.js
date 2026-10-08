@@ -248,6 +248,28 @@ Avant de dormir, j’ai écrit une lettre à ma mère, sur le bureau, avec un st
     `sur ordinateur, au bout, la molette rend la main à la page ; elle fait reculer le chemin (${o0.x - o2.x} points), la souris le tire (${o2.x - o3.x}) sans ouvrir de tuile, un clic l’ouvre`);
   await co.close();
 
+  // 10. trois pinceaux : la ligne claire et le croquis repeignent la tuile autrement ; l’aquarelle revient du carnet ; le choix reste
+  const cp = await b.newContext(TELEPHONE), q3 = await cp.newPage(); surveiller(q3, e, x);
+  await q3.goto(BASE + 'chemin/?demo');
+  await attendre(q3, () => q3.evaluate(() => document.querySelector('#intro').hidden && window.chemin?.tuiles.length > 2), 60000);
+  const empreinte = async () => { // la tuile du milieu de l’écran, peinte : d’où vient son image, et un résumé de ses pixels
+    await attendre(q3, () => q3.evaluate(() => { const f = document.querySelector('#frise'), t = [...f.querySelectorAll('.tuile')].find(t => { const a = t.getBoundingClientRect(), g = f.getBoundingClientRect(); return a.left <= g.left + g.width / 2 && a.right > g.left + g.width / 2; }); return t?.classList.contains('peinte') && t.querySelector('img[src]')?.complete; }), PEINTURE);
+    return q3.evaluate(() => { const f = document.querySelector('#frise'), t = [...f.querySelectorAll('.tuile')].find(t => { const a = t.getBoundingClientRect(), g = f.getBoundingClientRect(); return a.left <= g.left + g.width / 2 && a.right > g.left + g.width / 2; }), i = t.querySelector('img'), c = document.createElement('canvas'); c.width = 48; c.height = 36; const g = c.getContext('2d'); g.drawImage(i, 0, 0, 48, 36); const d = g.getImageData(0, 0, 48, 36).data; let h = 7; for (let n = 0; n < d.length; n += 4) h = (h * 31 + d[n] * 3 + d[n + 1] * 5 + d[n + 2] * 7) % 1000000007; return { k: t.dataset.k, source: t.dataset.source, h, cle: window.chemin.tuiles[+t.dataset.k].cle }; });
+  };
+  const aqua = await empreinte();
+  await q3.selectOption('#style', 'ligne'); const ligne = await empreinte();
+  await q3.screenshot({ path: path.join(OUT, 'ligne-claire.png') });
+  await q3.selectOption('#style', 'croquis'); const croquis = await empreinte();
+  await q3.screenshot({ path: path.join(OUT, 'croquis.png') });
+  await q3.selectOption('#style', 'aquarelle'); const retour = await empreinte();
+  await q3.reload(); await attendre(q3, () => q3.evaluate(() => document.querySelector('#intro').hidden && window.chemin?.tuiles.length > 2), 60000);
+  await q3.selectOption('#style', 'croquis'); await q3.reload(); await attendre(q3, () => q3.evaluate(() => document.querySelector('#intro').hidden && window.chemin?.tuiles.length > 2), 60000);
+  const garde = await q3.evaluate(() => ({ style: window.chemin.style, choix: document.querySelector('#style').value, dit: document.querySelector('#dit').textContent }));
+  verifier(aqua.k === ligne.k && ligne.k === croquis.k && new Set([aqua.h, ligne.h, croquis.h]).size === 3 && ligne.source === 'pinceau' && croquis.source === 'pinceau' && /:ligne:/.test(ligne.cle) && /:croquis:/.test(croquis.cle),
+    `la même tuile, peinte de trois façons : aquarelle, ligne claire, croquis (${[aqua, ligne, croquis].map(x => x.source).join(', ')})`);
+  verifier(retour.h === aqua.h && retour.source === 'carnet' && garde.style === 'croquis' && garde.choix === 'croquis', `revenir à l’aquarelle la rend telle quelle, du carnet ; le pinceau choisi reste d’une visite à l’autre (${garde.style})`);
+  await cp.close();
+
   verifier(!calme(e).length, `aucune erreur dans la console${calme(e).length ? ' : ' + calme(e).slice(0, 4).join(' | ') : ''}`);
   verifier(!x.length, `aucune requête vers l’extérieur${x.length ? ' : ' + x.slice(0, 3).join(' ') : ''}`);
   await b.close(); local.fermer(); bilan();
