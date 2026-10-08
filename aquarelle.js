@@ -241,7 +241,63 @@ void main() {
   p = mix(p, vec3(1.), max(etoile, flocon)); // réservés
   gl_FragColor = vec4(papier * (1. + (gx - gy) * .3) * p, 1.);
 }`;
-const PINCEAUX = { aquarelle: FRISE, ligne: LIGNE, croquis: CROQUIS };
+// Le dessin d’enfant : un trait épais, d’une main qui tremble fort ; la cire posée à côté du trait, qui laisse voir le papier ;
+// des couleurs vives ; le ciel en bande bleue en haut de la feuille ; le soleil avec ses rayons, la lune en croissant.
+const ENFANT = `precision highp float;
+${COMMUN}
+float grain(vec2 p) { return vb(p / 3.1) * .6 + vb(p / 7.3 + 13.) * .4; }
+float cire(vec2 px, vec2 dir, float serre) { // la cire du crayon : des traînées dans le sens du geste, qui laissent voir le papier
+  vec2 r = vec2(dot(px, dir), dot(px, vec2(-dir.y, dir.x)));
+  return smoothstep(.12, .5, vb(vec2(r.x / 2.2, r.y / serre)) * .7 + vb(vec2(r.x / 9., r.y / (serre * 3.)) + 7.) * .3);
+}
+void main() {
+  vec2 px = uv * taille + decalage, e = 1. / taille;
+  float g = grain(px);
+  vec2 q = uv + ((vec2(fbm(px / 38. + 3.), fbm(px / 38. + 13.)) - .5) * 12. + (vec2(vb(px / 9. + 5.), vb(px / 9. + 15.)) - .5) * 4.) * e; // le trait, d’une main qui tremble fort
+  vec2 qf = uv + (vec2(fbm(px / 50. + 23.), fbm(px / 50. + 33.)) - .5) * 16. * e; // la couleur, posée à côté du trait
+  vec3 c = texture2D(aplat, qf).rgb;
+  vec2 h = texture2D(halo, qf).rg;
+  vec4 t = suivre(ta, tb, tc, px.x), s = suivre(sa, sb, sc, px.x), m = suivre(ma, mb, mc, px.x), n = suivre(na, nb, nc, px.x);
+  float pression = .62 + .38 * vb(px / 7. + 1.);
+  float trait = smoothstep(.07, .15, bords(q, 3.2, e)) * pression * step(.06, vb(px / 5. + 9.));
+  vec3 col = clamp(mix(vec3(lum(c)), c, 1.5), 0., 1.); // des couleurs vives
+  col = mix(col, vec3(lum(col)), t.w * .6) * mix(vec3(1.), t.rgb, .7); col *= 1. - .15 * n.y;
+  float vide = (1. - h.r) * (1. - h.g), eau = h.g * (1. - h.r);
+  float ciel = vide * smoothstep(.35, .55, uv.y), haut = smoothstep(.55, .9, uv.y);
+  float nu = nuee(px), seuilN = .63 - .07 * haut, nuage = ciel * (1. - s.z) * smoothstep(seuilN - .006, seuilN + .006, nu);
+  float contourN = ciel * (1. - s.z) * smoothstep(.02, .006, abs(nu - seuilN)) * pression;
+  float bande = mix(smoothstep(.6, .86, uv.y), 1., max(m.w, .7 * n.y)); // le ciel : une bande de bleu en haut de la feuille ; la nuit, tout entier
+  float cr = mix(cire(px, vec2(.906, .423), 14.), cire(px, vec2(1., 0.), 10.), max(ciel, eau)); // en biais ; couché pour le ciel et l’eau
+  float couvert = mix(1., bande, ciel) * (1. - nuage);
+  vec3 p = mix(vec3(1.), col, (.3 + .7 * cr) * couvert);
+  p = mix(p, vec3(1.), nuage);
+  vec2 d = px - astre.xy; float da = length(d), disque = vide * smoothstep(astre.z + 2., astre.z - 2., da), cerne = vide * smoothstep(3.5, 1.5, abs(da - astre.z - 1.)) * pression;
+  if (astre.w > 1.5) { // le soleil, et ses rayons
+    float ang = atan(d.y, d.x) * 1.273 + vb(px / 11.) * .25, rayon = vide * smoothstep(.1, .04, abs(fract(ang) - .5)) * step(astre.z + 7., da) * step(da, astre.z + 36. + 8. * vb(vec2(floor(ang), 2.)));
+    p = mix(p, vec3(1., .85, .2), disque); p = mix(p, vec3(1., .6, .15), max(rayon, cerne) * .95);
+  } else if (astre.w > .5) { // la lune, en croissant
+    float lune = disque - vide * smoothstep(astre.z + 2., astre.z - 2., length(d - vec2(10., 5.)));
+    p = mix(p, vec3(1., .95, .6), clamp(lune, 0., 1.));
+  }
+  vec2 cs = floor(px / 13.), ps = (cs + .5 + (vec2(vb(cs * 3.71 + 1.3), vb(cs * 5.37 + 2.9)) - .5) * .7) * 13.;
+  float etoile = m.w * vide * smoothstep(.5, .78, uv.y) * step(.86, vb(cs * 7.31 + 3.7)) * smoothstep(3.2, 1.6, length(px - ps)) * (1. - disque);
+  p = mix(p, vec3(1., .92, .4), etoile); // des étoiles jaunes
+  float brume = m.z * (.15 + .6 * smoothstep(.12, .75, uv.y)); // la brume : moins de cire au loin
+  p = mix(p, vec3(1.), brume * .8);
+  vec2 rp = mat2(.94, -.342, .342, .94) * px; // la pluie : des tirets bleus
+  float colonne = floor(rp.x / 14.), hz = vb(vec2(colonne * 1.731, 3.17));
+  float goutte = smoothstep(1.8, .6, abs(fract(rp.x / 14.) - .5) * 14.) * step(.5, fract(rp.y / 26. + hz * 7.)) * step(.3, hz) * m.x;
+  p = mix(p, vec3(.3, .5, .9), goutte * .9);
+  vec2 cf = floor(px / 26.), pf = (cf + .5 + (vec2(vb(cf * 2.31 + 1.7), vb(cf * 4.13 + 7.9)) - .5) * .8) * 26.; // la neige : des ronds blancs cernés de bleu
+  float df = length(px - pf), flocon = step(.45, vb(cf * 9.71 + 4.3)) * m.y, rond = flocon * smoothstep(4.2, 2.6, df), anneau = flocon * smoothstep(1.6, .6, abs(df - 4.));
+  p = mix(p, vec3(1.), rond); p = mix(p, vec3(.45, .6, .9), anneau);
+  float cadre = smoothstep(0., .04 + .025 * vb(vec2(px.x / 60., 1.)), uv.y) * smoothstep(1., .955 - .025 * vb(vec2(px.x / 60., 7.)), uv.y); // la feuille, nue au bord
+  p = mix(vec3(1.), p, cadre);
+  float ligne = max(trait * (1. - .6 * brume), contourN * .9) * cadre;
+  p = mix(p, vec3(.22, .16, .14), ligne);
+  gl_FragColor = vec4(vec3(.985, .98, .96) * (1. - .06 * g) * p, 1.);
+}`;
+const PINCEAUX = { aquarelle: FRISE, ligne: LIGNE, croquis: CROQUIS, enfant: ENFANT };
 
 function hasard(graine) { // le bruit : des valeurs tirées d’une graine, pour que la même île, vue du même côté, donne la même carte
   let a = graine >>> 0 || 1; const d = new Uint8Array(256 * 256 * 4);
@@ -344,9 +400,9 @@ export async function peindre(vue, graine = 1) {
 // petit. decalage : la place de la tuile dans toute la frise, en pixels. jours : la teinte de trois jours, la veille, le jour,
 // le lendemain, à leur place : [{ x, teinte: [r, g, b, gris], ciel: [lourd, ombre, voile], meteo: [pluie, neige, brume, nuit],
 // astres: [soleil, orage] }]. La nuit, une lune ; au grand soleil, le soleil : dans le ciel du jour, à une place tirée de la graine.
-// style : le pinceau, aquarelle, ligne (claire) ou croquis.
+// style : le pinceau, aquarelle, ligne (claire), croquis ou enfant (un dessin d’enfant : le soleil est là dès qu’il ne pleut pas).
 export async function peindreFrise(vue, { graine = 1, decalage = [0, 0], jours, style = 'aquarelle' }) {
-  const W = vue.image.width, H = vue.image.height, j = jours[1], nuit = (j.meteo?.[3] || 0) >= .5, soleil = (j.astres?.[0] || 0) >= .5;
+  const W = vue.image.width, H = vue.image.height, j = jours[1], nuit = (j.meteo?.[3] || 0) >= .5, soleil = (j.astres?.[0] || 0) >= .5 || (style === 'enfant' && (j.meteo?.[0] || 0) < .5);
   const u = ((Math.sin((j.x + graine) * 12.9898) * 43758.5453) % 1 + 1) % 1, astre = nuit || soleil ? [j.x + (u - .5) * W * .45, H * (.84 + .05 * u), nuit ? 24 : 30, nuit ? 1 : 2] : [0, 0, 0, 0];
   return passer(vue.image, masques(vue.silhouette), graine, PINCEAUX[style] || FRISE, (gl, p) => {
     gl.uniform3f(gl.getUniformLocation(p, 'jours'), ...jours.map(j => j.x));
