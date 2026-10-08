@@ -18,6 +18,7 @@ jobs:
         with:
           node-version: 22
       - run: node chemin/extension/fabriquer.js
+      - run: npx --yes addons-linter --self-hosted chemin/extension/dist # les règles de Mozilla : une erreur arrête tout, un avertissement non
       - run: cd chemin/extension/dist && zip -qr ../chemin-extension.zip . && ls -la ../chemin-extension.zip
       - uses: actions/upload-artifact@v4 # GitHub zippe lui-même la pièce jointe : on lui donne le dossier, un seul dézippage
         with:

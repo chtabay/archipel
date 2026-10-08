@@ -4,7 +4,11 @@ const ext = globalThis.browser ?? globalThis.chrome;
 let attente = false; // un bloc arrivé pendant l’intro : le chemin se relira dès qu’il sera prêt
 const relire = () => { if (window.chemin?.rafraichir) { attente = false; window.chemin.rafraichir().catch(() => {}); } else attente = true; };
 ext.runtime.onMessage.addListener(m => { if (m?.type === 'bloc') relire(); });
-addEventListener('chemin:pret', () => { if (attente) relire(); });
+addEventListener('chemin:pret', async () => {
+  if (attente) relire();
+  const { accord } = await ext.storage.local.get('accord').catch(() => ({})); // le premier jour : rien encore, et le chemin attend les écrits de la journée
+  if (accord === true && window.chemin?.pages?.length === 0) { const d = document.querySelector('#dit'); if (d) d.textContent = 'Écris comme d’habitude : ton chemin pousse derrière.'; }
+});
 (async () => {
   const { accord } = await ext.storage.local.get('accord').catch(() => ({}));
   if (accord === true) return;

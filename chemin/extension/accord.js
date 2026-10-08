@@ -7,7 +7,19 @@ const ENCART = RECHERCHES; // d’office, le chemin au coin de la page sur les m
 const lignes = t => [...new Set(t.split('\n').map(l => l.trim().toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/[/:].*$/, '')).filter(Boolean))];
 const acces = () => ext.permissions.contains({ origins: ['<all_urls>'] }).catch(() => true);
 
+// la version, et des comptes sans un mot : pour dire où on en est, à l’essai
+async function etat() {
+  try {
+    const db = await new Promise((ok, ko) => { const q = indexedDB.open('chemin'); q.onsuccess = () => ok(q.result); q.onerror = () => ko(q.error); });
+    const compte = nom => (db.objectStoreNames.contains(nom) ? new Promise(ok => { const q = db.transaction(nom).objectStore(nom).getAll(); q.onsuccess = () => ok(q.result); q.onerror = () => ok([]); }) : Promise.resolve([]));
+    const pages = await compte('pages'), tuiles = await compte('tuiles'); db.close();
+    const glanes = pages.reduce((n, p) => n + (p.blocs || []).filter(b => b.source === 'glane').length, 0);
+    const place = await navigator.storage?.estimate?.().then(e => e.usage ? ` · ${(e.usage / 1048576).toFixed(0)} Mo` : '').catch(() => '') || '';
+    $('#etat').textContent = `Version ${ext.runtime.getManifest().version} · ${pages.length} jour${pages.length > 1 ? 's' : ''} · ${glanes} écrit${glanes > 1 ? 's' : ''} glané${glanes > 1 ? 's' : ''} · ${tuiles.length} tuile${tuiles.length > 1 ? 's' : ''} peinte${tuiles.length > 1 ? 's' : ''}${place}`;
+  } catch { $('#etat').textContent = `Version ${ext.runtime.getManifest().version}`; }
+}
 async function montrer({ champs = true } = {}) {
+  etat();
   const r = await ext.storage.local.get(['accord', 'pause', 'exclus', 'recherches', 'encart']);
   $('#reglages').hidden = r.accord !== true;
   $('#pause').checked = r.pause === true;
