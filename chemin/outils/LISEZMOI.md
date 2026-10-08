@@ -33,6 +33,12 @@ Ils fabriquent, une fois pour toutes, ce que l’app lit : les objets, leur cata
    leurs noms français. Les couleurs et les formes comptent peu. Les noms d’objets rares entrent dans le vocabulaire. Il
    écrit aussi `images.bin`, qui dit quels mots font une image.
 
+8. `node chemin/outils/couverture.mjs [--sans <nombre>]` : ce que le catalogue couvre. Lit les 3 000 mots pleins les plus
+   fréquents du français (`outils/mots-courants.tsv`, tirés de Lexique 3.83, CC BY-SA 4.0) un par un avec le moteur de sens tel
+   qu’il tourne dans l’app, symboles compris (`chemin/sens/symboles.txt` : un mot sans objet à lui, et les noms d’objets qui le
+   montrent, le préféré d’abord), compte par nature de mot, écrit `outils/couverture.tsv`, et montre les mots fréquents qui
+   n’ont encore rien : ce qu’il reste à trouver, ou à construire. À relancer après un ajout d’objets ou de symboles.
+
 Après un changement des objets ou du sens, augmenter les numéros de version : `?v=` dans `chemin/sens.js`
 (`FICHIERS_SENS`), `MOTEUR` dans `chemin/monde.js` pour repeindre les tuiles gardées, et `OBJETS` dans `chemin/sw.js` si
 un modèle déjà publié change sous le même nom.
