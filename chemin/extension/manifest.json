@@ -3,11 +3,12 @@
   "name": "Le chemin",
   "short_name": "Chemin",
   "version": "0.1.0",
-  "description": "Ce que tu écris dans la journée fait pousser un chemin, peint à l’aquarelle, dans chaque nouvel onglet. Rien ne part de cet ordinateur.",
+  "description": "Ce que tu écris dans la journée fait pousser un chemin à l’aquarelle, dans chaque nouvel onglet. Rien ne part de cet ordinateur.",
   "icons": {
     "16": "icones/favicon-16.png",
     "32": "icones/favicon-32.png",
     "96": "icones/symbole-96.png",
+    "128": "icones/icone-128.png",
     "192": "icones/icone-192.png"
   },
   "permissions": [

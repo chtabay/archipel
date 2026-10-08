@@ -10,11 +10,12 @@ function fabriquer() {
   for (const f of ['aquarelle.js', 'outils.js', 'contenu.js', 'fonts']) copier(path.join(RACINE, f), path.join(DIST, f)); // ce que le chemin emprunte à l’archipel
   for (const f of ['app.js', 'sens.js', 'monde.js', 'carnet.js', 'demo.js', 'style.css', 'catalogue.json', 'vendor', 'sens', 'objets']) copier(path.join(RACINE, 'chemin', f), path.join(DIST, 'chemin', f));
   // la page du chemin, avec ce que l’extension y ajoute ; sans sw.js : une page d’extension n’a pas de service worker à elle
-  const html = fs.readFileSync(path.join(RACINE, 'chemin/index.html'), 'utf8').replace('</body>', '  <script type="module" src="onglet.js"></script>\n</body>');
+  const html = fs.readFileSync(path.join(RACINE, 'chemin/index.html'), 'utf8').replace('</body>', '  <script type="module" src="onglet.js"></script>\n</body>').replace('href="extension/confidentialite.html"', 'href="../confidentialite.html"'); // dans le paquet, la politique est à la racine
   fs.writeFileSync(path.join(DIST, 'chemin/index.html'), html);
   copier(path.join(ICI, 'onglet.js'), path.join(DIST, 'chemin/onglet.js'));
   for (const f of ['manifest.json', 'fond.js', 'glaneur.js', 'accord.html', 'accord.css', 'accord.js']) copier(path.join(ICI, f), path.join(DIST, f));
-  for (const f of ['favicon-16.png', 'favicon-32.png', 'symbole-96.png', 'icone-192.png']) copier(path.join(RACINE, 'icones', f), path.join(DIST, 'icones', f));
+  for (const f of ['favicon-16.png', 'favicon-32.png', 'symbole-96.png', 'icone-128.png', 'icone-192.png']) copier(path.join(RACINE, 'icones', f), path.join(DIST, 'icones', f));
+  copier(path.join(ICI, 'confidentialite.html'), path.join(DIST, 'confidentialite.html')); // la politique, aussi dans le paquet
   return DIST;
 }
 module.exports = { fabriquer, DIST };
