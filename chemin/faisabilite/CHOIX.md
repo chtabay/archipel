@@ -52,7 +52,9 @@ s’en souvienne au moment de construire. Les essais et les mesures sont dans le
 
 - Les tuiles du journal gardent leur étiquette, pour se distinguer des tuiles des écrits.
 
-Le plan de construction est dans `PLAN.md` ; il précise ces choix après relecture critique.
+Le plan de construction est dans `PLAN.md`. Pour l’essai, un écrit glané est un bloc de plus dans la page du
+jour, avec son heure, par la mécanique des blocs que le chemin a reçue le 8 octobre : la tuile qui se ferme pour
+de bon, l’arrivée différée et l’effacement du texte viennent avec le durcissement, après l’essai.
 
 ## Recommandations non encore tranchées
 
