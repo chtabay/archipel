@@ -117,6 +117,7 @@ const JAMAIS = {
     blocs = await blocsDuJour();
     for (const [k, t] of Object.entries(JAMAIS)) if (k !== 'pause') verifier(!tout.includes(t.slice(0, 24)), `jamais dans le carnet : ${k}`);
     verifier(blocs.every(b => /^\d{2}:\d{2}$/.test(b.heure)), 'chaque bloc glané a son heure');
+    verifier(await attendre(async () => (await sw.evaluate(() => chrome.action.getBadgeText({}))) === String(blocs.length)), `l’icône compte les écrits du jour : ${blocs.length}`);
 
     // 4. un moteur choisi : ce qu’on y cherche compte, même court ; Entrée envoie et la page change
     const m = await ctx.newPage(); await m.goto(MOTEUR); await m.waitForTimeout(300);

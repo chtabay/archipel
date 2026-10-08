@@ -28,6 +28,7 @@ async function ajouter({ fil, texte }) {
     return { date, blocs, texte: blocs.map(b => b.texte).join('\n\n') };
   });
   if (!bloc) return;
+  compter(); // sur l’icône, le nombre d’écrits du jour : on voit que l’écrit a été pris, sans un mot
   if (typeof fil === 'string') {
     fils[fil] = { date, quand: Date.now(), bloc: empreinte(bloc.texte) };
     for (const [k, v] of Object.entries(fils)) if (Date.now() - v.quand > FIL) delete fils[k];
@@ -36,6 +37,14 @@ async function ajouter({ fil, texte }) {
   ext.runtime.sendMessage({ type: 'bloc', date }).catch(() => {}); // les onglets du chemin, s’il y en a
 }
 
+// le nombre d’écrits glanés aujourd’hui, sur l’icône ; rien si la journée est vide
+async function compter() {
+  try {
+    const { accord, pause } = await ext.storage.local.get(['accord', 'pause']); if (accord !== true || pause === true) return;
+    const page = (await carnet.lirePages()).find(p => p.date === aujourdhui()), n = page ? (page.blocs || []).filter(b => b.source === 'glane').length : 0;
+    await ext.action.setBadgeBackgroundColor({ color: '#9fb48a' }); await ext.action.setBadgeText({ text: n ? String(n) : '' });
+  } catch { /* sans icône, tant pis */ }
+}
 ext.runtime.onMessage.addListener((m, expediteur, repondre) => {
   if (expediteur.id !== ext.runtime.id || !m || typeof m !== 'object') return;
   if (m.type === 'glane' && typeof m.texte === 'string' && m.texte.length <= 200000) {
@@ -59,6 +68,7 @@ const brancher = () => tour(async () => { // dans la file : deux réveils en mê
     badge = accord === true && pause === true ? 'II' : voulu && !(await acces()) ? '!' : ''; // en pause, ou sans accès aux sites : on le voit
   } catch (e) { console.warn('le chemin, le glaneur :', e); }
   await ext.action.setBadgeText({ text: badge }).catch(() => {});
+  if (!badge) compter();
 });
 ext.runtime.onInstalled.addListener(({ reason }) => { brancher(); if (reason === 'install') ext.tabs.create({ url: ext.runtime.getURL('accord.html') }); });
 ext.runtime.onStartup.addListener(brancher);
