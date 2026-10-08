@@ -50,12 +50,22 @@ html.encart .frise { height: 100vh; }
 @media (hover: hover) and (pointer: fine) { .frise { cursor: grab; } .frise.tiree { cursor: grabbing; } } /* sur ordinateur, la souris tire le chemin */
 .frise:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 .tuile { position: relative; flex: none; height: 100%; aspect-ratio: 1273 / 1000; background: #efe8da; }
+.tuile:first-child { margin-left: auto; } /* tant que les tuiles n’emplissent pas la rangée, elles se tiennent au milieu ; dès qu’elles débordent, le chemin part du bord */
+.tuile:last-child { margin-right: auto; }
 .tuile img { display: block; width: 100%; height: 100%; }
 .tuile img:not([src]) { visibility: hidden; }
 .tuile .attente { position: absolute; inset: 0; display: grid; place-items: center; color: var(--pale); font-weight: 700; pointer-events: none; }
 .tuile .attente:empty { display: none; }
 .tuile .date { position: absolute; left: .7rem; right: .7rem; bottom: .45rem; overflow: hidden; color: rgba(70, 58, 46, .55); font-size: .78rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; text-overflow: ellipsis; }
 .jour { min-height: 1.4em; margin: .1rem 1rem 0; color: var(--doux); font-size: .92rem; }
+
+/* Dès que la colonne d’écriture flotte (34rem) : le titre, les commandes et la page du jour sur cette même colonne ; la frise,
+   elle, garde toute la largeur. En dessous, rien ne change */
+@media (min-width: 34rem) {
+  .tete, .parcours { max-width: 34rem; margin-inline: auto; }
+  .jour { max-width: 34rem; margin: .1rem auto 0; padding: 0 1rem; }
+  .frise { height: min(58vh, calc(32rem * 1000 / 1273)); } /* une tuile seule a la largeur de la zone d’écriture : 32rem */
+}
 
 /* Sous la frise : le début, le chemin qui se déroule, la fin ; discrets */
 .parcours { display: flex; align-items: center; justify-content: space-between; padding: .15rem .55rem 0; }

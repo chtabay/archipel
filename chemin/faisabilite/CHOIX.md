@@ -53,6 +53,7 @@ s’en souvienne au moment de construire. Les essais et les mesures sont dans le
 
 - Les tuiles du journal gardent leur étiquette, pour se distinguer des tuiles des écrits.
 - Les recherches, courtes et denses, font leurs tuiles à elles : chaque recherche fait sa tuile, à part des courriels, et une recherche n’efface jamais la tuile d’avant (8 octobre, après essai). Un clic sur l’encart ouvre le chemin en grand, dans son onglet.
+- Sur un grand écran (l’onglet de l’extension, le site sur ordinateur) : le titre, les commandes et la page du jour partagent la colonne de l’écriture ; la frise garde toute la largeur, ses tuiles se tiennent au milieu tant qu’elles n’emplissent pas la rangée, et une tuile seule a la largeur de la zone d’écriture (8 octobre, après essai).
 
 Le plan de construction est dans `PLAN.md`. Pour l’essai, un écrit glané est un bloc de plus dans la page du
 jour, avec son heure, par la mécanique des blocs que le chemin a reçue le 8 octobre : la tuile qui se ferme pour

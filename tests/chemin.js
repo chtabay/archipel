@@ -8,7 +8,7 @@ const { OUT: CAPTURES, GL, TELEPHONE, verifier, bilan, surveiller, servir } = re
 const OUT = path.join(CAPTURES, 'chemin'); fs.mkdirSync(OUT, { recursive: true });
 const PEINTURE = 240000; // sans carte graphique, le pinceau est lent
 const attendre = async (p, test, delai = 8000) => { const fin = Date.now() + delai; while (!(await test()) && Date.now() < fin) await p.waitForTimeout(100); return test(); };
-const calme = e => e.filter(m => !/Failed to fetch|net::ERR_|Failed to load resource|fetching the script/.test(m)); // ce que la console dit d’un réseau coupé exprès
+const calme = e => e.filter(m => !/Failed to fetch|net::ERR_|Failed to load resource|fetching the script|Couldn't load texture/.test(m)); // ce que la console dit d’un réseau coupé exprès, ou d’une page fermée en plein chargement
 const tuiles = p => p.$$eval('.tuile', l => l.map(t => ({ nom: t.querySelector('.date').textContent, peinte: t.classList.contains('peinte') && !!t.querySelector('img[src]'), source: t.dataset.source || '' })));
 const PAGE = 'Balade en forêt avec ma sœur. Des champignons partout, l’odeur de la mousse après la pluie. On a vu un chevreuil près du ruisseau.';
 // un long texte : trois chapitres, des paragraphes, un dialogue ; de quoi faire plusieurs tuiles par chapitre
@@ -234,6 +234,22 @@ Avant de dormir, j’ai écrit une lettre à ma mère, sur le bureau, avec un st
   await o.mouse.click(cx, cy); const o4 = await ici();
   verifier(o1.x === o0.x && o1.page > 0 && o2.x <= o0.x - 350 && o3.x <= o2.x - 250 && !o3.jour && o4.jour,
     `sur ordinateur, au bout, la molette rend la main à la page ; elle fait reculer le chemin (${o0.x - o2.x} points), la souris le tire (${o2.x - o3.x}) sans ouvrir de tuile, un clic l’ouvre`);
+
+  // 10. sur un grand écran : le titre, les commandes, la ligne du jour et l’écriture partagent une colonne ; la frise garde toute la
+  // largeur, et le chemin part du bord quand il déborde (Début : la première tuile au bord gauche ; Fin : la dernière au bord droit) ;
+  // sur une page neuve, hors démo, la tuile du départ, seule, se tient au milieu, et les commandes restent cachées
+  await o.setViewportSize({ width: 1920, height: 1020 }); // l’écran du porteur
+  const bords = () => o.evaluate(() => { const W = document.documentElement.clientWidth, g = s => document.querySelector(s).getBoundingClientRect(); return { W, tete: g('.tete').left, parcours: g('.parcours').left, jour: g('.jour').left, ecrire: g('.ecrire').left, frise: g('#frise').width, deborde: document.querySelector('#frise').scrollWidth > W, premiere: g('.tuile:first-child').left, derniere: g('.tuile:last-child').right }; });
+  await o.click('#debut'); const b0 = await bords(); await o.click('#fin'); const b1 = await bords();
+  const colonne = [b0.parcours, b0.jour, b0.ecrire].every(v => Math.abs(v - b0.tete) < 1);
+  const seul = await co.newPage(); surveiller(seul, e, x); await seul.setViewportSize({ width: 1920, height: 1020 });
+  await seul.goto(BASE + 'chemin/'); // la démo ne range rien dans le carnet : ici, la tuile du départ est seule
+  await attendre(seul, () => seul.evaluate(() => document.querySelectorAll('.tuile').length === 1), 30000); // la tuile est là bien avant d’être peinte
+  const milieu = await seul.evaluate(() => { const W = document.documentElement.clientWidth, t = document.querySelector('.tuile')?.getBoundingClientRect(), g = s => document.querySelector(s).getBoundingClientRect().left; return t && { W, tuiles: document.querySelectorAll('.tuile').length, centre: t.left + t.width / 2, largeur: t.width, parcours: document.querySelector('#parcours').hidden, colonne: Math.abs(g('.tete') - g('.ecrire')) < 1 }; });
+  verifier(colonne && b0.tete > 300 && b0.frise === b0.W && b0.deborde && Math.abs(b0.premiere) <= 1 && Math.abs(b1.derniere - b1.W) <= 2 && !!milieu && milieu.tuiles === 1 && milieu.parcours && milieu.colonne && Math.abs(milieu.centre - milieu.W / 2) <= 1,
+    `sur un grand écran (${b0.W} de large), le titre, les commandes et l’écriture partagent une colonne (bord à ${Math.round(b0.tete)}) ; la frise garde toute la largeur, et le chemin part du bord quand il déborde ; seule, la tuile du départ (${Math.round(milieu?.largeur || 0)} de large) se tient au milieu`);
+  await attendre(seul, () => seul.evaluate(() => document.querySelector('#intro').hidden && ['faite', 'rate'].includes(window.chemin?.tuiles[0]?.etat)), 60000); // fermer en pleine peinture couperait des chargements
+  await seul.close();
   await co.close();
 
   verifier(!calme(e).length, `aucune erreur dans la console${calme(e).length ? ' : ' + calme(e).slice(0, 4).join(' | ') : ''}`);

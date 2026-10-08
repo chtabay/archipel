@@ -85,7 +85,7 @@ const JAMAIS = {
     const p0 = await ctx.newPage(); await p0.goto(ORDINAIRE); await poser(p0, '#journal', JAMAIS.avant); await p0.close();
     verifier((await blocsDuJour()).length === 0, 'avant l’accord, un écrit ne fait rien');
     const onglet0 = await ctx.newPage(); await onglet0.goto(CHEMIN);
-    verifier(await onglet0.locator('.tete .accord a').count() === 1 && await onglet0.locator('.tete .reglages a').count() === 1, 'sans accord, la page du chemin dit où le donner, et mène aux réglages'); await onglet0.close();
+    verifier(await onglet0.locator('.tete .accord a').count() === 1 && await onglet0.locator('.ecrire .reglages a').count() === 1, 'sans accord, la page du chemin dit où le donner, et mène aux réglages'); await onglet0.close();
 
     // 2. l’accord, et le moteur de recherche d’essai parmi ceux qui comptent
     await reglage({ accord: true, pause: false, exclus: ['chtabay.github.io'], recherches: ['localhost'], encart: ['localhost'] });

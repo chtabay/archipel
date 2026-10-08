@@ -40,5 +40,7 @@ dans la page du jour (sous la frise, d’un clic sur l’icône), et noter ce qu
 - [ ] Slack : un message dans un canal dont le nom contient « code » ou « secu » (c’était un trou ; il doit arriver).
 - [ ] LinkedIn : un message, un commentaire.
 - [ ] N’importe où : changer d’onglet au milieu d’une phrase, revenir, finir : un seul bloc.
+- [ ] L’onglet du chemin, en grand : le titre, la tuile du départ et la page du jour sur la même colonne ; « Garder la page » visible
+  sans défiler ; le lien vers l’accord et les réglages au pied de la page.
 - [ ] Firefox : charger `dist/manifest.json` dans `about:debugging` ; si l’icône porte « ! », redonner l’accès aux sites
   depuis l’accord ; puis Gmail par Ctrl+Entrée.

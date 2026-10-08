@@ -14,9 +14,9 @@ if (new URLSearchParams(location.search).has('encart')) { // l’encart, au coin
   addEventListener('click', e => { e.stopPropagation(); e.preventDefault(); ext.runtime.sendMessage({ type: 'ouvrir' }).catch(() => {}); }, true);
 }
 (async () => {
-  const r = document.createElement('p'), lien = document.createElement('a'); // l’accord et les réglages, toujours à portée
+  const r = document.createElement('p'), lien = document.createElement('a'); // l’accord et les réglages, au pied de la page, à côté du mot sur l’extension
   r.className = 'tiny reglages'; lien.href = ext.runtime.getURL('accord.html'); lien.textContent = 'L’accord et les réglages de l’extension'; r.append(lien);
-  (document.querySelector('.tete') || document.body).append(r);
+  (document.querySelector('.ecrire') || document.body).append(r);
   const { accord } = await ext.storage.local.get('accord').catch(() => ({}));
   if (accord === true) return;
   const p = document.createElement('p'), a = document.createElement('a');
