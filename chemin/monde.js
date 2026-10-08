@@ -6,7 +6,7 @@
 import * as THREE from './vendor/three-chemin.min.js?v=1';
 import { rng, hash, melange, nuance } from '../outils.js?v=1';
 
-export const MOTEUR = 3; // la version du peintre, ici et dans l’aquarelle : on l’augmente quand une même page se peindrait autrement
+export const MOTEUR = 4; // la version du peintre, ici et dans l’aquarelle : on l’augmente quand une même page se peindrait autrement
 export const L = 14, V = 11, ELEV = 8 * Math.PI / 180, HAUT = 1000, LARGE = Math.round(HAUT * L / V), MARGE = 40; // un jour : 14 m de long, une tuile de 1273 × 1000 points, et une marge pour le pinceau
 const BAS = -2.2, CIBLE = (V / 2 + BAS) / Math.cos(ELEV); // le bas de l’image, en mètres, sous le chemin ; la hauteur que vise la caméra
 const PLANS = { avant: [1.4, 3], bord: [-2.2, -1.1], milieu: [-3.4, -11], fond: [-15, -26] };
@@ -20,16 +20,29 @@ const TAILLES = { avant: [.25, 1, 2.4], bord: [.3, 3, 5], chemin: [.2, 1.9, 3], 
 /* ───────── Le catalogue, par familles ───────── */
 
 const FAMILLES = {
-  arbres: /^nature-kit\/tree_(default|oak|detailed|fat|simple|tall|thin|cone|plateau)(_dark)?$/, arbresAutomne: /^nature-kit\/tree_\w+_fall$/,
-  pins: /^nature-kit\/tree_pine(Default|Round|Tall)/, sapinsNeige: /^holiday-kit\/tree-snow/, petitsArbres: /^nature-kit\/tree_(small|pineSmall)/,
-  buissons: /^nature-kit\/plant_bush/, rochers: /^nature-kit\/rock_(large|tall)/, cailloux: /^nature-kit\/(rock|stone)_small/,
-  champignons: /^nature-kit\/mushroom/, souches: /^nature-kit\/(stump|log)/, herbes: /^nature-kit\/grass/, fleurs: /^nature-kit\/flower_/,
-  cultures: /^nature-kit\/crops_(wheat|corn)Stage[BCD]/, potager: /^nature-kit\/crop_/, clotures: /^nature-kit\/fence_(simple|planks)$/,
-  maisons: /^city-kit-suburban\/building-type/, immeubles: /^city-kit-commercial\/building-[a-n]$/, lanternes: /^fantasy-town-kit\/lantern$/,
-  palmiers: /^nature-kit\/tree_palm(Short|Tall|Bend)?$/, bateaux: /^watercraft-kit\/boat-(sail|row|fishing)/, rochersSable: /^pirate-kit\/rocks-sand/,
-  meubles: /^furniture-kit\/(bookcaseOpen|bookcaseClosed|lampRoundFloor|lampSquareFloor|pottedPlant|plantSmall\d|loungeChair|sideTable|cabinetTelevision|coatRackStanding)$/,
-  tapis: /^furniture-kit\/rug(Rectangle|Round|Rounded|Square)$/, tables: /^furniture-kit\/(table|tableRound|tableCloth)$/, chaises: /^furniture-kit\/(chair|chairCushion|chairRounded)$/,
+  arbres: /^nature-kit\/tree_(default|oak|detailed|fat|simple|tall|thin|cone|plateau)(_dark)?$|^q-nature\/(CommonTree_[123]|BirchTree_[12]|Willow_[12])$|^kaykit-forest\/Tree_[1-4]_A|^fantasy-town-kit\/tree(-high|-high-round|-crooked|-high-crooked)?$|^survival-kit\/tree(-tall)?$/,
+  arbresAutomne: /^nature-kit\/tree_\w+_fall$|^q-nature\/\w+_Autumn_\d$|^survival-kit\/tree-autumn(-tall)?$|^kaykit-medieval\/tree_pine_(orange|yellow)_(medium|large)$/,
+  pins: /^nature-kit\/tree_pine(Default|Round|Tall)|^q-nature\/PineTree_[12]$/, sapinsNeige: /^holiday-kit\/tree-snow|^q-nature\/(PineTree|CommonTree|BirchTree|Willow)_Snow_\d$|^platformer-kit\/tree-(pine-)?snow$/,
+  arbresNus: /^kaykit-forest\/Tree_Bare|^kaykit-medieval\/tree_dead_(small|medium|large)$|^archipel\/arbre-nu$/, petitsArbres: /^nature-kit\/tree_(small|pineSmall)/,
+  buissons: /^nature-kit\/plant_bush|^kaykit-forest\/Bush_[1-4]|^q-nature\/(Bush_1|BushBerries_1)$|^kaykit-city-builder-bits\/bush$/,
+  rochers: /^nature-kit\/rock_(large|tall)|^kaykit-forest\/Rock_[1-3]|^q-nature\/Rock_Moss_1$|^survival-kit\/rock-[abc]$|^fantasy-town-kit\/rock-(large|wide)$|^kaykit-medieval\/rock_single_A$/,
+  cailloux: /^nature-kit\/(rock|stone)_small|^fantasy-town-kit\/rock-small$|^survival-kit\/rock-flat(-grass)?$/,
+  champignons: /^nature-kit\/mushroom|^q-crops\/Mushroom_4$/, souches: /^nature-kit\/(stump|log)|^survival-kit\/tree-(log|trunk|log-small|autumn-trunk)$|^q-nature\/(TreeStump_Moss|WoodLog_Moss)$/,
+  herbes: /^nature-kit\/grass|^kaykit-forest\/Grass_[12]/, fleurs: /^nature-kit\/flower_|^q-nature\/(Flowers|Plant_1|Plant_3)$|^archipel\/fleurs$/, herbesPlage: /^tropiques\/BeachGrass01$|^nature-kit\/grass_leafs/,
+  cultures: /^nature-kit\/crops_(wheat|corn)Stage[BCD]|^q-crops\/(Wheat|Corn|Rice)_4$/, legumes: /^nature-kit\/crop_|^q-crops\/(Tomato|Lettuce|Pumpkin|Carrot|Beet|Watermelon)_4$/, fruitiers: /^q-crops\/(Apple|Orange)_4$|^archipel\/arbre-fleuri$/,
+  clotures: /^nature-kit\/fence_(simple|planks|simpleHigh|simpleLow|planksDouble)$|^fantasy-town-kit\/fence(-curved|-broken)?$|^survival-kit\/fence$|^quaternius-farm\/Fence2?$|^city-kit-suburban\/fence-low$/,
   haies: /^fantasy-town-kit\/hedge(-large)?$/, portails: /^fantasy-town-kit\/(hedge-gate|hedge-large-gate|fence-gate)$/, rails: /^train-kit\/track$/,
+  maisons: /^city-kit-suburban\/building-type|^kaykit-medieval\/building_(home_[AB]|tavern|market|grain)|^q-buildings\/(House\d?|Shop)$|^textured-buildings\/[12]Story_|^archipel\/maison-(automne|lande|prairie|volets)$/,
+  immeubles: /^city-kit-commercial\/building-[a-n]$|^textured-buildings\/(3Story_Slim|4Story|4Story_Center)$|^kaykit-city-builder-bits\/building_[A-H]_withoutBase$/,
+  fermes: /^quaternius-farm\/(Barn|BigBarn|SmallBarn|OpenBarn|Silo|Silo_House|Windmill|TowerWindmill|WaterTower)$|^fantasy-town-kit\/(windmill|watermill)$|^kaykit-medieval\/building_(windmill|watermill)_blue$/,
+  ateliers: /^kaykit-medieval\/building_(blacksmith|lumbermill)_blue$/, betail: /^poses\/(bete-(cow|sheep|horse|pig|chick)|mange-cube-(cow|pig)|galop-horse)$|^archipel\/bete-(mouton|poule)$/,
+  betesBois: /^poses\/(bete-red-fox|mange-cube-bunny)$|^archipel\/bete-(chevreuil|lievre|renard)$/,
+  fontaines: /^fantasy-town-kit\/fountain|^kaykit-medieval\/building_well_blue$|^quaternius-farm\/Well$|^archipel\/puits$/, bancs: /^kaykit-city-builder-bits\/bench$|^retro-urban-kit\/detail-bench$|^archipel\/banc$|^fantasy-town-kit\/stall-bench$/,
+  etals: /^fantasy-town-kit\/stall(-green|-red)?$/, caisses: /^survival-kit\/(barrel|barrel-open|box|box-large|box-open|box-large-open)$|^kaykit-medieval\/(barrel|crate_A_big|sack)$|^platformer-kit\/(barrel|crate)$|^kaykit-city-builder-bits\/box_A$/,
+  charrettes: /^fantasy-town-kit\/cart(-high)?$|^kaykit-medieval\/wheelbarrow$/, panneaux: /^survival-kit\/signpost(-single)?$|^platformer-kit\/sign$|^nature-kit\/sign$/, lanternes: /^fantasy-town-kit\/lantern$|^kaykit-city-builder-bits\/streetlight$/,
+  palmiers: /^nature-kit\/tree_palm(Short|Tall|Bend)?$/, bateaux: /^watercraft-kit\/boat-(sail|row|fishing)/, rochersSable: /^pirate-kit\/rocks-sand/,
+  meubles: /^furniture-kit\/(bookcaseOpen|bookcaseClosed|lampRoundFloor|lampSquareFloor|pottedPlant|plantSmall\d|loungeChair|sideTable|cabinetTelevision|coatRackStanding)$|^q-furniture\/(BookCaseBooks|BookCaseLargeBooks|Closet|Lamp|Plant|Sofa|SofaLong|Vase2?)$|^kaykit-furniture-bits\/(armchair(_pillows)?|cabinet_(medium|small)(_decorated)?|couch(_pillows)?|lamp_standing|shelf_[AB]_(big|small|large)(_decorated)?|pictureframe_standing_A)$|^q-interior\/(Bookshelf|Couch_\w+|Drawer_[13]|Fireplace|Houseplant_\d|Light_Floor1|Shelf_Large)$/,
+  tapis: /^furniture-kit\/rug(Rectangle|Round|Rounded|Square)$|^kaykit-furniture-bits\/rug_/, tables: /^furniture-kit\/(table|tableRound|tableCloth)$|^q-furniture\/Table$|^kaykit-furniture-bits\/table_(medium|small)$/, chaises: /^furniture-kit\/(chair|chairCushion|chairRounded)$|^q-furniture\/Chair(Cushioned)?$|^kaykit-furniture-bits\/chair_[AC]$/,
   // le désert, la savane, les tropiques, la montagne
   cactus: /^(q-desert\/Cactus\d?$|q-nature\/Cactus_1$|nature-kit\/cactus_)/, palmiersOasis: /^q-desert\/(Big|Small)PalmTree$/, arbresMorts: /^q-desert\/DeadTree$|^savane\/af_deadTree/,
   rochersRouges: /^savane\/africaRock_0[56]$/, pyramides: /^q-desert\/Pyramid$/, maisonsTerre: /^mali\/mali_(house_[1-4]|storehouse|farmstead)$/,
@@ -112,7 +125,7 @@ export function planifier(jour, veille, F, recents) {
     const saute = /nage-(fish|piranha)/.test(o.id), enfonce = saute ? -.6 : /nage-(homme|femme)/.test(o.id) ? .25 : .5;
     const it = { id: o.id, x, z, y: -enfonce * haut * s, ry: (r() < .5 ? 1 : -1) * Math.PI / 2 + (r() - .5) * .4, s, plan: 'eau', eau: true }; items.push(it); return it;
   };
-  const lieu = jour.lieu, arbres = saison === 'automne' ? F.arbresAutomne : saison === 'hiver' ? [...F.sapinsNeige, ...F.pins] : F.arbres;
+  const lieu = jour.lieu, arbres = saison === 'automne' ? F.arbresAutomne : saison === 'hiver' ? [...F.sapinsNeige, ...F.pins, ...F.arbresNus] : F.arbres;
   let piece = null;
 
   const ARBRE = [4.5, 7.5, 6], CULTURE = [.9, 1.6, 2], MAISON = [5.5, 8.5, 14], BATEAU = [1, 5.5, 7], GENS = [1.6, 1.8, 1.5];
@@ -138,62 +151,86 @@ export function planifier(jour, veille, F, recents) {
     else poser(o, piece ? 'bord' : r() < .6 ? 'bord' : 'avant', { z: piece ? -2 : undefined });
   }
 
-  // le décor du lieu, autour
+  // le décor du lieu, autour : des motifs tirés au sort, et des nombres qui changent, pour que deux jours ne se ressemblent pas
+  const entre = (a, b) => a + Math.floor(r() * (b - a + 1)), quelques = (liste, k) => { const l = [...liste], out = []; while (out.length < k && l.length) out.push(l.splice(Math.floor(r() * l.length), 1)[0]); return out; };
+  const bordure = () => { // le bord du chemin : une clôture, une haie, des pierres, ou rien
+    const u = r();
+    if (u < .4) { const o = tirer(F.clotures, 2); for (let i = 0, k = entre(1, 3); i < k; i++) poser(o, 'bord', { z: -1.3, profil: false }); }
+    else if (u < .6) { for (let i = 0, k = entre(1, 2); i < k; i++) poser(tirer(F.haies, 2), 'bord', { z: -1.3, profil: false, h: [.6, 1.2, 4] }); }
+    else if (u < .75) { for (let i = 0, k = entre(2, 4); i < k; i++) poser(tirer(F.rochers, 2), 'bord', { h: [.3, .9, 2] }); }
+  };
+  const devant = (k = entre(3, 8)) => { for (let i = 0; i < k; i++) { const u = r(); poser(tirer(u < .45 ? F.herbes : u < .75 ? F.fleurs : u < .9 ? F.cailloux : F.champignons), 'avant', { s: 1.2 }); } };
   if (lieu === 'foret') {
-    for (let n = 0; n < 12; n++) poser(tirer(r() < .4 ? F.pins : arbres), 'milieu', { s: 1.1 + r() * .5, h: ARBRE });
-    for (let n = 0; n < 16; n++) poser(tirer(r() < .5 ? F.pins : arbres), 'fond', { s: 1.4 + r() * .6, h: ARBRE });
-    for (let n = 0; n < 4; n++) poser(tirer(r() < .5 ? F.buissons : F.rochers), 'bord');
-    for (let n = 0; n < 3; n++) poser(tirer(r() < .5 ? F.champignons : F.souches), 'bord', { s: 1.2 });
-    for (let n = 0; n < 10; n++) poser(tirer(r() < .6 ? F.herbes : F.fleurs), 'avant', { s: 1.3 });
-    for (let n = 0; n < 2; n++) poser(tirer(F.buissons), 'avant', { z: 2.6, h: [.8, 1.5, 2.6] }); // de gros buissons devant : la profondeur
+    const m = quelques(['futaie', 'clairiere', 'sousbois', 'rochers'], 1)[0], dense = m === 'futaie' ? entre(10, 14) : m === 'clairiere' ? entre(4, 7) : entre(7, 10);
+    for (let i = 0; i < dense; i++) poser(tirer(r() < .4 ? F.pins : arbres), 'milieu', { s: 1.1 + r() * .5, h: ARBRE });
+    for (let i = 0, k = entre(10, 16); i < k; i++) poser(tirer(r() < .5 ? F.pins : arbres), 'fond', { s: 1.4 + r() * .6, h: ARBRE });
+    if (m === 'clairiere') { for (let i = 0, k = entre(4, 8); i < k; i++) poser(tirer(r() < .6 ? F.fleurs : F.herbes), 'milieu', { z: -3.6 - r() * 2.5, h: [.3, .7, 1.2] }); if (r() < .6) poser(tirer(F.betesBois, 3), 'milieu', { z: -4 - r() * 2, h: [.5, 1.4, 2] }); }
+    if (m === 'sousbois') { for (let i = 0, k = entre(3, 6); i < k; i++) poser(tirer(r() < .5 ? F.champignons : F.souches), 'bord', { s: 1.2 }); for (let i = 0, k = entre(2, 4); i < k; i++) poser(tirer(F.fougeres), 'bord', { h: [.6, 1.2, 2] }); }
+    if (m === 'rochers') { for (let i = 0, k = entre(3, 5); i < k; i++) poser(tirer(F.rochers, 2), 'bord', { h: [.5, 1.6, 3] }); for (let i = 0; i < 2; i++) poser(tirer(F.rochers), 'milieu', { z: -4 - r() * 3, h: [1, 2.5, 4] }); }
+    for (let i = 0, k = entre(2, 4); i < k; i++) poser(tirer(r() < .5 ? F.buissons : F.rochers), 'bord');
+    devant(entre(5, 10));
+    for (let i = 0, k = entre(1, 2); i < k; i++) poser(tirer(F.buissons), 'avant', { z: 2.6, h: [.8, 1.5, 2.6] }); // de gros buissons devant : la profondeur
   } else if (lieu === 'champs') {
-    for (let n = 0; n < 9; n++) poser(tirer(saison === 'hiver' ? F.souches : F.cultures), 'milieu', { z: -3.6 - n * .45, h: CULTURE });
-    for (let n = 0; n < 9; n++) poser(tirer(saison === 'hiver' ? F.souches : F.cultures), 'milieu', { z: -4.5 - r() * 3, h: CULTURE });
-    for (let n = 0; n < 2; n++) poser(tirer(arbres), 'milieu', { z: -8 - r() * 3, h: ARBRE });
-    for (let n = 0; n < 7; n++) poser(tirer(arbres), 'fond', { h: ARBRE });
-    for (let n = 0; n < 3; n++) poser(tirer(F.clotures), 'bord', { z: -1.3, profil: false });
-    for (let n = 0; n < 11; n++) poser(tirer(saison === 'printemps' || saison === 'ete' ? (r() < .6 ? F.fleurs : F.herbes) : F.herbes), 'avant', { s: 1.3 });
+    for (const m of quelques(['cultures', 'prairie', 'verger', 'potager', 'ferme', 'bosquet'], 2)) {
+      if (m === 'cultures') { const c = tirer(saison === 'hiver' ? F.souches : F.cultures, 2); for (let i = 0, k = entre(5, 10); i < k; i++) poser(r() < .7 || saison === 'hiver' ? c : tirer(F.cultures), 'milieu', { z: -3.6 - i * .45, h: CULTURE }); }
+      else if (m === 'prairie') { for (let i = 0, k = entre(1, 3); i < k; i++) poser(tirer(F.betail, 3), 'milieu', { z: -4 - r() * 3, h: [.8, 1.6, 2.4] }); for (let i = 0, k = entre(4, 8); i < k; i++) poser(tirer(r() < .6 ? F.fleurs : F.herbes), 'milieu', { z: -3.6 - r() * 2, h: [.3, .7, 1.2] }); }
+      else if (m === 'verger') { for (let i = 0, k = entre(3, 6); i < k; i++) poser(tirer(F.fruitiers, 2), 'milieu', { z: -5 - (i % 2) * 2, h: [3, 4.5, 4] }); }
+      else if (m === 'potager') { for (let i = 0, k = entre(4, 8); i < k; i++) poser(tirer(F.legumes), 'milieu', { z: -3.5 - r() * 1.5, h: [.3, .9, 1.5] }); if (r() < .5) poser(tirer(F.charrettes), 'milieu', { z: -4, h: [.8, 1.4, 2.5] }); }
+      else if (m === 'ferme') { poser(tirer(F.fermes, 3), 'milieu', { z: -7 - r() * 3, profil: false, h: [4, 8, 14] }); if (r() < .5) poser(tirer(F.betail, 3), 'milieu', { z: -5, h: [.8, 1.6, 2.4] }); }
+      else if (m === 'bosquet') { const x = x0 + 2 + r() * (L - 4); for (let i = 0, k = entre(3, 5); i < k; i++) poser(tirer(arbres), 'milieu', { x: x + (r() - .5) * 4, z: -6 - r() * 4, h: ARBRE }); for (let i = 0; i < 2; i++) poser(tirer(F.buissons), 'milieu', { x: x + (r() - .5) * 5, z: -5, h: [.6, 1.4, 2.5] }); }
+    }
+    for (let i = 0, k = entre(3, 7); i < k; i++) poser(tirer(arbres), 'fond', { h: ARBRE });
+    bordure(); devant(entre(4, 9));
   } else if (lieu === 'village') {
-    for (let n = 0; n < 2; n++) poser(tirer(F.maisons, 3), 'milieu', { z: -4.6 - r() * 1.2, profil: false, h: MAISON });
-    for (let n = 0; n < 6; n++) poser(tirer(F.immeubles, 3), 'fond', { z: -16 - r() * 8, profil: false, h: [8, 16, 14] });
-    for (let n = 0; n < 2; n++) poser(tirer(r() < .5 ? arbres : F.petitsArbres), 'milieu', { z: -3.5, h: [3, 5.5, 5] });
-    for (let n = 0; n < 2; n++) poser(tirer(F.lanternes), 'bord', { z: -1.2, h: [2.2, 2.8, 1] });
-    for (let n = 0; n < 6; n++) poser(tirer(r() < .5 ? F.fleurs : F.herbes), 'avant', { s: 1.1 });
+    for (const m of quelques(['rue', 'place', 'marche', 'jardin', 'atelier'], 2)) {
+      if (m === 'rue') { for (let i = 0, k = entre(1, 2); i < k; i++) poser(tirer(F.maisons, 4), 'milieu', { z: -4.6 - r() * 1.2, profil: false, h: MAISON }); for (let i = 0, k = entre(1, 2); i < k; i++) poser(tirer(F.lanternes, 2), 'bord', { z: -1.2, h: [2.2, 2.8, 1] }); }
+      else if (m === 'place') { poser(tirer(F.fontaines, 3), 'milieu', { z: -3.6, profil: false, h: [1.2, 2.4, 3] }); for (let i = 0, k = entre(1, 2); i < k; i++) poser(tirer(F.bancs, 2), 'bord', { z: -1.3, h: [.4, .6, 1.8] }); poser(tirer(F.maisons, 4), 'milieu', { z: -6, profil: false, h: MAISON }); }
+      else if (m === 'marche') { for (let i = 0, k = entre(1, 3); i < k; i++) poser(tirer(F.etals, 2), 'milieu', { z: -3.5, profil: false, h: [1.5, 2.4, 3] }); for (let i = 0, k = entre(1, 3); i < k; i++) poser(tirer(F.caisses, 2), 'bord', { z: -1.3, h: [.5, 1, 1.2] }); }
+      else if (m === 'jardin') { poser(tirer(F.maisons, 4), 'milieu', { z: -5, profil: false, h: MAISON }); for (let i = 0, k = entre(1, 3); i < k; i++) poser(tirer(F.haies, 2), 'bord', { z: -1.3, profil: false, h: [.6, 1.2, 4] }); for (let i = 0, k = entre(2, 5); i < k; i++) poser(tirer(F.fleurs), 'milieu', { z: -3.4, h: [.3, .7, 1.2] }); }
+      else if (m === 'atelier') { poser(tirer(F.ateliers, 3), 'milieu', { z: -5.5, profil: false, h: MAISON }); for (let i = 0, k = entre(1, 2); i < k; i++) poser(tirer(F.charrettes, 2), 'bord', { z: -1.4, h: [.8, 1.4, 2.5] }); }
+    }
+    for (let i = 0, k = entre(2, 6); i < k; i++) poser(tirer(r() < .6 ? F.immeubles : F.maisons, 3), 'fond', { z: -16 - r() * 8, profil: false, h: [8, 16, 14] });
+    for (let i = 0, k = entre(1, 3); i < k; i++) poser(tirer(r() < .5 ? arbres : F.petitsArbres), 'milieu', { z: -3.5, h: [3, 5.5, 5] });
+    devant(entre(3, 7));
   } else if (lieu === 'rivage') {
-    for (let n = 0; n < 2; n++) poser(tirer(F.bateaux, 3), 'milieu', { z: -7 - r() * 6, profil: true, h: BATEAU });
-    for (let n = 0; n < 3; n++) poser(tirer(saison === 'ete' ? F.palmiers : F.rochers), 'bord', { h: saison === 'ete' ? [3.5, 5.5, 4] : [.5, 1.4, 3] });
-    for (let n = 0; n < 3; n++) poser(tirer(F.rochersSable), 'avant', { s: 1.2 });
-    for (let n = 0; n < 3; n++) poser(tirer(F.herbes), 'avant', { s: 1.2 });
+    const m = quelques(['plage', 'port', 'dunes', 'rochers'], 1)[0];
+    for (let i = 0, k = m === 'port' ? entre(2, 3) : entre(1, 2); i < k; i++) poser(tirer(F.bateaux, 3), 'milieu', { z: -7 - r() * 6, profil: true, h: BATEAU });
+    if (m === 'port') { for (let i = 0, k = entre(2, 4); i < k; i++) poser(tirer(F.caisses, 2), 'bord', { h: [.5, 1, 1.2] }); if (r() < .5) poser(tirer(F.panneaux), 'bord', { h: [1.2, 1.8, 1] }); if (r() < .35) poser(F.parId.get('archipel/phare'), 'milieu', { z: -9, profil: false, h: [6, 9, 4] }); }
+    if (m === 'plage') for (let i = 0, k = entre(2, 3); i < k; i++) poser(tirer(saison === 'ete' ? F.palmiers : F.rochers), 'bord', { h: saison === 'ete' ? [3.5, 5.5, 4] : [.5, 1.4, 3] });
+    if (m === 'dunes') { for (let i = 0, k = entre(4, 7); i < k; i++) poser(tirer(F.herbesPlage), 'bord', { h: [.3, .7, 1.5] }); for (let i = 0, k = entre(1, 2); i < k; i++) poser(tirer(F.souches), 'bord', { s: 1.2 }); }
+    if (m === 'rochers') for (let i = 0, k = entre(3, 5); i < k; i++) poser(tirer(F.rochersSable, 2), 'bord', { h: [.5, 1.6, 3] });
+    for (let i = 0, k = entre(2, 4); i < k; i++) poser(tirer(F.rochersSable), 'avant', { s: 1.2 });
+    for (let i = 0, k = entre(2, 4); i < k; i++) poser(tirer(r() < .6 ? F.herbesPlage : F.herbes), 'avant', { s: 1.2 });
   } else if (lieu === 'interieur') { // une maison ouverte, comme une maison de poupée : le chemin y entre par une porte et ressort par l’autre
-    poser(tirer(F.tapis), 'chemin', { z: -.2, profil: false, x: x0 + L / 2, h: [.01, .05, 3.2] });
-    for (let n = 0; n < 5; n++) poser(tirer(F.meubles, 2), 'bord', { z: -2.3, profil: false, h: [1, 2.2, 2.4], de: piece.de + .5, a: piece.a - .5 });
-    for (let n = 0; n < 6; n++) poser(tirer(arbres), 'fond', { h: ARBRE }); // derrière la maison, le pays continue
+    poser(tirer(F.tapis, 2), 'chemin', { z: -.2, profil: false, x: x0 + L / 2, h: [.01, .05, 3.2] });
+    for (let i = 0, k = entre(4, 6); i < k; i++) poser(tirer(F.meubles, 3), 'bord', { z: -2.3, profil: false, h: [1, 2.2, 2.4], de: piece.de + .5, a: piece.a - .5 });
+    for (let i = 0, k = entre(4, 7); i < k; i++) poser(tirer(arbres), 'fond', { h: ARBRE }); // derrière la maison, le pays continue
   } else if (lieu === 'desert') { // le sable, des cactus, une oasis ; au loin, parfois, une pyramide ou un village de terre
-    for (let n = 0; n < 2; n++) poser(tirer(F.palmiersOasis), 'milieu', { z: -5 - r() * 4, h: ARBRE });
-    for (let n = 0; n < 5; n++) poser(tirer(r() < .65 ? F.cactus : F.arbresMorts), 'milieu', { h: [1.2, 3, 4] });
+    for (let i = 0, k = entre(1, 3); i < k; i++) poser(tirer(F.palmiersOasis), 'milieu', { z: -5 - r() * 4, h: ARBRE });
+    for (let i = 0, k = entre(3, 6); i < k; i++) poser(tirer(r() < .65 ? F.cactus : F.arbresMorts), 'milieu', { h: [1.2, 3, 4] });
     if (r() < .35) poser(tirer(F.pyramides), 'fond', { z: -24, profil: false, h: [8, 13, 16] });
-    else if (r() < .5) for (let n = 0; n < 2; n++) poser(tirer(F.maisonsTerre, 3), 'fond', { z: -16 - r() * 6, profil: false, h: [5, 8, 12] });
-    for (let n = 0; n < 4; n++) poser(tirer(F.rochersRouges), 'fond', { h: [2, 5, 8] });
-    for (let n = 0; n < 3; n++) poser(tirer(F.cactus), 'bord', { h: [.6, 1.6, 1.5] });
-    for (let n = 0; n < 2; n++) poser(tirer(F.rochersRouges), 'avant', { h: [.3, .8, 1.5] });
+    else if (r() < .5) for (let i = 0, k = entre(1, 3); i < k; i++) poser(tirer(F.maisonsTerre, 3), 'fond', { z: -16 - r() * 6, profil: false, h: [5, 8, 12] });
+    for (let i = 0, k = entre(2, 5); i < k; i++) poser(tirer(F.rochersRouges), 'fond', { h: [2, 5, 8] });
+    for (let i = 0, k = entre(2, 4); i < k; i++) poser(tirer(F.cactus), 'bord', { h: [.6, 1.6, 1.5] });
+    for (let i = 0, k = entre(1, 3); i < k; i++) poser(tirer(F.rochersRouges), 'avant', { h: [.3, .8, 1.5] });
   } else if (lieu === 'savane') { // l’herbe sèche, les acacias, un baobab
-    for (let n = 0; n < 4; n++) poser(tirer(r() < .2 ? F.baobabs : r() < .75 ? F.acacias : F.arbresSavane), 'milieu', { z: -5 - r() * 6, h: ARBRE });
-    for (let n = 0; n < 7; n++) poser(tirer(r() < .85 ? F.acacias : F.baobabs), 'fond', { h: ARBRE });
-    for (let n = 0; n < 5; n++) poser(tirer(F.buissonsSavane), 'bord', { h: [.8, 1.8, 3] });
-    for (let n = 0; n < 9; n++) poser(tirer(F.herbesSavane), 'avant', { h: [.5, 1.1, 1.5] });
+    for (let i = 0, k = entre(3, 5); i < k; i++) poser(tirer(r() < .2 ? F.baobabs : r() < .75 ? F.acacias : F.arbresSavane), 'milieu', { z: -5 - r() * 6, h: ARBRE });
+    for (let i = 0, k = entre(5, 8); i < k; i++) poser(tirer(r() < .85 ? F.acacias : F.baobabs), 'fond', { h: ARBRE });
+    for (let i = 0, k = entre(3, 6); i < k; i++) poser(tirer(F.buissonsSavane), 'bord', { h: [.8, 1.8, 3] });
+    for (let i = 0, k = entre(6, 10); i < k; i++) poser(tirer(F.herbesSavane), 'avant', { h: [.5, 1.1, 1.5] });
     if (r() < .3) poser(tirer(F.cases), 'milieu', { z: -9, profil: false, h: [3, 4.5, 6] });
   } else if (lieu === 'tropiques') { // la jungle : palmiers, bananiers, bambous, de grandes feuilles
-    for (let n = 0; n < 5; n++) poser(tirer(r() < .5 ? F.palmiersTropiques : r() < .6 ? F.bananiers : F.bambous), 'milieu', { h: ARBRE });
-    for (let n = 0; n < 10; n++) poser(tirer(r() < .55 ? F.arbresJungle : F.palmiersTropiques), 'fond', { h: [6, 12, 12] });
-    for (let n = 0; n < 6; n++) poser(tirer(F.fougeres), 'bord', { h: [.8, 1.6, 2.5] });
-    for (let n = 0; n < 3; n++) poser(tirer(F.fougeres), 'avant', { z: 2.3, h: [.6, 1.2, 2] });
+    for (let i = 0, k = entre(4, 6); i < k; i++) poser(tirer(r() < .5 ? F.palmiersTropiques : r() < .6 ? F.bananiers : F.bambous), 'milieu', { h: ARBRE });
+    for (let i = 0, k = entre(8, 12); i < k; i++) poser(tirer(r() < .55 ? F.arbresJungle : F.palmiersTropiques), 'fond', { h: [6, 12, 12] });
+    for (let i = 0, k = entre(4, 7); i < k; i++) poser(tirer(F.fougeres), 'bord', { h: [.8, 1.6, 2.5] });
+    for (let i = 0, k = entre(2, 4); i < k; i++) poser(tirer(F.fougeres), 'avant', { z: 2.3, h: [.6, 1.2, 2] });
     if (r() < .3) poser(tirer(F.paillotes), 'milieu', { z: -8, profil: false, h: [4, 6, 9] });
-  } else if (lieu === 'montagne') { // les sommets au loin, les sapins, les rochers ; l’hiver, la neige
-    for (let n = 0; n < 2; n++) poser(tirer(F.montagnes), 'fond', { z: -22 - r() * 4, profil: false, h: [4, 6.5, 14] }); // des rochers ; les sommets, eux, sont au lointain
+  } else if (lieu === 'montagne') { // des rochers, les sapins ; l’hiver, la neige ; les sommets, eux, sont au lointain
+    for (let i = 0; i < 2; i++) poser(tirer(F.montagnes), 'fond', { z: -22 - r() * 4, profil: false, h: [4, 6.5, 14] });
     const pins = saison === 'hiver' && F.pinsNeige.length ? [...F.pinsNeige, ...F.sapinsNeige] : F.pins;
-    for (let n = 0; n < 8; n++) poser(tirer(pins), 'milieu', { h: ARBRE });
-    for (let n = 0; n < 4; n++) poser(tirer(F.rochersMontagne), 'bord', { h: [.5, 1.6, 3] });
-    for (let n = 0; n < 6; n++) poser(tirer(saison === 'hiver' ? F.rochersMontagne : F.fleurs), 'avant', { s: 1.2 });
+    for (let i = 0, k = entre(6, 10); i < k; i++) poser(tirer(pins), 'milieu', { h: ARBRE });
+    for (let i = 0, k = entre(3, 5); i < k; i++) poser(tirer(F.rochersMontagne), 'bord', { h: [.5, 1.6, 3] });
+    for (let i = 0, k = entre(4, 7); i < k; i++) poser(tirer(saison === 'hiver' ? F.rochersMontagne : F.fleurs), 'avant', { s: 1.2 });
     if (r() < .3) poser(tirer(F.chalets), 'milieu', { z: -7, profil: false, h: MAISON });
   }
 
