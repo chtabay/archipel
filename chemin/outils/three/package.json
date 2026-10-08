@@ -1,0 +1,9 @@
+{
+  "name": "three-chemin",
+  "private": true,
+  "description": "Les versions épinglées qui fabriquent chemin/vendor/three-chemin.min.js : npm ci ici, puis node ../fabriquer-three.mjs.",
+  "devDependencies": {
+    "esbuild": "0.28.2",
+    "three": "0.186.1"
+  }
+}

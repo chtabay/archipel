@@ -17,6 +17,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - run: cd chemin/outils/three && npm ci && cd ../../.. && node chemin/outils/fabriquer-three.mjs --verifier # le three.js embarqué se refait à l’identique
       - run: node chemin/extension/fabriquer.js
       - run: npx --yes addons-linter --self-hosted chemin/extension/dist # les règles de Mozilla : une erreur arrête tout, un avertissement non
       - run: cd chemin/extension/dist && zip -qr ../chemin-extension.zip . && ls -la ../chemin-extension.zip
