@@ -47,16 +47,18 @@ async function compter() {
 }
 ext.runtime.onMessage.addListener((m, expediteur, repondre) => {
   if (expediteur.id !== ext.runtime.id || !m || typeof m !== 'object') return;
+  if (m.type === 'ouvrir') { ouvrirChemin().catch(() => {}); return; } // un clic sur l’encart
   if (m.type === 'glane' && typeof m.texte === 'string' && m.texte.length <= 200000) {
     tour(() => ajouter(m).then(() => repondre(true), e => { console.warn('le chemin, un écrit :', e); repondre(false); })); // le glaneur garde l’écrit si le carnet n’a pas pu le prendre
     return true;
   }
 });
-ext.action.onClicked.addListener(async () => { // l’icône : le chemin, dans son onglet, déjà ouvert s’il l’est
+async function ouvrirChemin() { // le chemin, dans son onglet, déjà ouvert s’il l’est
   const url = ext.runtime.getURL('chemin/index.html');
   try { const [t] = await ext.tabs.query({ url: `${url}*` }); if (t) { await ext.tabs.update(t.id, { active: true }); await ext.windows.update(t.windowId, { focused: true }); return; } } catch { /* sans la permission tabs : un onglet de plus */ }
-  ext.tabs.create({ url });
-});
+  await ext.tabs.create({ url });
+}
+ext.action.onClicked.addListener(ouvrirChemin); // l’icône
 
 /* ───────── Le glaneur, branché après l’accord, débranché en pause ───────── */
 

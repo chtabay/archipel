@@ -9,6 +9,10 @@ addEventListener('chemin:pret', async () => {
   const { accord } = await ext.storage.local.get('accord').catch(() => ({})); // le premier jour : rien encore, et le chemin attend les écrits de la journée
   if (accord === true && window.chemin?.pages?.length === 0) { const d = document.querySelector('#dit'); if (d) d.textContent = 'Écris comme d’habitude : ton chemin pousse derrière.'; }
 });
+if (new URLSearchParams(location.search).has('encart')) { // l’encart, au coin d’une page : un clic l’ouvre en grand, dans son onglet
+  document.documentElement.style.cursor = 'pointer';
+  addEventListener('click', e => { e.stopPropagation(); e.preventDefault(); ext.runtime.sendMessage({ type: 'ouvrir' }).catch(() => {}); }, true);
+}
 (async () => {
   const r = document.createElement('p'), lien = document.createElement('a'); // l’accord et les réglages, toujours à portée
   r.className = 'tiny reglages'; lien.href = ext.runtime.getURL('accord.html'); lien.textContent = 'L’accord et les réglages de l’extension'; r.append(lien);

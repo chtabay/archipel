@@ -67,8 +67,7 @@ async function calculer(suivre = () => {}) {
   let t = performance.now();
   const respirer = async () => { if (performance.now() - t > 30) { await souffle(); t = performance.now(); } return g === gen; };
   for (const [n, p] of pages.entries()) {
-    const d = decouper(S, p.texte);
-    (d.length ? d : [{ texte: p.texte, titre: null, porteurs: 0 }]).forEach((x, k) => out.push({ ...x, date: p.date, page: n, premier: k === 0 }));
+    (passagesDe(p).length ? passagesDe(p) : [{ texte: p.texte, titre: null, porteurs: 0 }]).forEach((x, k) => out.push({ ...x, date: p.date, page: n, premier: k === 0 }));
     if (!(await respirer())) return false;
   }
   const manquent = out.filter(x => !lus.has(x.texte)), nouvelles = [];
@@ -279,8 +278,8 @@ function preparerParcours() {
 /* ───────── La page d’un jour, sous la frise : ses blocs, chacun à son heure ; aujourd’hui, un bloc de plus ───────── */
 
 // une page : ses blocs ; son texte, qui fait les tuiles, les met bout à bout, comme des paragraphes. Entre une suite de
-// recherches (glanées sur un moteur par l’extension) et le reste, une coupe que le découpage respecte : courtes et denses,
-// les recherches font leurs tuiles à elles, au lieu de se fondre dans celles des courriels
+// recherches (glanées sur un moteur par l’extension) et le reste, une coupe : courtes et denses, les recherches font chacune
+// sa tuile, au lieu de se fondre dans celles des courriels
 const COUPE = '\n\n* * *\n\n', genre = b => (b.recherche ? 'recherche' : 'texte');
 const joindre = (date, blocs) => {
   let texte = ''; const debuts = []; // la place de chaque bloc dans le texte de la page
@@ -288,6 +287,15 @@ const joindre = (date, blocs) => {
   return { date, blocs, texte, debuts };
 };
 const enBlocs = p => joindre(p.date, p.blocs?.length ? p.blocs : [{ heure: '', texte: p.texte }]); // une page d’avant les blocs : un seul, sans heure
+// les passages d’une page : le texte se découpe en passages d’environ 14 porteurs ; chaque recherche est un passage à elle seule
+function passagesDe(p) {
+  const out = []; let groupe = [];
+  const vider = () => { if (groupe.length) { for (const x of decouper(S, groupe.map(b => b.texte).join('\n\n'))) out.push(x); groupe = []; } };
+  for (const b of p.blocs || [{ texte: p.texte }]) {
+    if (b.recherche) { vider(); out.push({ texte: b.texte, titre: null, porteurs: lirePage(S, b.texte).mots.length }); } else groupe.push(b);
+  }
+  vider(); return out;
+}
 const maintenant = () => { const d = new Date(); return `${deux(d.getHours())}:${deux(d.getMinutes())}`; };
 const aLHeure = h => (h ? `${+h.slice(0, 2)} h ${h.slice(3, 5)}` : '');
 let vu = null, edition = null, cible = null, brouillon = ''; // le jour montré ; le bloc qu’on modifie ; le passage de la tuile touchée ; ce qu’on écrivait avant

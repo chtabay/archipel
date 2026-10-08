@@ -137,7 +137,9 @@ const JAMAIS = {
     verifier(await attendre(() => m2.locator('#chemin-encart iframe').count().then(n => n === 1)), 'sur le moteur, l’encart est posé au coin de la page');
     const cadre = await attendre(() => m2.frames().find(f => f.url().includes('chemin/index.html?encart')) || null, 10000);
     verifier(!!cadre && await attendre(() => cadre.evaluate(() => window.chemin?.passages?.length > 1 && !document.querySelector('.intro:not([hidden])')).catch(() => false), 60000), 'l’encart montre la frise, sans intro');
-    await m2.locator('#chemin-encart button').click();
+    const ouverture = ctx.waitForEvent('page', { timeout: 10000 }).catch(() => null); await m2.locator('#chemin-encart .voile').click();
+    const ouvert = await ouverture; verifier(!!ouvert && ouvert.url().includes('chemin/index.html') && !ouvert.url().includes('encart'), 'un clic sur l’encart ouvre le chemin en grand, dans son onglet'); if (ouvert) await ouvert.close();
+    await m2.locator('#chemin-encart .croix').click();
     verifier(await m2.locator('#chemin-encart').count() === 0, 'la croix replie l’encart');
     await m2.reload(); await m2.waitForTimeout(600);
     verifier(await m2.locator('#chemin-encart').count() === 0, 'et il reste replié sur la page suivante'); await m2.close();
@@ -156,7 +158,7 @@ const JAMAIS = {
     verifier(vu.ailleurs === blocs.length && vu.accord === 0, `la page du jour montre ses ${blocs.length} blocs « écrits ailleurs », et plus le mot de l’accord`);
     for (const q of vu.plans) console.log(`    ${q.lieu} · ${q.objets.join(', ') || '—'}`);
     verifier(vu.plans.some(q => q.objets.length), 'les tuiles du jour ont des objets');
-    verifier(await onglet.evaluate(() => window.chemin.passages.filter(x => x.texte.includes('poires')).every(x => !x.texte.includes('rivière') && !x.texte.includes('gâteau'))), 'les recherches font leurs tuiles à elles, à part des courriels');
+    verifier(await onglet.evaluate(() => { const r = window.chemin.passages.filter(x => x.texte.includes('poires') || x.texte.includes('piscine')); return r.length === 2 && r.every(x => !x.texte.includes('rivière') && !x.texte.includes('gâteau') && x.texte.split('\n').length === 1); }), 'chaque recherche fait sa tuile à elle, à part des courriels');
 
     // 6. un écrit arrive pendant que le chemin est ouvert : il se relit tout seul
     const p2 = await ctx.newPage(); await p2.goto(ORDINAIRE); await p2.waitForTimeout(300); await poser(p2, '#journal', GARDER.apres); await p2.close();
@@ -179,7 +181,7 @@ const JAMAIS = {
     const n = (await blocsDuJour()).length;
     await onglet.reload(); await onglet.waitForFunction(() => window.chemin?.passages?.length > 1, null, { timeout: 60000 });
     verifier((await blocsDuJour()).length === n, `après rechargement, toujours ${n} blocs`);
-    verifier(erreurs.filter(e => !/Failed to (fetch|load)|net::ERR_/.test(e)).length === 0, `aucune erreur dans la console du chemin${erreurs.length ? ` (${erreurs[0].slice(0, 80)})` : ''}`);
+    verifier(erreurs.filter(e => !/Failed to (fetch|load)|net::ERR_|Couldn't load texture/.test(e)).length === 0, `aucune erreur dans la console du chemin${erreurs.length ? ` (${erreurs[0].slice(0, 80)})` : ''}`); // un rechargement coupe des chargements en cours : pas une erreur
 
     // 8. la pause débranche le glaneur
     await reglage({ pause: true });

@@ -145,12 +145,14 @@
     const poser = () => {
       if (!document.body || document.getElementById('chemin-encart')) return;
       const hote = document.createElement('div'); hote.id = 'chemin-encart'; hote.setAttribute('style', 'position:fixed!important;right:16px!important;bottom:16px!important;z-index:2147483647!important;width:320px!important;height:120px!important;margin:0!important;padding:0!important;');
-      const r = hote.attachShadow({ mode: 'open' }), style = document.createElement('style'), cadre = document.createElement('iframe'), croix = document.createElement('button');
-      style.textContent = ':host{all:initial;position:fixed;right:16px;bottom:16px;z-index:2147483647;width:320px;height:120px;display:block}iframe{display:block;width:100%;height:100%;border:0;border-radius:12px;background:#f4efe4;box-shadow:0 6px 24px rgba(40,30,10,.28)}button{position:absolute;top:-10px;right:-10px;width:24px;height:24px;border:0;border-radius:50%;background:#3b3428;color:#f4efe4;font:700 14px/24px system-ui,sans-serif;cursor:pointer;padding:0}button:hover{background:#6b6150}';
+      const r = hote.attachShadow({ mode: 'open' }), style = document.createElement('style'), cadre = document.createElement('iframe'), croix = document.createElement('button'), voile = document.createElement('button');
+      style.textContent = ':host{all:initial;position:fixed;right:16px;bottom:16px;z-index:2147483647;width:320px;height:120px;display:block}iframe{display:block;width:100%;height:100%;border:0;border-radius:12px;background:#f4efe4;box-shadow:0 6px 24px rgba(40,30,10,.28)}.voile{position:absolute;inset:0;border:0;border-radius:12px;background:transparent;cursor:pointer;padding:0}.croix{position:absolute;top:-10px;right:-10px;width:24px;height:24px;border:0;border-radius:50%;background:#3b3428;color:#f4efe4;font:700 14px/24px system-ui,sans-serif;cursor:pointer;padding:0}.croix:hover{background:#6b6150}';
       cadre.src = ext.runtime.getURL('chemin/index.html?encart'); cadre.title = 'Le chemin'; cadre.setAttribute('aria-label', 'Le chemin, les dernières tuiles');
-      croix.type = 'button'; croix.textContent = '×'; croix.setAttribute('aria-label', 'Replier le chemin');
+      voile.type = 'button'; voile.className = 'voile'; voile.setAttribute('aria-label', 'Ouvrir le chemin'); voile.title = 'Ouvrir le chemin'; // par-dessus le cadre : un clic ouvre le chemin en grand
+      voile.addEventListener('click', () => ext.runtime.sendMessage({ type: 'ouvrir' }).catch(() => {}));
+      croix.type = 'button'; croix.className = 'croix'; croix.textContent = '×'; croix.setAttribute('aria-label', 'Replier le chemin');
       croix.addEventListener('click', () => { hote.remove(); ext.storage.session?.set({ encartReplie: true }).catch(() => {}); });
-      r.append(style, cadre, croix); document.body.append(hote);
+      r.append(style, cadre, voile, croix); document.body.append(hote);
     };
     if (document.body) poser(); else document.addEventListener('DOMContentLoaded', poser, { once: true });
   }
