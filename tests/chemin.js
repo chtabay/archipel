@@ -87,7 +87,7 @@ Avant de dormir, j’ai écrit une lettre à ma mère, sur le bureau, avec un st
 
   // 2 bis. au-delà des choses : un verbe conjugué trouve sa pose, le temps qu’il fait change le ciel, les mots mènent ailleurs
   const v = await p.evaluate(async () => {
-    const { lirePage, objetsDeLaPage, lieuDeLaPage } = await import('./sens.js?v=5'), { climatDe, planifier } = await import('./monde.js?v=4'), S = window.chemin.S, F = window.chemin.F;
+    const { lirePage, objetsDeLaPage, lieuDeLaPage } = await import('./sens.js?v=5'), { climatDe, planifier } = await import('./monde.js?v=5'), S = window.chemin.S, F = window.chemin.F;
     const lire = t => { const l = lirePage(S, t), o = objetsDeLaPage(S, l); return { l, o, mots: l.mots.map(x => x.m), lieu: lieuDeLaPage(l, o) }; };
     const mer = lire('Une baleine au loin, des mouettes dans le ciel, et nous avons nagé.');
     const plan = planifier({ i: 0, date: '2026-07-01', lieu: 'rivage', objets: mer.o, climat: climatDe(mer.l) }, null, F, new Map());
@@ -97,7 +97,13 @@ Avant de dormir, j’ai écrit une lettre à ma mère, sur le bureau, avec un st
       nuit: climatDe(lire('La nuit, les étoiles.').l).meteo, desert: lire('Le désert, le sable, les dunes, un chameau près de l’oasis.').lieu,
       ciel: plan.items.filter(it => it.vol).map(it => it.id), eau: plan.items.filter(it => it.eau).map(it => it.id), eauAuxChamps: champs.items.filter(it => it.eau).length,
       loin: lire('Depuis la colline, on voyait la mer au loin et les sommets enneigés.').l.horizon, fondMer: plan.fond,
-      fondMontagne: planifier({ i: 2, date: '2026-01-10', lieu: 'montagne', objets: [], climat: climatDe(lire('Le sommet.').l), horizon: {} }, null, F, new Map()).fond };
+      fondMontagne: planifier({ i: 2, date: '2026-01-10', lieu: 'montagne', objets: [], climat: climatDe(lire('Le sommet.').l), horizon: {} }, null, F, new Map()).fond,
+      reperes: (() => { // vingt-quatre jours de champs, vingt-quatre de rivage : ce qui se pose au second plan
+        const voir = (lieu, n) => { const recents = new Map(), out = []; let veille = null; for (let i = 0; i < n; i++) { const q = planifier({ i, date: `2026-03-${String(1 + i).padStart(2, '0')}`, lieu, objets: [], climat: climatDe(lire('Une journée.').l), horizon: {} }, veille, F, recents); veille = q; out.push(...q.items); } return out; };
+        const champs = voir('champs', 24), rivage = voir('rivage', 24);
+        return { champs: champs.filter(it => it.plan === 'fond' && /windmill|church|tower|castle|Silo|WaterTower|Barn/i.test(it.id)).map(it => it.id.split('/')[1]), vie: champs.filter(it => /poses\/(marche|course)|train-kit|tractor/.test(it.id)).length,
+          large: rivage.filter(it => it.plan === 'fond' && /ship|Sail_ship|Viking|BoatWSail|phare/.test(it.id)).map(it => it.id.split('/')[1]), surEau: rivage.filter(it => it.plan === 'milieu' && /poses\/(marche|course)/.test(it.id)).length };
+      })() };
   });
   verifier(v.dormi.includes('dormir') && v.marche.includes('marcher') && v.marche.includes('marché') && v.lit.includes('lire') && v.lit.includes('lit'),
     `un verbe conjugué compte par son infinitif ; « marché » et « lit » restent des noms, sauf après un auxiliaire ou un pronom (${v.marche.join(', ')} ; ${v.lit.join(', ')})`);
@@ -106,6 +112,8 @@ Avant de dormir, j’ai écrit une lettre à ma mère, sur le bureau, avec un st
   verifier(v.ciel.some(id => /mouette/.test(id)) && v.eau.some(id => /whale/.test(id)) && !v.eauAuxChamps, `au bord de l’eau, les mouettes volent et la baleine nage (${v.ciel.concat(v.eau).join(', ')}) ; loin de l’eau, pas de baleine`);
   verifier(v.loin.mer >= .5 && v.loin.montagnes >= .5 && v.loin.collines >= .5 && v.fondMontagne.montagnes >= .8 && v.fondMer.mer === 1,
     `le lointain vient du lieu et des mots : la mer, les sommets, la colline (${Object.entries(v.loin).map(([k, x]) => k + ' ' + x).join(', ')}) ; en montagne, des sommets ; au bord de l’eau, la mer jusqu’à l’horizon`);
+  verifier(v.reperes.champs.length >= 2 && v.reperes.vie >= 1 && v.reperes.large.length >= 1 && !v.reperes.surEau,
+    `au second plan, des repères : sur vingt-quatre jours de champs, ${v.reperes.champs.length} au fond (${[...new Set(v.reperes.champs)].slice(0, 4).join(', ')}) et ${v.reperes.vie} promeneurs, tracteurs ou trains au milieu ; au bord de l’eau, ${v.reperes.large.length} navires ou phares au large (${[...new Set(v.reperes.large)].slice(0, 3).join(', ')}), et personne ne marche sur l’eau`);
 
   // 3. la première page : gardée sur le téléphone, une tuile de plus, peinte
   await p.fill('#page', PAGE); await p.click('#garder');
