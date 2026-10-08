@@ -87,7 +87,7 @@ const JAMAIS = {
     verifier(await onglet0.locator('.tete .accord a').count() === 1, 'sans accord, le nouvel onglet dit où le donner'); await onglet0.close();
 
     // 2. l’accord, et le moteur de recherche d’essai parmi ceux qui comptent
-    await reglage({ accord: true, pause: false, exclus: ['chtabay.github.io'], recherches: ['localhost'] });
+    await reglage({ accord: true, pause: false, exclus: ['chtabay.github.io'], recherches: ['localhost'], encart: ['localhost'] });
     verifier(await attendre(branche), 'après l’accord, le glaneur est branché sur toutes les pages');
 
     // 3. une page ordinaire : ce qui compte, ce qui ne compte jamais, et un écrit repris
@@ -126,6 +126,17 @@ const JAMAIS = {
     verifier(await attendre(async () => (await blocsDuJour()).some(b => b.texte === GARDER.recherche)), 'sur un moteur choisi, la recherche est un bloc');
     blocs = await blocsDuJour(); const toutM = JSON.stringify(blocs);
     verifier(!toutM.includes('Inventée') && !toutM.includes('toiture') && !toutM.includes('ok merci'), 'sur ce moteur, ni les destinataires, ni l’objet, ni deux mots dans un corps de courriel');
+    // 4 bis. l’encart : sur le moteur, la frise du chemin au coin de la page ; pas ailleurs ; la croix la replie pour la session
+    verifier(await p.locator('#chemin-encart').count() === 0, 'sur une page ordinaire, pas d’encart');
+    const m2 = await ctx.newPage(); await m2.goto(MOTEUR);
+    verifier(await attendre(() => m2.locator('#chemin-encart iframe').count().then(n => n === 1)), 'sur le moteur, l’encart est posé au coin de la page');
+    const cadre = await attendre(() => m2.frames().find(f => f.url().includes('chemin/index.html?encart')) || null, 10000);
+    verifier(!!cadre && await attendre(() => cadre.evaluate(() => window.chemin?.passages?.length > 1 && !document.querySelector('.intro:not([hidden])')).catch(() => false), 60000), 'l’encart montre la frise, sans intro');
+    await m2.locator('#chemin-encart button').click();
+    verifier(await m2.locator('#chemin-encart').count() === 0, 'la croix replie l’encart');
+    await m2.reload(); await m2.waitForTimeout(600);
+    verifier(await m2.locator('#chemin-encart').count() === 0, 'et il reste replié sur la page suivante'); await m2.close();
+    await sw.evaluate(() => chrome.storage.session.remove('encartReplie'));
 
     // 5. le chemin, dans le nouvel onglet : il lit les blocs, et les montre « écrits ailleurs »
     const onglet = await ctx.newPage(); const erreurs = []; onglet.on('pageerror', e => erreurs.push(String(e))); onglet.on('console', x => { if (x.type() === 'error') erreurs.push(x.text()); });

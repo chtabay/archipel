@@ -14,6 +14,8 @@ const el = (tag, props = {}, ...kids) => { const n = Object.assign(document.crea
 const deux = n => String(n).padStart(2, '0'), aujourdhui = () => { const d = new Date(); return `${d.getFullYear()}-${deux(d.getMonth() + 1)}-${deux(d.getDate())}`; }; // la date d’ici, pas celle de Greenwich
 const norm = s => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[’‘`´]/g, "'").replace(/\s+/g, ' ');
 const enDemo = new URLSearchParams(location.search).has('demo');
+const enEncart = new URLSearchParams(location.search).has('encart'); // la frise seule, petite, posée par l’extension au coin d’une page
+if (enEncart) document.documentElement.classList.add('encart');
 const dates = new Map(), quand = d => { // « 7 octobre », et l’année si ce n’est pas celle-ci
   if (!dates.has(d)) { const x = new Date(`${d}T12:00:00`); dates.set(d, x.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', ...(x.getFullYear() !== new Date().getFullYear() && { year: 'numeric' }) })); }
   return dates.get(d);
@@ -403,7 +405,7 @@ function garderHorsLigne() {
     dit(pages.length ? 'Chaque page devient un bout de chemin.' : 'Écris ta première page : le chemin commence là.');
     pret = premiere;
   } catch (e) { console.error(e); dit('Le chemin ne s’ouvre pas sur cet appareil.'); }
-  await intro.quand(pret);
+  await intro.quand(pret, enEncart ? 0 : undefined); // en encart, pas d’intro
   window.chemin = { get plans() { return plans; }, get passages() { return passages; }, get pages() { return pages; }, get tuiles() { return tuiles; }, S, F, atelier, carnet, rafraichir }; // pour les essais, et pour l’extension
   dispatchEvent(new Event('chemin:pret'));
   if (document.readyState === 'complete') garderHorsLigne(); else addEventListener('load', garderHorsLigne);

@@ -75,3 +75,4 @@ ext.runtime.onStartup.addListener(brancher);
 ext.storage.onChanged.addListener((ch, zone) => { if (zone === 'local' && (ch.accord || ch.pause)) brancher(); });
 ext.permissions.onAdded.addListener(brancher); ext.permissions.onRemoved.addListener(brancher);
 brancher(); // à chaque réveil du fond
+ext.storage.session?.setAccessLevel?.({ accessLevel: 'TRUSTED_AND_UNTRUSTED_CONTEXTS' }).catch(() => {}); // le glaneur lit si l’encart est replié, le temps de la session

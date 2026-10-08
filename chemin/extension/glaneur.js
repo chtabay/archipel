@@ -22,12 +22,13 @@
   const JAMAIS = ['chtabay.github.io']; // l’archipel et le chemin eux-mêmes : ce qu’on y dépose n’est pas glané
   const DELAIS = [60, 250, 1000, 2500]; // après Entrée ou un bouton : la page vide la zone tout de suite, ou après un aller-retour
 
-  let reglages = { accord: false, pause: false, exclus: [], recherches: [] }; // rien tant qu’on n’a pas dit oui
+  let reglages = { accord: false, pause: false, exclus: [], recherches: [], encart: [] }; // rien tant qu’on n’a pas dit oui
   const sous = liste => liste.some(h => host === h || host.endsWith(`.${h}`)); // un site exclu l’est avec ses sous-domaines
-  const lire = () => ext.storage.local.get(['accord', 'pause', 'exclus', 'recherches']).then(r => {
+  const lire = () => ext.storage.local.get(['accord', 'pause', 'exclus', 'recherches', 'encart']).then(r => {
     const avant = permis();
-    reglages = { accord: r.accord === true, pause: r.pause === true, exclus: Array.isArray(r.exclus) ? r.exclus : [], recherches: Array.isArray(r.recherches) ? r.recherches : [] };
+    reglages = { accord: r.accord === true, pause: r.pause === true, exclus: Array.isArray(r.exclus) ? r.exclus : [], recherches: Array.isArray(r.recherches) ? r.recherches : [], encart: Array.isArray(r.encart) ? r.encart : [] };
     if (permis() && !avant && courante) sessions.get(courante).avant = texte(courante); // le oui vaut pour la suite, pas pour ce qui est déjà tapé
+    encart();
   }).catch(() => {});
   const permis = () => reglages.accord && !reglages.pause && !ext.extension?.inIncognitoContext && !sous(JAMAIS) && !sous(reglages.exclus);
   const moteur = () => reglages.recherches.some(h => host === h || host === `www.${h}`); // le moteur lui-même, pas mail.google.com
@@ -121,6 +122,25 @@
     pagehide() { cueillir(courante); },
   };
   const cache = () => { if (document.hidden) cueillir(courante); };
+
+  // L’encart : sur les sites choisis, la frise du chemin, petite, au coin de la page, dans un cadre de l’extension. Elle se peint
+  // là comme dans le nouvel onglet ; une croix la replie, le temps de la session du navigateur.
+  async function encart() {
+    if (window !== top || !permis() || !sous(reglages.encart) || document.getElementById('chemin-encart')) return;
+    const replie = await (ext.storage.session?.get('encartReplie').catch(() => ({})) ?? {});
+    if (replie?.encartReplie === true || document.getElementById('chemin-encart')) return;
+    const poser = () => {
+      if (!document.body || document.getElementById('chemin-encart')) return;
+      const hote = document.createElement('div'); hote.id = 'chemin-encart'; hote.setAttribute('style', 'position:fixed!important;right:16px!important;bottom:16px!important;z-index:2147483647!important;width:320px!important;height:120px!important;margin:0!important;padding:0!important;');
+      const r = hote.attachShadow({ mode: 'open' }), style = document.createElement('style'), cadre = document.createElement('iframe'), croix = document.createElement('button');
+      style.textContent = ':host{all:initial;position:fixed;right:16px;bottom:16px;z-index:2147483647;width:320px;height:120px;display:block}iframe{display:block;width:100%;height:100%;border:0;border-radius:12px;background:#f4efe4;box-shadow:0 6px 24px rgba(40,30,10,.28)}button{position:absolute;top:-10px;right:-10px;width:24px;height:24px;border:0;border-radius:50%;background:#3b3428;color:#f4efe4;font:700 14px/24px system-ui,sans-serif;cursor:pointer;padding:0}button:hover{background:#6b6150}';
+      cadre.src = ext.runtime.getURL('chemin/index.html?encart'); cadre.title = 'Le chemin'; cadre.setAttribute('aria-label', 'Le chemin, les dernières tuiles');
+      croix.type = 'button'; croix.textContent = '×'; croix.setAttribute('aria-label', 'Replier le chemin');
+      croix.addEventListener('click', () => { hote.remove(); ext.storage.session?.set({ encartReplie: true }).catch(() => {}); });
+      r.append(style, cadre, croix); document.body.append(hote);
+    };
+    if (document.body) poser(); else document.addEventListener('DOMContentLoaded', poser, { once: true });
+  }
   // Un même écouteur ajouté deux fois ne compte qu’une fois : rebrancher est sans risque. Une page qui écrit son cadre vide
   // avec document.open() efface tous les écouteurs de sa fenêtre, ceux de l’extension compris : on les remet.
   const brancher = () => { for (const [nom, f] of Object.entries(ecoute)) addEventListener(nom, f, true); document.addEventListener('visibilitychange', cache); };

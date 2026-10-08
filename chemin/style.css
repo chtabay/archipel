@@ -42,6 +42,10 @@ body.accueil { overflow: hidden; }
 /* La frise : une rangée de tuiles qu’on parcourt du doigt, sans couture */
 .frise { position: relative; display: flex; overflow-x: auto; overflow-y: hidden; height: min(58vh, 32rem); scroll-behavior: auto; overscroll-behavior-x: contain; scrollbar-width: none; background: var(--papier); }
 .frise::-webkit-scrollbar { display: none; }
+/* l’encart : la frise seule, posée par l’extension au coin d’une page */
+html.encart body { margin: 0; overflow: hidden; }
+html.encart body > :not(.frise) { display: none; }
+html.encart .frise { height: 100vh; }
 .frise { user-select: none; -webkit-user-select: none; }
 @media (hover: hover) and (pointer: fine) { .frise { cursor: grab; } .frise.tiree { cursor: grabbing; } } /* sur ordinateur, la souris tire le chemin */
 .frise:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
