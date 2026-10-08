@@ -8,8 +8,8 @@
   <title>Le chemin</title>
   <meta name="description" content="Un journal : chaque page devient un bout de chemin, peint à l’aquarelle. Rien ne quitte ce téléphone.">
   <link rel="preload" href="../fonts/nunito.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="style.css?v=3">
-  <script type="module" src="app.js?v=5"></script>
+  <link rel="stylesheet" href="style.css?v=4">
+  <script type="module" src="app.js?v=6"></script>
 </head>
 <body class="accueil">
   <div class="intro trace" id="intro" aria-hidden="true">
@@ -40,6 +40,16 @@
     <p class="demo" id="demo" hidden>Démo : trente-deux pages d’exemple. Ce que tu écris ici n’est pas gardé. <a href="./">Commencer mon journal</a></p>
   </header>
   <section class="frise" id="frise" aria-label="Le chemin de tes pages, du plus ancien au plus récent" tabindex="0"></section>
+  <nav class="parcours" id="parcours" aria-label="Parcourir le chemin" hidden>
+    <button type="button" class="discret" id="debut"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1.5 1.5h1.8v9H1.5zM10.5 1.5v9L4 6z"/></svg>Début</button>
+    <button type="button" class="discret" id="derouler"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 1.2v9.6L10.5 6z"/></svg>Dérouler</button>
+    <button type="button" class="discret" id="fin">Fin<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1.5 1.5v9L8 6zM8.7 1.5h1.8v9H8.7z"/></svg></button>
+  </nav>
+  <aside class="recit" id="recit" aria-live="polite" hidden>
+    <p class="quand" id="recit-quand"></p>
+    <div class="passage" id="recit-texte"></div>
+    <p class="commandes"><button type="button" class="btn" id="pause">Pause</button><button type="button" class="lien" id="fermer">Fermer</button></p>
+  </aside>
   <p class="jour" id="jour" aria-live="polite"></p>
   <main class="ecrire">
     <div class="entete"><h2 class="titre" id="titre-page">Aujourd’hui</h2><button type="button" class="lien" id="retour" hidden>Revenir à aujourd’hui</button></div>

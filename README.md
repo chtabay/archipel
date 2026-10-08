@@ -156,6 +156,7 @@ Une île de l’archipel peut se relier à d’autres, par des routes sur l’ea
 
 - **Une seule façon d’écrire.** La zone « Aujourd’hui » prend quelques lignes, un courrier ou un roman entier. « Garder la page » la garde. On peut revenir le même jour : chaque bloc s’ajoute à la page du jour, avec son heure. Un bloc se modifie ; vidé, il s’efface.
 - **Relire.** Toucher une tuile ouvre sa page sous la frise, même d’un jour ancien ; dans une page de plusieurs tuiles, son passage est surligné.
+- **Parcourir.** Le chemin s’ouvre à sa fin. Sous la frise, « Début » et « Fin » y mènent ; « Dérouler » le fait passer seul, lentement et en grand, le texte de la tuile du milieu dessous, ou à côté quand le téléphone est couché. Chaque tuile reste le temps de lire son passage. Toucher l’arrête ou le relance, glisser le met en pause ; l’écran reste allumé. Sur ordinateur, la molette fait avancer ou reculer le chemin, puis rend la main à la page au bout ; la souris le tire.
 - **Le découpage.** Un texte se découpe en passages d’environ 14 mots porteurs, une tuile chacun : une page de journal fait une tuile, un roman quelques centaines. Un mot porteur fait une image : il est proche d’un objet du catalogue, ou d’un champ de la vie ordinaire. On coupe aux titres, chapitres ou dates, et aux séparateurs ; puis entre les paragraphes, puis entre les phrases. Les répliques d’un dialogue restent ensemble tant qu’on peut. Une page de garde rejoint le passage qui suit ; un jour vide garde sa tuile. La première tuile d’une page porte sa date, celle d’un chapitre son titre.
 - **La tuile.** Les mots du passage choisissent le lieu, le temps qu’il fait, et jusqu’à six objets parmi 1 713 modèles libres, par la distance de leur sens : ceux de Kenney, des KayKit, de Quaternius et d’OpenGameArt, et les choses de l’archipel. Chaque modèle a ses noms français, traduits une fois de ses noms anglais, dans le sens de l’objet : « can » y est une canette, « cup » une tasse. Un mot du texte retrouve ainsi l’objet qui porte son nom, ou le plus proche ; un pluriel compte comme son singulier. Un objet vu récemment devient moins probable. Tous les plans sont là, du premier plan au lointain, et le chemin ne s’interrompt pas d’une tuile à l’autre.
 - **Les paysages.** La maison, le village, la forêt, les champs, le bord de l’eau ; et, quand les mots y mènent, le désert, la savane, la jungle des tropiques, la montagne. Des modèles venus d’ailleurs : un baobab et des acacias, des bananiers, une paillote, une mosquée de terre du Mali, une pyramide maya, un gong chinois, des sushis.
@@ -166,7 +167,7 @@ Une île de l’archipel peut se relier à d’autres, par des routes sur l’ea
 
 | Fichier | Rôle |
 | --- | --- |
-| `chemin/app.js` | L’intro, la frise, la peinture et la garde des tuiles, la page du jour et ses blocs, la relecture |
+| `chemin/app.js` | L’intro, la frise, la peinture et la garde des tuiles, le parcours et le déroulé, la page du jour et ses blocs, la relecture |
 | `chemin/sens.js` | Le découpage, les mots porteurs, les objets les plus proches, les champs, le lieu, la tonalité, la météo |
 | `chemin/monde.js` | Le plan de chaque tuile, ses paysages, le sol, l’eau, le ciel, les maisons ouvertes, le temps qu’il fait, le rendu en 3D |
 | `chemin/carnet.js` | Les pages, leurs blocs, et les tuiles peintes, dans le stockage du téléphone |

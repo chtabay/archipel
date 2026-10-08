@@ -124,6 +124,9 @@ Avant de dormir, j’ai écrit une lettre à ma mère, sur le bureau, avec un st
   t = await tuiles(p);
   const revenue = await p.evaluate(() => ({ blocs: [...document.querySelectorAll('#blocs .bloc .texte')].map(b => b.textContent), zone: document.querySelector('#page').value }));
   verifier(t.length === 2 && t.every(x => x.peinte && x.source === 'carnet') && revenue.blocs.join('|') === PAGE && revenue.zone === '', 'à la visite suivante, la page revient sous la frise, la zone prête pour la suite, et ses tuiles, gardées, sans repeindre');
+  const bout = () => p.evaluate(() => { const f = document.querySelector('#frise'); return { x: f.scrollLeft, fin: f.scrollWidth - f.clientWidth }; });
+  const arrivee = await bout(); await p.click('#debut'); const auDebut = await bout(); await p.click('#fin'); const aLaFin = await bout();
+  verifier(arrivee.fin > 0 && Math.abs(arrivee.x - arrivee.fin) <= 2 && auDebut.x === 0 && Math.abs(aLaFin.x - aLaFin.fin) <= 2, `le chemin s’ouvre à sa fin ; sous la frise, « Début » et « Fin » y mènent (${Math.round(arrivee.x)} sur ${Math.round(arrivee.fin)})`);
 
   // 4 bis. un deuxième bloc, le même jour : il s’ajoute à la page, à la suite du premier, avec son heure
   const SUITE = 'Le soir, une soupe de légumes, puis un livre au lit.';
@@ -204,7 +207,34 @@ Avant de dormir, j’ai écrit une lettre à ma mère, sur le bureau, avec un st
   const revenu = await dm.evaluate(() => ({ titre: document.querySelector('#titre-page').textContent, zone: !document.querySelector('#page').hidden }));
   verifier(lue.titre === lue.etiquette && lue.blocs === lue.page && lue.retour && !lue.zone && revenu.titre === 'Aujourd’hui' && revenu.zone,
     `toucher la tuile d’un autre jour ouvre sa page sous la frise (« ${lue.titre} ») ; on la lit, puis on revient à aujourd’hui`);
+
+  // le chemin se déroule seul, en grand, depuis le départ quand on était au bout, le texte de la tuile du milieu dessous ;
+  // il s’arrête, reprend, et se referme là où il en était
+  const etat = () => dm.evaluate(() => { const f = document.querySelector('#frise'); return { deroule: document.body.classList.contains('deroule'), recit: !document.querySelector('#recit').hidden, quand: document.querySelector('#recit-quand').textContent, texte: document.querySelector('#recit-texte').textContent, x: f.scrollLeft, haut: f.clientHeight, bouton: document.querySelector('#pause').textContent }; });
+  await dm.click('#derouler'); await dm.waitForTimeout(400);
+  const d0 = await etat(); await attendre(dm, async () => (await etat()).x > d0.x + 40, 20000); const d1 = await etat(); // sans carte graphique, le pinceau ralentit tout
+  await dm.click('#pause'); const d2 = await etat(); await dm.waitForTimeout(800); const d3 = await etat();
+  await dm.screenshot({ path: path.join(OUT, 'derouler.png') });
+  await dm.click('#fermer'); const d4 = await etat();
+  verifier(d0.deroule && d0.recit && d0.quand === 'Le départ' && d0.haut > 505 && d1.x > d0.x + 40 && d1.quand !== '' && Math.abs(d3.x - d2.x) < 2 && d3.bouton === 'Reprendre' && !d4.deroule && !d4.recit,
+    `« Dérouler » fait passer le chemin seul, en grand, depuis le départ, le texte de la tuile du milieu dessous (« ${d1.quand} ») ; il s’arrête, reprend, et se referme`);
   await dm.close();
+
+  // 9. sur ordinateur : la molette fait reculer le chemin, la souris le tire ; au bout, la page reprend la main ; un clic ouvre la tuile
+  const co = await b.newContext({ viewport: { width: 1280, height: 800 } }), o = await co.newPage(); surveiller(o, e, x);
+  await o.goto(BASE + 'chemin/?demo');
+  await attendre(o, () => o.evaluate(() => document.querySelector('#intro').hidden && window.chemin?.tuiles.length > 2), 60000);
+  const ici = () => o.evaluate(() => ({ x: Math.round(document.querySelector('#frise').scrollLeft), page: Math.round(scrollY), jour: document.querySelector('#jour').textContent }));
+  const cadre = await o.locator('#frise').boundingBox(), cx = cadre.x + cadre.width / 2, cy = cadre.y + cadre.height / 2;
+  await o.mouse.move(cx, cy);
+  const o0 = await ici(); await o.mouse.wheel(0, 300); await o.waitForTimeout(300); const o1 = await ici();
+  await o.evaluate(() => scrollTo(0, 0)); await o.waitForTimeout(100);
+  await o.mouse.wheel(0, -400); await o.waitForTimeout(300); const o2 = await ici();
+  await o.mouse.down(); await o.mouse.move(cx + 300, cy, { steps: 8 }); await o.mouse.up(); await o.waitForTimeout(200); const o3 = await ici();
+  await o.mouse.click(cx, cy); const o4 = await ici();
+  verifier(o1.x === o0.x && o1.page > 0 && o2.x <= o0.x - 350 && o3.x <= o2.x - 250 && !o3.jour && o4.jour,
+    `sur ordinateur, au bout, la molette rend la main à la page ; elle fait reculer le chemin (${o0.x - o2.x} points), la souris le tire (${o2.x - o3.x}) sans ouvrir de tuile, un clic l’ouvre`);
+  await co.close();
 
   verifier(!calme(e).length, `aucune erreur dans la console${calme(e).length ? ' : ' + calme(e).slice(0, 4).join(' | ') : ''}`);
   verifier(!x.length, `aucune requête vers l’extérieur${x.length ? ' : ' + x.slice(0, 3).join(' ') : ''}`);
