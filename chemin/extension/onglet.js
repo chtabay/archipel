@@ -1,7 +1,10 @@
 // L’extension du chemin : ce qu’elle ajoute à la page du chemin, dans le nouvel onglet. Quand le fond a posé un bloc, le chemin
 // se relit et va au bout ; sans accord encore, un mot pour y aller.
 const ext = globalThis.browser ?? globalThis.chrome;
-ext.runtime.onMessage.addListener(m => { if (m?.type === 'bloc') window.chemin?.rafraichir?.(); });
+let attente = false; // un bloc arrivé pendant l’intro : le chemin se relira dès qu’il sera prêt
+const relire = () => { if (window.chemin?.rafraichir) { attente = false; window.chemin.rafraichir().catch(() => {}); } else attente = true; };
+ext.runtime.onMessage.addListener(m => { if (m?.type === 'bloc') relire(); });
+addEventListener('chemin:pret', () => { if (attente) relire(); });
 (async () => {
   const { accord } = await ext.storage.local.get('accord').catch(() => ({}));
   if (accord === true) return;

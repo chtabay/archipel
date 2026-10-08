@@ -2,4 +2,3 @@ node_modules/
 chemin/outils/catalogue-brut.json
 __pycache__/
 chemin/extension/dist/
-chemin/extension/dist-firefox/

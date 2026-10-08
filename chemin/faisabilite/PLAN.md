@@ -37,7 +37,7 @@ Le manifeste : `storage`, `unlimitedStorage`, `scripting`, l’accès à tous le
 `chrome_url_overrides.newtab`, `incognito: not_allowed`. Les règles de sécurité, vérifiées dans Chromium :
 `script-src 'self' 'wasm-unsafe-eval'` (le décodeur des modèles est en WebAssembly ; sans lui, chaque tuile sort
 sans objet, en silence), `connect-src 'self'`, `img-src 'self' blob: data:`, `object-src 'none'`. Les styles
-écrits dans `index.html` passent dans `style.css`. L’extension pèse environ 17 Mo ; les boutiques acceptent bien plus.
+écrits dans `index.html` passent dans `style.css`. L’extension pèse environ 47 Mo, dont 41 Mo d’objets 3D ; les boutiques acceptent bien plus.
 
 ## Les séances
 

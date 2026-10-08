@@ -40,6 +40,8 @@
 
   <!-- Un fil : Entrée envoie et la page vide la zone aussitôt -->
   <p><input id="chat" placeholder="Écrire un message"></p>
+  <!-- Un fil lent : Entrée envoie, et la page ne vide la zone qu’après un aller-retour -->
+  <p><input id="chatlent" placeholder="Écrire un message"></p>
 
   <script>
     window.__inputs = 0;
@@ -54,6 +56,9 @@
     const chat = document.getElementById('chat');
     chat.addEventListener('keydown', e => { if (e.key === 'Enter') { window.__envoye = chat.value; chat.value = ''; } });
     document.getElementById('envoyer').addEventListener('click', () => { window.__envoiCompose = document.getElementById('corps').innerText; });
+    const lent = document.getElementById('chatlent');
+    lent.addEventListener('keydown', e => { if (e.key === 'Enter') setTimeout(() => { lent.value = ''; }, 200); });
+    document.getElementById('corps').addEventListener('keydown', e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) document.getElementById('compose').remove(); }); // comme Gmail : Ctrl+Entrée envoie, la fenêtre disparaît
   </script>
 </body>
 </html>

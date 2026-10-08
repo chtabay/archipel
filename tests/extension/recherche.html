@@ -12,6 +12,10 @@
     <textarea name="q" id="q" rows="1" role="combobox" aria-autocomplete="both" aria-label="Rechercher"></textarea>
     <button type="submit">Rechercher</button>
   </form>
+  <!-- Sur le même hôte, un courriel : seuls les écrits comptent, pas l’objet, ni les destinataires, ni deux mots -->
+  <input id="a" role="combobox" aria-autocomplete="list" aria-label="Destinataires">
+  <input id="objet" name="subjectbox" placeholder="Objet">
+  <div id="corps" contenteditable="true" role="textbox" aria-label="Corps du message"></div>
   <script>
     document.getElementById('q').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); e.target.form.requestSubmit(); } });
   </script>

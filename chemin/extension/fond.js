@@ -16,15 +16,18 @@ const tour = f => (file = file.then(f, f)); // un écrit après l’autre : deux
 
 async function ajouter({ fil, texte }) {
   texte = texte.trim(); if (!texte) return;
-  const date = aujourdhui(), { fils = {} } = await ext.storage.local.get('fils');
-  const page = (await carnet.lirePages()).find(p => p.date === date);
-  const blocs = page ? (page.blocs?.length ? page.blocs.map(b => ({ ...b })) : [{ heure: '', texte: page.texte }]) : [];
-  if (blocs.some(b => b.texte === texte)) return; // le même écrit, deux fois le même jour : une fois suffit
-  const f = typeof fil === 'string' && fils[fil]; let i = -1;
-  if (f && f.date === date && Date.now() - f.quand < FIL) i = blocs.findIndex(b => b.source === 'glane' && empreinte(b.texte) === f.bloc); // la suite d’un écrit en cours
-  if (i >= 0) blocs[i] = { ...blocs[i], texte: `${blocs[i].texte}\n${texte}` }; else blocs.push({ heure: maintenant(), texte, source: 'glane' });
-  const bloc = i >= 0 ? blocs[i] : blocs[blocs.length - 1];
-  if (!(await carnet.garderPage({ date, blocs, texte: blocs.map(b => b.texte).join('\n\n') }))) return;
+  const date = aujourdhui(), { fils = {} } = await ext.storage.local.get('fils'), f = typeof fil === 'string' && fils[fil];
+  let bloc = null;
+  await carnet.modifierPage(date, page => { // d’après la page telle qu’elle est à cet instant : le chemin, lui aussi, y écrit
+    const blocs = page ? (page.blocs?.length ? page.blocs.map(b => ({ ...b })) : [{ heure: '', texte: page.texte }]) : [];
+    if (blocs.some(b => b.texte === texte)) return page; // le même écrit, deux fois le même jour : une fois suffit
+    let i = -1;
+    if (f && f.date === date && Date.now() - f.quand < FIL) i = blocs.findIndex(b => b.source === 'glane' && empreinte(b.texte) === f.bloc); // la suite d’un écrit en cours
+    if (i >= 0) blocs[i] = { ...blocs[i], texte: `${blocs[i].texte}${/[.!?…:\n]$/.test(blocs[i].texte) ? '\n' : ' '}${texte}` }; else blocs.push({ heure: maintenant(), texte, source: 'glane' });
+    bloc = i >= 0 ? blocs[i] : blocs[blocs.length - 1];
+    return { date, blocs, texte: blocs.map(b => b.texte).join('\n\n') };
+  });
+  if (!bloc) return;
   if (typeof fil === 'string') {
     fils[fil] = { date, quand: Date.now(), bloc: empreinte(bloc.texte) };
     for (const [k, v] of Object.entries(fils)) if (Date.now() - v.quand > FIL) delete fils[k];
@@ -33,26 +36,32 @@ async function ajouter({ fil, texte }) {
   ext.runtime.sendMessage({ type: 'bloc', date }).catch(() => {}); // les onglets du chemin, s’il y en a
 }
 
-ext.runtime.onMessage.addListener((m, expediteur) => {
+ext.runtime.onMessage.addListener((m, expediteur, repondre) => {
   if (expediteur.id !== ext.runtime.id || !m || typeof m !== 'object') return;
-  if (m.type === 'glane' && typeof m.texte === 'string' && m.texte.length <= 200000) tour(() => ajouter(m).catch(e => console.warn('le chemin, un écrit :', e)));
+  if (m.type === 'glane' && typeof m.texte === 'string' && m.texte.length <= 200000) {
+    tour(() => ajouter(m).then(() => repondre(true), e => { console.warn('le chemin, un écrit :', e); repondre(false); })); // le glaneur garde l’écrit si le carnet n’a pas pu le prendre
+    return true;
+  }
 });
+ext.action.onClicked.addListener(() => ext.runtime.openOptionsPage()); // l’icône : l’accord et les réglages
 
 /* ───────── Le glaneur, branché après l’accord, débranché en pause ───────── */
 
-const SCRIPT = { id: 'glaneur', js: ['glaneur.js'], matches: ['<all_urls>'], excludeMatches: ['https://chtabay.github.io/*'], allFrames: true, runAt: 'document_start', persistAcrossSessions: true };
-async function brancher() {
+const SCRIPT = { id: 'glaneur', js: ['glaneur.js'], matches: ['<all_urls>'], excludeMatches: ['https://chtabay.github.io/*'], allFrames: true, matchOriginAsFallback: true, runAt: 'document_start', persistAcrossSessions: true }; // matchOriginAsFallback : les cadres sans origine (about:blank) ; Firefox 128+
+const acces = () => ext.permissions.contains({ origins: ['<all_urls>'] }).catch(() => true); // Firefox laisse retirer l’accès aux sites à tout moment
+const brancher = () => tour(async () => { // dans la file : deux réveils en même temps n’enregistrent pas deux fois
+  let badge = '';
   try {
     const { accord, pause } = await ext.storage.local.get(['accord', 'pause']), voulu = accord === true && pause !== true;
     const deja = (await ext.scripting.getRegisteredContentScripts({ ids: ['glaneur'] })).length > 0;
-    if (voulu && !deja) {
-      try { await ext.scripting.registerContentScripts([{ ...SCRIPT, matchOriginAsFallback: true }]); } // les cadres sans origine (about:blank)
-      catch { await ext.scripting.registerContentScripts([SCRIPT]); } // Firefox, sans matchOriginAsFallback
-    } else if (!voulu && deja) await ext.scripting.unregisterContentScripts({ ids: ['glaneur'] });
-    await ext.action.setBadgeText({ text: accord === true && pause === true ? 'II' : '' }); // en pause, on le voit
+    if (voulu && !deja) await ext.scripting.registerContentScripts([SCRIPT]);
+    else if (!voulu && deja) await ext.scripting.unregisterContentScripts({ ids: ['glaneur'] });
+    badge = accord === true && pause === true ? 'II' : voulu && !(await acces()) ? '!' : ''; // en pause, ou sans accès aux sites : on le voit
   } catch (e) { console.warn('le chemin, le glaneur :', e); }
-}
+  await ext.action.setBadgeText({ text: badge }).catch(() => {});
+});
 ext.runtime.onInstalled.addListener(({ reason }) => { brancher(); if (reason === 'install') ext.tabs.create({ url: ext.runtime.getURL('accord.html') }); });
 ext.runtime.onStartup.addListener(brancher);
 ext.storage.onChanged.addListener((ch, zone) => { if (zone === 'local' && (ch.accord || ch.pause)) brancher(); });
+ext.permissions.onAdded.addListener(brancher); ext.permissions.onRemoved.addListener(brancher);
 brancher(); // à chaque réveil du fond

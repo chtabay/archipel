@@ -346,12 +346,18 @@ function preparerEcriture() {
     const texte = zone.value.replace(/\r\n?/g, '\n').trim(), e = edition;
     if (!texte && !e) { zone.focus(); return; }
     aide(texte); bouton.disabled = true;
-    const jour = e?.date || aujourdhui(), i = pages.findIndex(p => p.date === jour), premiere = !pages.length, blocs = i >= 0 ? [...pages[i].blocs] : [];
-    if (!e) blocs.push({ heure: maintenant(), texte }); else if (texte) blocs[e.i] = { ...blocs[e.i], texte }; else blocs.splice(e.i, 1);
-    const page = joindre(jour, blocs);
-    if (i < 0) pages.push(page); else if (blocs.length) pages[i] = page; else pages.splice(i, 1);
+    const jour = e?.date || aujourdhui(), premiere = !pages.length;
+    const changer = p => { // d’après la page telle qu’elle est : un bloc glané entre-temps par l’extension du navigateur reste
+      const blocs = p ? [...enBlocs(p).blocs] : [];
+      if (!e) blocs.push({ heure: maintenant(), texte }); else if (texte) blocs[e.i] = { ...blocs[e.i], texte }; else blocs.splice(e.i, 1);
+      return blocs.length ? joindre(jour, blocs) : null;
+    };
+    let page = null, garde = true;
+    if (enDemo) page = changer(pages.find(p => p.date === jour));
+    else { try { page = await carnet.modifierPage(jour, changer); } catch { garde = false; page = changer(pages.find(p => p.date === jour)); } }
+    const i = pages.findIndex(p => p.date === jour), blocs = page?.blocs || [];
+    if (!page) { if (i >= 0) pages.splice(i, 1); } else if (i < 0) pages.push(page); else pages[i] = page;
     pages.sort((a, b) => a.date.localeCompare(b.date));
-    const garde = enDemo || await (blocs.length ? carnet.garderPage(page) : carnet.effacerPage(jour)).catch(() => false);
     if (premiere && !enDemo) carnet.proteger();
     edition = cible = null; vu = blocs.length && jour !== aujourdhui() ? jour : null; zone.value = e ? brouillon : ''; brouillon = ''; montrerPage(); // une page partie : retour à aujourd’hui
     dit(texte.length > 3000 ? 'Le texte se lit…' : e ? 'Le chemin change…' : 'Le chemin s’allonge…');
@@ -372,6 +378,7 @@ function preparerEcriture() {
 async function rafraichir() {
   if (enDemo || !S) return;
   pages = (await carnet.lirePages()).map(enBlocs);
+  if (!edition) { vu = cible = null; $('#jour').textContent = ''; } // comme un bloc écrit à la main aujourd’hui : retour à aujourd’hui
   dit('Un écrit de plus : le chemin s’allonge…');
   if (await calculer((n, t) => dit(`Le texte se lit : ${n} passages sur ${t}`))) { montrer(); allerA(); dit('Un écrit de plus. Le chemin s’allonge.'); }
   if (!edition) montrerPage();
@@ -398,5 +405,6 @@ function garderHorsLigne() {
   } catch (e) { console.error(e); dit('Le chemin ne s’ouvre pas sur cet appareil.'); }
   await intro.quand(pret);
   window.chemin = { get plans() { return plans; }, get passages() { return passages; }, get pages() { return pages; }, get tuiles() { return tuiles; }, S, F, atelier, carnet, rafraichir }; // pour les essais, et pour l’extension
+  dispatchEvent(new Event('chemin:pret'));
   if (document.readyState === 'complete') garderHorsLigne(); else addEventListener('load', garderHorsLigne);
 })();

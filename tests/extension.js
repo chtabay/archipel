@@ -34,6 +34,11 @@ const GARDER = {
   chat: 'On se retrouve demain au marché avec les enfants vers dix heures.',
   recherche: 'recette tarte aux poires',
   apres: 'Un héron s’est posé sur la barque, au bord de l’étang, sous la pluie fine.',
+  lent: 'Le phare clignotait au loin pendant que les mouettes criaient sur le port.',
+  ctrl: 'Bonjour Camille, je t’envoie les photos du jardin et de la vieille grange.',
+  pendant: 'Pendant que le chemin se prépare, un renard a traversé la clairière enneigée.',
+  main: 'Écrit à la main dans le chemin, sous les tilleuls, un soir de juin.',
+  efface: 'Après avoir tout effacé, une barque neuve attendait sur le sable mouillé.',
 };
 const JAMAIS = {
   mdp: 'corbeau tunnel violette orage saumon',
@@ -43,6 +48,9 @@ const JAMAIS = {
   rechercheAilleurs: 'horaires des marées à Saint-Malo demain',
   avant: 'Un mot écrit avant l’accord, qui ne compte pas pour le chemin.',
   pause: 'Un mot écrit pendant la pause, qui ne compte pas non plus.',
+  destinataires: 'Marie Inventée Paul Fictif',
+  objet: 'Devis toiture grange',
+  court: 'ok merci',
 };
 
 (async () => {
@@ -93,20 +101,30 @@ const JAMAIS = {
     verifier((await p.evaluate(() => window.__inputs)) === 0, 'l’éditeur riche n’a émis aucun événement input : le glaneur lit la zone, pas les touches');
     await taper(p, '#chat', GARDER.chat); await p.keyboard.press('Enter'); await p.waitForTimeout(150);
     verifier((await p.locator('#chat').inputValue()) === '', 'le fil a vidé la zone à l’envoi');
-    await p.locator('#ailleurs').click(); await p.waitForTimeout(400);
+    await p.locator('#ailleurs').click();
+    await taper(p, '#chatlent', GARDER.lent); await p.keyboard.press('Enter'); await p.waitForTimeout(600); await p.locator('#ailleurs').click(); // vidé après un aller-retour
+    verifier(await attendre(async () => (await blocsDuJour()).length >= 5), 'les écrits sont dans le carnet');
     let blocs = await blocsDuJour(); const tout = JSON.stringify(blocs);
     const bloc = t => blocs.find(b => b.texte.includes(t.slice(0, 30)));
     verifier(bloc(GARDER.journal) && bloc(GARDER.journal).texte.includes(GARDER.suite.slice(0, 30)) && bloc(GARDER.journal).source === 'glane', 'le journal et sa suite font un seul bloc, marqué « glané »');
     verifier(bloc(GARDER.compose) && !tout.includes('cité de quelqu’un'), 'le courriel « à la Gmail » est un bloc, sans le message cité');
     verifier(bloc(GARDER.riche) && bloc(GARDER.chat), 'l’éditeur riche et le fil sont des blocs');
+    verifier(!!bloc(GARDER.lent), 'un fil qui ne vide la zone qu’après un aller-retour est un bloc aussi');
+    // Ctrl+Entrée envoie, et la fenêtre de composition disparaît : l’écrit est posé quand même
+    const p1 = await ctx.newPage(); await p1.goto(ORDINAIRE); await p1.waitForTimeout(300);
+    await taper(p1, '#corps', GARDER.ctrl); await p1.keyboard.press('Control+Enter'); await p1.waitForTimeout(600);
+    verifier(await attendre(async () => !!(await blocsDuJour()).find(b => b.texte.includes('grange'))), 'Ctrl+Entrée, qui retire la fenêtre de composition, pose l’écrit'); await p1.close();
+    blocs = await blocsDuJour();
     for (const [k, t] of Object.entries(JAMAIS)) if (k !== 'pause') verifier(!tout.includes(t.slice(0, 24)), `jamais dans le carnet : ${k}`);
     verifier(blocs.every(b => /^\d{2}:\d{2}$/.test(b.heure)), 'chaque bloc glané a son heure');
 
     // 4. un moteur choisi : ce qu’on y cherche compte, même court ; Entrée envoie et la page change
     const m = await ctx.newPage(); await m.goto(MOTEUR); await m.waitForTimeout(300);
+    await poser(m, '#a', JAMAIS.destinataires); await poser(m, '#objet', JAMAIS.objet); await poser(m, '#corps', JAMAIS.court); // sur ce même hôte, un courriel : rien de tout ça
     await taper(m, '#q', GARDER.recherche); await m.keyboard.press('Enter'); await m.waitForURL(/resultats\.html/); await m.waitForTimeout(300); await m.close();
-    blocs = await blocsDuJour();
-    verifier(blocs.some(b => b.texte === GARDER.recherche), 'sur un moteur choisi, la recherche est un bloc');
+    verifier(await attendre(async () => (await blocsDuJour()).some(b => b.texte === GARDER.recherche)), 'sur un moteur choisi, la recherche est un bloc');
+    blocs = await blocsDuJour(); const toutM = JSON.stringify(blocs);
+    verifier(!toutM.includes('Inventée') && !toutM.includes('toiture') && !toutM.includes('ok merci'), 'sur ce moteur, ni les destinataires, ni l’objet, ni deux mots dans un corps de courriel');
 
     // 5. le chemin, dans le nouvel onglet : il lit les blocs, et les montre « écrits ailleurs »
     const onglet = await ctx.newPage(); const erreurs = []; onglet.on('pageerror', e => erreurs.push(String(e))); onglet.on('console', x => { if (x.type() === 'error') erreurs.push(x.text()); });
@@ -127,6 +145,18 @@ const JAMAIS = {
     verifier(await attendre(() => onglet.evaluate(() => window.chemin.passages.map(x => x.texte).join('\n').includes('héron')), 15000), 'le chemin ouvert a relu le carnet : l’écrit nouveau y est');
     verifier(await onglet.evaluate(() => document.querySelector('#dit').textContent.includes('écrit de plus')), 'et il le dit');
 
+    // 6 bis. un écrit arrivé pendant que l’onglet se prépare n’est pas perdu, même si on écrit ensuite à la main
+    const onglet2 = await ctx.newPage(); const allerSansAttendre = onglet2.goto(CHEMIN);
+    const p4 = await ctx.newPage(); await p4.goto(ORDINAIRE); await p4.waitForTimeout(200);
+    const pret = await onglet2.evaluate(() => !!window.chemin).catch(() => false); await poser(p4, '#journal', GARDER.pendant); await p4.close(); await allerSansAttendre;
+    console.log(`    (le chemin était ${pret ? 'déjà prêt' : 'encore en préparation'} quand l’écrit est arrivé)`);
+    await onglet2.waitForFunction(() => window.chemin?.passages?.length > 1, null, { timeout: 60000 });
+    await onglet2.locator('#page').fill(GARDER.main); await onglet2.locator('#garder').click();
+    await onglet2.waitForFunction(() => /gardée|s’allonge/.test(document.querySelector('#dit').textContent), null, { timeout: 60000 });
+    blocs = await blocsDuJour();
+    verifier(blocs.some(b => b.texte.includes('renard')) && blocs.some(b => b.texte.includes('tilleuls')), 'l’écrit arrivé pendant la préparation et le bloc écrit à la main sont tous deux gardés');
+    verifier(await attendre(() => onglet2.evaluate(() => window.chemin.pages.some(p => p.blocs.some(b => b.texte.includes('renard'))))), 'et l’onglet les a relus'); await onglet2.close();
+
     // 7. recharger ne duplique rien
     const n = (await blocsDuJour()).length;
     await onglet.reload(); await onglet.waitForFunction(() => window.chemin?.passages?.length > 1, null, { timeout: 60000 });
@@ -139,6 +169,15 @@ const JAMAIS = {
     const p3 = await ctx.newPage(); await p3.goto(ORDINAIRE); await poser(p3, '#journal', JAMAIS.pause); await p3.close();
     verifier(!JSON.stringify(await blocsDuJour()).includes(JAMAIS.pause.slice(0, 24)), 'en pause, un écrit ne fait rien');
     await reglage({ pause: false }); verifier(await attendre(branche), 'la pause levée, le glaneur revient');
+
+    // 8 bis. tout effacer, puis écrire encore : le carnet se rouvre
+    const accord = await ctx.newPage(); accord.on('dialog', d => d.accept()); await accord.goto(`chrome-extension://${ID}/accord.html`);
+    await onglet.close(); await accord.locator('#effacer').click(); await accord.waitForFunction(() => document.querySelector('#dit').textContent.includes('effacé'), null, { timeout: 15000 });
+    verifier((await blocsDuJour()).length === 0, 'tout effacer vide le carnet');
+    await reglage({ accord: true, pause: false, exclus: ['chtabay.github.io'], recherches: ['localhost'] }); await attendre(branche);
+    const p5 = await ctx.newPage(); await p5.goto(ORDINAIRE); await p5.waitForTimeout(300); await poser(p5, '#journal', GARDER.efface); await p5.close();
+    verifier(await attendre(async () => (await blocsDuJour()).some(b => b.texte.includes('barque neuve'))), 'après tout effacer, un écrit fait de nouveau un bloc');
+    verifier(await sw.evaluate(() => chrome.action.onClicked.hasListeners()), 'l’icône de l’extension ouvre l’accord'); await accord.close();
 
     // 9. rien n’est parti
     verifier(dehors.length === 0, `aucune requête vers l’extérieur${dehors.length ? ` (${dehors[0]})` : ''}`);
