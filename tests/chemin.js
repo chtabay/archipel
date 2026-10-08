@@ -73,7 +73,7 @@ Avant de dormir, j’ai écrit une lettre à ma mère, sur le bureau, avec un st
 
   // 2. le découpage, dans la page : une page courte reste entière ; les dates, les séparateurs coupent
   const d = await p.evaluate(async () => {
-    const { decouper } = await import('./sens.js?v=3'), S = window.chemin.S;
+    const { decouper } = await import('./sens.js?v=4'), S = window.chemin.S;
     return {
       court: decouper(S, 'Café au soleil sur le balcon, le chat dort sur le canapé.').length, vide: decouper(S, '  \n ').length,
       dates: decouper(S, 'Lundi 3 mars\n\nRéveil difficile, métro bondé, bureau, réunion.\n\nMardi 4 mars\n\nRien.\n\nMercredi 5 mars\n\nForêt, champignons, mousse.').map(x => x.titre),
@@ -85,6 +85,24 @@ Avant de dormir, j’ai écrit une lettre à ma mère, sur le bureau, avec un st
   verifier(d.court === 1 && d.vide === 0 && d.lignes === 1 && d.verne === 1, 'une page courte, même sans ponctuation, ou avec « M. Fogg », reste d’un seul tenant ; un texte vide ne fait rien');
   verifier(d.dates.join(' | ') === 'Lundi 3 mars | Mardi 4 mars | Mercredi 5 mars' && d.separateur === 2, `les dates et les séparateurs coupent : un jour, un passage, même vide (${d.dates.join(', ')})`);
 
+  // 2 bis. au-delà des choses : un verbe conjugué trouve sa pose, le temps qu’il fait change le ciel, les mots mènent ailleurs
+  const v = await p.evaluate(async () => {
+    const { lirePage, objetsDeLaPage, lieuDeLaPage } = await import('./sens.js?v=4'), { climatDe, planifier } = await import('./monde.js?v=3'), S = window.chemin.S, F = window.chemin.F;
+    const lire = t => { const l = lirePage(S, t), o = objetsDeLaPage(S, l); return { l, o, mots: l.mots.map(x => x.m), lieu: lieuDeLaPage(l, o) }; };
+    const mer = lire('Une baleine au loin, des mouettes dans le ciel, et nous avons nagé.');
+    const plan = planifier({ i: 0, date: '2026-07-01', lieu: 'rivage', objets: mer.o, climat: climatDe(mer.l) }, null, F, new Map());
+    const champs = planifier({ i: 1, date: '2026-07-02', lieu: 'champs', objets: mer.o, climat: climatDe(mer.l) }, null, F, new Map());
+    return { dormi: lire('Hier soir, j’ai dormi longtemps.').mots, marche: lire('J’ai marché jusqu’au marché.').mots, lit: lire('Il lit dans son lit.').mots,
+      pluie: climatDe(lire('Il pleut, une averse, nous sommes trempés.').l).meteo, neige: climatDe(lire('Il neigeait, des flocons partout.').l),
+      nuit: climatDe(lire('La nuit, les étoiles.').l).meteo, desert: lire('Le désert, le sable, les dunes, un chameau près de l’oasis.').lieu,
+      ciel: plan.items.filter(it => it.vol).map(it => it.id), eau: plan.items.filter(it => it.eau).map(it => it.id), eauAuxChamps: champs.items.filter(it => it.eau).length };
+  });
+  verifier(v.dormi.includes('dormir') && v.marche.includes('marcher') && v.marche.includes('marché') && v.lit.includes('lire') && v.lit.includes('lit'),
+    `un verbe conjugué compte par son infinitif ; « marché » et « lit » restent des noms, sauf après un auxiliaire ou un pronom (${v.marche.join(', ')} ; ${v.lit.join(', ')})`);
+  verifier(v.pluie[0] >= .5 && v.neige.meteo[1] >= .5 && v.nuit[3] === 1, `le temps qu’il fait vient des mots : la pluie, la neige, la nuit (${v.pluie} · ${v.neige.meteo} · ${v.nuit})`);
+  verifier(v.desert === 'desert', 'les mots mènent ailleurs : le sable, les dunes et le chameau font le désert');
+  verifier(v.ciel.some(id => /mouette/.test(id)) && v.eau.some(id => /whale/.test(id)) && !v.eauAuxChamps, `au bord de l’eau, les mouettes volent et la baleine nage (${v.ciel.concat(v.eau).join(', ')}) ; loin de l’eau, pas de baleine`);
+
   // 3. la première page : gardée sur le téléphone, une tuile de plus, peinte
   await p.fill('#page', PAGE); await p.click('#garder');
   await attendre(p, () => p.evaluate(() => /gardée/.test(document.querySelector('#dit').textContent)), 20000);
@@ -95,8 +113,8 @@ Avant de dormir, j’ai écrit une lettre à ma mère, sur le bureau, avec un st
   await attendre(p, async () => (await tuiles(p))[1].peinte, PEINTURE);
   const lieu = await p.evaluate(() => { const q = window.chemin.plans[1]; return { lieu: q.lieu, objets: q.objets.map(o => o.mot) }; });
   verifier(lieu.lieu === 'foret' && lieu.objets.length >= 2, `la tuile de la page est peinte : en forêt, avec ${lieu.objets.join(', ')}`);
-  await p.click('.tuile >> nth=1'); const jour = await p.textContent('#jour');
-  verifier(jour.includes(aujourdhui) && jour.includes('en forêt'), `toucher la tuile dit sa date, son lieu et ses mots (« ${jour} »)`);
+  await p.click('.tuile >> nth=1'); const jour = await p.textContent('#jour'), vue = await p.evaluate(() => ({ marque: document.querySelector('#blocs mark')?.textContent || '', blocs: [...document.querySelectorAll('#blocs .texte')].map(b => b.textContent).join('|') }));
+  verifier(jour.includes(aujourdhui) && jour.includes('en forêt') && !vue.marque && vue.blocs === PAGE, `toucher la tuile dit sa date, son lieu et ses mots (« ${jour} ») ; sa page est là, sous la frise`);
   await p.screenshot({ path: path.join(OUT, 'premiere-page.png') });
 
   // 4. à la visite suivante : la page revient du carnet, les tuiles aussi, sans repeindre
@@ -104,11 +122,33 @@ Avant de dormir, j’ai écrit une lettre à ma mère, sur le bureau, avec un st
   await attendre(p, () => p.evaluate(() => document.querySelector('#intro').hidden), 20000);
   await attendre(p, async () => (await tuiles(p)).every(x => x.peinte), 10000);
   t = await tuiles(p);
-  verifier(t.length === 2 && t.every(x => x.peinte && x.source === 'carnet') && await p.inputValue('#page') === PAGE, 'à la visite suivante, la page revient dans la zone d’écriture, et ses tuiles, gardées, sans repeindre');
+  const revenue = await p.evaluate(() => ({ blocs: [...document.querySelectorAll('#blocs .bloc .texte')].map(b => b.textContent), zone: document.querySelector('#page').value }));
+  verifier(t.length === 2 && t.every(x => x.peinte && x.source === 'carnet') && revenue.blocs.join('|') === PAGE && revenue.zone === '', 'à la visite suivante, la page revient sous la frise, la zone prête pour la suite, et ses tuiles, gardées, sans repeindre');
+  const bout = () => p.evaluate(() => { const f = document.querySelector('#frise'); return { x: f.scrollLeft, fin: f.scrollWidth - f.clientWidth }; });
+  const arrivee = await bout(); await p.click('#debut'); const auDebut = await bout(); await p.click('#fin'); const aLaFin = await bout();
+  verifier(arrivee.fin > 0 && Math.abs(arrivee.x - arrivee.fin) <= 2 && auDebut.x === 0 && Math.abs(aLaFin.x - aLaFin.fin) <= 2, `le chemin s’ouvre à sa fin ; sous la frise, « Début » et « Fin » y mènent (${Math.round(arrivee.x)} sur ${Math.round(arrivee.fin)})`);
 
-  // 5. un long texte, collé d’un coup : des passages d’environ 14 mots porteurs, coupés aux chapitres et entre les phrases
+  // 4 bis. un deuxième bloc, le même jour : il s’ajoute à la page, à la suite du premier, avec son heure
+  const SUITE = 'Le soir, une soupe de légumes, puis un livre au lit.';
+  await p.fill('#page', SUITE); await p.click('#garder');
+  await attendre(p, () => p.evaluate(() => document.querySelectorAll('#blocs .bloc').length === 2 && /gardée/.test(document.querySelector('#dit').textContent)), 20000);
+  const suite = await p.evaluate(async () => ({ blocs: [...document.querySelectorAll('#blocs .bloc')].map(b => ({ heure: b.querySelector('.heure')?.textContent || '', texte: b.querySelector('.texte').textContent })), zone: document.querySelector('#page').value, bouton: document.querySelector('#garder').textContent, carnet: (await window.chemin.carnet.lirePages()).map(x => ({ texte: x.texte, blocs: x.blocs?.length })) }));
+  verifier(suite.blocs.map(b => b.texte).join('|') === `${PAGE}|${SUITE}` && suite.blocs.every(b => /^\d{1,2} h \d{2}$/.test(b.heure)) && suite.zone === '' && suite.bouton === 'Ajouter à la page' && suite.carnet.length === 1 && suite.carnet[0].blocs === 2 && suite.carnet[0].texte === `${PAGE}\n\n${SUITE}`,
+    `un deuxième bloc, le même jour, s’ajoute à la page avec son heure (${suite.blocs.map(b => b.heure).join(', ')}) ; la zone se vide pour la suite`);
+  await p.screenshot({ path: path.join(OUT, 'deux-blocs.png'), fullPage: true });
+
+  // 5. modifier un bloc : le second, vidé, s’efface ; le premier devient un long texte, collé d’un coup, qui fait des passages
+  // d’environ 14 mots porteurs, coupés aux chapitres et entre les phrases
+  await p.click('#blocs .bloc >> nth=1 >> button:has-text("Modifier")');
+  const enCours = await p.evaluate(() => ({ zone: document.querySelector('#page').value, consigne: document.querySelector('#consigne').textContent, annuler: !document.querySelector('#annuler').hidden }));
+  await p.screenshot({ path: path.join(OUT, 'modifier.png'), fullPage: true });
+  await p.fill('#page', ''); await p.click('#garder');
+  await attendre(p, () => p.evaluate(() => /effacé/.test(document.querySelector('#dit').textContent)), 20000);
+  const efface = await p.evaluate(async () => ({ blocs: document.querySelectorAll('#blocs .bloc').length, carnet: (await window.chemin.carnet.lirePages()).map(x => x.texte) }));
+  verifier(enCours.zone === SUITE && /Vidé, il s’efface/.test(enCours.consigne) && enCours.annuler && efface.blocs === 1 && efface.carnet.join('|') === PAGE, 'modifier un bloc le remet dans la zone d’écriture ; vidé puis gardé, il s’efface de la page et du carnet');
+  await p.click('#blocs .bloc >> nth=0 >> button:has-text("Modifier")');
   await p.fill('#page', LONG); await p.click('#garder');
-  await attendre(p, () => p.evaluate(() => /gardée/.test(document.querySelector('#dit').textContent)), 30000);
+  await attendre(p, () => p.evaluate(() => /modifié/.test(document.querySelector('#dit').textContent)), 30000);
   const l = await p.evaluate(() => { const C = window.chemin, ps = C.passages.filter(x => !x.depart && x.page === C.pages.length - 1); return { dit: document.querySelector('#dit').textContent, ps: ps.map(x => ({ titre: x.titre, porteurs: x.porteurs, texte: x.texte })), lieux: C.plans.filter(q => q.passage.page === C.pages.length - 1).map(q => q.lieu) }; });
   const titres = l.ps.filter(x => x.titre).map(x => x.titre), fins = l.ps.every(x => /[.!?…»]$/.test(x.texte.trim()));
   verifier(l.ps.length >= 5 && l.dit.includes(`${l.ps.length} tuiles`), `le long texte fait ${l.ps.length} tuiles (« ${l.dit} »)`);
@@ -119,6 +159,9 @@ Avant de dormir, j’ai écrit une lettre à ma mère, sur le bureau, avec un st
   verifier(l.lieux.includes('foret') && l.lieux.includes('rivage'), `les lieux suivent le texte : ${l.lieux.join(', ')}`);
   t = await tuiles(p);
   verifier(t.some(x => x.nom === `${aujourdhui} · Chapitre I`) && t.some(x => x.nom === 'Chapitre II'), 'la première tuile du texte porte sa date et son premier chapitre, les suivantes leur chapitre');
+  await p.click('.tuile:has(.date:text-is("Chapitre II"))');
+  const surligne = await p.evaluate(() => { const m = document.querySelector('#blocs mark'); return { marque: m?.textContent || '', ouvert: !!m?.closest('.bloc.ouvert') }; });
+  verifier(surligne.marque.startsWith('Le lendemain') && LONG.includes(surligne.marque) && surligne.ouvert, `dans une page de plusieurs tuiles, toucher l’une d’elles surligne son passage, le bloc ouvert (« ${surligne.marque.slice(0, 40)}… »)`);
   await attendre(p, () => p.evaluate(() => [...document.querySelectorAll('.tuile')].some((t, k) => k > 1 && t.classList.contains('peinte'))), PEINTURE);
   await p.screenshot({ path: path.join(OUT, 'long-texte.png') });
   const lues = await p.evaluate(() => new Promise(ok => { const r = indexedDB.open('chemin'); r.onsuccess = () => { const n = r.result.transaction('lectures').objectStore('lectures').count(); n.onsuccess = () => { ok(n.result); r.result.close(); }; }; r.onerror = () => ok(0); }));
@@ -145,6 +188,53 @@ Avant de dormir, j’ai écrit une lettre à ma mère, sur le bureau, avec un st
   const deux = await attendre(q, () => q.evaluate(async () => { const n = await caches.keys(); return n.some(k => k.startsWith('archipel-')) && n.includes('chemin-1') && n.includes('chemin-objets-1') && n; }), 30000);
   verifier(!!deux, `l’archipel garde ses fichiers à côté, sans toucher à ceux du chemin (${deux || 'manque un cache'})`);
   await q.close();
+
+  // 8. la démo : elle se dit démo, et ce qu’on y écrit ne touche pas au journal du téléphone
+  const dm = await c.newPage(); surveiller(dm, e, x);
+  await dm.goto(BASE + 'chemin/?demo');
+  await attendre(dm, () => dm.evaluate(() => document.querySelector('#intro').hidden && window.chemin?.pages.length > 0), 60000);
+  const demo = await dm.evaluate(() => { const b = document.querySelector('#demo'); return { vue: !b.hidden && b.getBoundingClientRect().height > 0, liens: [...document.querySelectorAll('#demo a, #promesse a')].map(a => a.href), zone: document.querySelector('#page').value, pages: window.chemin.pages.length }; });
+  verifier(demo.vue && demo.liens.length === 2 && demo.liens.every(h => h === BASE + 'chemin/') && demo.zone === '' && demo.pages === 32, `la démo se dit démo, avec ses ${demo.pages} pages d’exemple et un lien vers son propre journal ; la zone d’écriture reste vide`);
+  await dm.screenshot({ path: path.join(OUT, 'demo.png') });
+  await dm.fill('#page', PAGE); await dm.click('#garder');
+  await attendre(dm, () => dm.evaluate(() => /sans être gardée/.test(document.querySelector('#dit').textContent)), 30000);
+  const ecrite = await dm.evaluate(async () => ({ dit: document.querySelector('#dit').textContent, pages: (await window.chemin.carnet.lirePages()).map(x => x.texte) }));
+  verifier(ecrite.dit.startsWith('Démo') && ecrite.pages.length === 1 && ecrite.pages[0] === LONG, `une page écrite dans la démo s’ajoute au chemin sans être gardée ; le journal du téléphone n’a pas bougé (« ${ecrite.dit} »)`);
+  await dm.click('.tuile >> nth=3');
+  const lue = await dm.evaluate(() => { const x = window.chemin.plans[3].passage; return { titre: document.querySelector('#titre-page').textContent, etiquette: document.querySelectorAll('.tuile .date')[3].textContent, blocs: [...document.querySelectorAll('#blocs .texte')].map(b => b.textContent).join('\n\n'), page: window.chemin.pages[x.page].texte, retour: !document.querySelector('#retour').hidden, zone: !document.querySelector('#page').hidden }; });
+  await dm.screenshot({ path: path.join(OUT, 'relire.png') });
+  await dm.click('#retour');
+  const revenu = await dm.evaluate(() => ({ titre: document.querySelector('#titre-page').textContent, zone: !document.querySelector('#page').hidden }));
+  verifier(lue.titre === lue.etiquette && lue.blocs === lue.page && lue.retour && !lue.zone && revenu.titre === 'Aujourd’hui' && revenu.zone,
+    `toucher la tuile d’un autre jour ouvre sa page sous la frise (« ${lue.titre} ») ; on la lit, puis on revient à aujourd’hui`);
+
+  // le chemin se déroule seul, en grand, depuis le départ quand on était au bout, le texte de la tuile du milieu dessous ;
+  // il s’arrête, reprend, et se referme là où il en était
+  const etat = () => dm.evaluate(() => { const f = document.querySelector('#frise'); return { deroule: document.body.classList.contains('deroule'), recit: !document.querySelector('#recit').hidden, quand: document.querySelector('#recit-quand').textContent, texte: document.querySelector('#recit-texte').textContent, x: f.scrollLeft, haut: f.clientHeight, bouton: document.querySelector('#pause').textContent }; });
+  await dm.click('#derouler'); await dm.waitForTimeout(400);
+  const d0 = await etat(); await attendre(dm, async () => (await etat()).x > d0.x + 40, 20000); const d1 = await etat(); // sans carte graphique, le pinceau ralentit tout
+  await dm.click('#pause'); const d2 = await etat(); await dm.waitForTimeout(800); const d3 = await etat();
+  await dm.screenshot({ path: path.join(OUT, 'derouler.png') });
+  await dm.click('#fermer'); const d4 = await etat();
+  verifier(d0.deroule && d0.recit && d0.quand === 'Le départ' && d0.haut > 505 && d1.x > d0.x + 40 && d1.quand !== '' && Math.abs(d3.x - d2.x) < 2 && d3.bouton === 'Reprendre' && !d4.deroule && !d4.recit,
+    `« Dérouler » fait passer le chemin seul, en grand, depuis le départ, le texte de la tuile du milieu dessous (« ${d1.quand} ») ; il s’arrête, reprend, et se referme`);
+  await dm.close();
+
+  // 9. sur ordinateur : la molette fait reculer le chemin, la souris le tire ; au bout, la page reprend la main ; un clic ouvre la tuile
+  const co = await b.newContext({ viewport: { width: 1280, height: 800 } }), o = await co.newPage(); surveiller(o, e, x);
+  await o.goto(BASE + 'chemin/?demo');
+  await attendre(o, () => o.evaluate(() => document.querySelector('#intro').hidden && window.chemin?.tuiles.length > 2), 60000);
+  const ici = () => o.evaluate(() => ({ x: Math.round(document.querySelector('#frise').scrollLeft), page: Math.round(scrollY), jour: document.querySelector('#jour').textContent }));
+  const cadre = await o.locator('#frise').boundingBox(), cx = cadre.x + cadre.width / 2, cy = cadre.y + cadre.height / 2;
+  await o.mouse.move(cx, cy);
+  const o0 = await ici(); await o.mouse.wheel(0, 300); await o.waitForTimeout(300); const o1 = await ici();
+  await o.evaluate(() => scrollTo(0, 0)); await o.waitForTimeout(100);
+  await o.mouse.wheel(0, -400); await o.waitForTimeout(300); const o2 = await ici();
+  await o.mouse.down(); await o.mouse.move(cx + 300, cy, { steps: 8 }); await o.mouse.up(); await o.waitForTimeout(200); const o3 = await ici();
+  await o.mouse.click(cx, cy); const o4 = await ici();
+  verifier(o1.x === o0.x && o1.page > 0 && o2.x <= o0.x - 350 && o3.x <= o2.x - 250 && !o3.jour && o4.jour,
+    `sur ordinateur, au bout, la molette rend la main à la page ; elle fait reculer le chemin (${o0.x - o2.x} points), la souris le tire (${o2.x - o3.x}) sans ouvrir de tuile, un clic l’ouvre`);
+  await co.close();
 
   verifier(!calme(e).length, `aucune erreur dans la console${calme(e).length ? ' : ' + calme(e).slice(0, 4).join(' | ') : ''}`);
   verifier(!x.length, `aucune requête vers l’extérieur${x.length ? ' : ' + x.slice(0, 3).join(' ') : ''}`);

@@ -2,7 +2,7 @@
 # français les plus fréquents, réduits par une ACP et quantifiés sur un octet ; et le vecteur de chaque objet du catalogue,
 # tiré de ses mots anglais. « vélo » et « bicycle » y sont voisins : le journal, en français, trouve les objets, nommés en anglais.
 # Chaque objet a aussi ses noms français (francais.py) : son vecteur vient surtout d’eux, un peu de l’anglais.
-# python3 chemin/outils/sens.py <wiki.fr.align.vec, ou son début> <wiki.en.align.vec, ou son début>
+# python3 chemin/outils/sens.py <wiki.fr.align.vec, ou son début> <wiki.en.align.vec, ou son début> [Lexique383.tsv]
 import os, sys, re, json, math
 import numpy as np
 ICI = os.path.dirname(os.path.abspath(__file__)); RACINE = os.path.dirname(ICI)
@@ -34,6 +34,7 @@ SENS = {
   'rolling': [], 'pin': ['dough', 'baking'], 'in': [], 'built': [], 'upper': [], 'whole': [], 'packed': [], 'vision': [], 'group': [],
 }
 NOMS = {r'food-kit/hot-dog': ['sausage']} # des noms entiers qui trompent : « hot dog » n’est pas un chien
+FRANCAIS = {'archipel', 'poses'} # les collections nommées en français : leurs noms ne valent rien en anglais
 # les mots qui précisent sans nommer : couleurs, formes, états ; ils comptent peu, l’objet compte
 NUANCES = set('''red green blue yellow purple white black orange pink brown dark colored thin fat curved diagonal broken damaged deep triangle
 rectangle hanging crushed stacked stack speed luxury design fortified cross power head standing stand floor display future return block
@@ -55,6 +56,7 @@ def main(fr, en):
     cat = json.load(open(os.path.join(ICI, 'catalogue-brut.json'), encoding='utf-8'))
     for o in cat: o['mots'] = [COQUILLES.get(m, m) for m in o['mots']]
     def sens_de(o): # les mots qui portent le sens de l’objet, chacun avec son poids d’origine
+        if o['id'].split('/')[0] in FRANCAIS: return [] # nommé en français : l’anglais n’a rien à dire
         for motif, mots in NOMS.items():
             if re.search(motif, o['id']): return [(m, [m]) for m in mots]
         return [(m, SENS.get(m, [m])) for m in o['mots']]
@@ -120,7 +122,8 @@ def main(fr, en):
         if n < 1e-6: sans.append(o['id']); continue
         objets.append(o); vecs.append(v / n)
     q(np.vstack(vecs)).tofile(os.path.join(RACINE, 'sens', 'objets.bin'))
-    images(q(Rf), q(np.vstack(vecs)))
+    best = images(q(Rf), q(np.vstack(vecs)))
+    if LEXIQUE: formes(LEXIQUE, mots_fr, best)
     json.dump(objets, open(os.path.join(RACINE, 'catalogue.json'), 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
     print(len(objets), 'objets avec un vecteur ;', len(sans), 'sans :', ' '.join(sans[:20]))
     return mots_fr, Rf, objets, np.vstack(vecs)
@@ -130,7 +133,33 @@ def images(Vq, Oq): # pour chaque mot, sa proximité au plus proche objet du cat
     best = np.concatenate([(V[i:i + 4000] @ O.T).max(1) for i in range(0, len(V), 4000)])
     np.round(np.clip(best, 0, 1) * 255).astype(np.uint8).tofile(os.path.join(RACINE, 'sens', 'images.bin'))
     print(f"mots porteurs d’images : {(best >= .5).sum()} à 0,5 ; {(best >= .55).sum()} à 0,55")
+    return best
 
+# Les formes des verbes qui font une image : « dormi », « nageait », « lisais » comptent comme « dormir », « nager », « lire ».
+# Tirées de Lexique 3.83 (www.lexique.org, CC BY-SA 4.0). Une forme qui est aussi un nom courant, comme « marché », n’est
+# un verbe qu’après un auxiliaire ou un pronom : l’app le vérifie ; elle est marquée d’une étoile.
+VERBES = set('''acclamer applaudir asseoir attendre atterrir attraper bondir boire bricoler brouter bêcher cacher chanter coucher courir creuser
+cueillir cuire cuisiner danser dormir découper déjeuner déménager dîner embarquer galoper grimper jardiner jeter lancer laver lire manger marcher
+nager naviguer photographier planter pleurer porter promener pêcher ramasser ramper reposer rire réparer récolter saluer sauter souper sécher'''.split())
+def formes(lexique, mots, best, seuil=.6): # seulement les verbes d’action, qui ont leur image : VERBES
+    import csv
+    idx = {m: i for i, m in enumerate(mots)}; verbes, autres = {}, {}
+    with open(lexique, encoding='utf-8') as f:
+        for r in csv.DictReader(f, delimiter='\t'):
+            fr = float(r['freqfilms2'] or 0) + float(r['freqlivres'] or 0)
+            if r['cgram'] == 'VER': verbes.setdefault(r['ortho'], {}).setdefault(r['lemme'], 0); verbes[r['ortho']][r['lemme']] += fr
+            elif r['cgram'] in ('NOM', 'ADJ', 'ADV', 'PRE', 'CON'): autres[r['ortho']] = autres.get(r['ortho'], 0) + fr
+    lignes = []
+    for forme, ls in sorted(verbes.items()):
+        lemme, fr = max(ls.items(), key=lambda x: x[1])
+        if forme == lemme or fr < .05 or lemme not in VERBES or lemme not in idx or best[idx[lemme]] < seuil or not MOT_FR.match(forme): continue
+        ambigu = autres.get(forme, 0) > max(.5, .15 * fr)
+        if forme in idx and best[idx[forme]] >= best[idx[lemme]] and not ambigu: continue # la forme fait déjà une meilleure image
+        lignes.append(f"{forme} {lemme}{' *' if ambigu else ''}")
+    open(os.path.join(RACINE, 'sens', 'formes.txt'), 'w', encoding='utf-8').write('\n'.join(lignes) + '\n')
+    print(len(lignes), 'formes de', len({l.split()[1] for l in lignes}), 'verbes qui font une image, dont', sum(l.endswith('*') for l in lignes), 'ambiguës')
+
+LEXIQUE = sys.argv[3] if __name__ == '__main__' and len(sys.argv) > 3 else None # Lexique383.tsv, pour les formes des verbes
 if __name__ == '__main__':
     mots, Rf, objets, O = main(sys.argv[1], sys.argv[2])
     idx = {m: i for i, m in enumerate(mots)}

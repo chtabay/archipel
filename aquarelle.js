@@ -85,7 +85,7 @@ void main() {
 // La frise du chemin : le lavis s’arrête en haut et en bas, jamais sur les côtés ; le ciel garde ses nuages, l’eau ses
 // reflets ; et le temps de chaque jour teinte la peinture, d’un jour à l’autre sans à-coup
 const FRISE = `precision highp float;
-uniform sampler2D aplat, halo; uniform vec2 taille, decalage; uniform vec3 papier, jours; uniform vec4 ta, tb, tc, sa, sb, sc; varying vec2 uv;
+uniform sampler2D aplat, halo; uniform vec2 taille, decalage; uniform vec3 papier, jours; uniform vec4 ta, tb, tc, sa, sb, sc, ma, mb, mc, na, nb, nc, astre; varying vec2 uv;
 ${BRUIT}
 float grain(vec2 p) { return vb(p / 3.1) * .6 + vb(p / 7.3 + 13.) * .4; }
 float nuee(vec2 px) { vec2 q = vec2(px.x / 300., px.y / 95.); return fbm(q + 5.3) * .75 + vb(q * 3.1 + 9.) * .25; }
@@ -120,6 +120,24 @@ void main() {
   p = clamp(p - (p - p * p) * (d - 1.), 0., 1.);
   p = mix(p, vec3(1.), nuage * .92 * (1. - s.z));
   p = mix(p, mix(vec3(.8, .8, .86), vec3(.56, .57, .64), s.x) * t.rgb, nuage * dessus * .55 * (1. - .3 * g));
+  // le temps qu’il fait, d’un jour à l’autre sans à-coup : la pluie, la neige, la brume, la nuit ; le soleil, l’orage
+  vec4 m = suivre(ma, mb, mc, px.x), n = suivre(na, nb, nc, px.x);
+  float vide = (1. - h.r) * (1. - h.g); // ni terre ni eau : le ciel
+  p *= 1. - .12 * n.y;
+  float da = length(px - astre.xy), disque = vide * smoothstep(astre.z + 1.5, astre.z - 1.5, da), lueur = vide * exp(-max(da - astre.z, 0.) / 34.);
+  if (astre.w > 1.5) { p = mix(p, vec3(1., .86, .58), lueur * .45); p = mix(p, vec3(1., .95, .78), disque); } // le soleil, et sa chaleur autour
+  else if (astre.w > .5) { p = mix(p, vec3(.82, .84, .9), lueur * .3); p = mix(p, vec3(.97, .95, .88), disque * (1. - .25 * smoothstep(.45, .8, vb((px - astre.xy) / 9. + 3.)))); } // la lune
+  vec2 cs = floor(px / 11.), ps = (cs + .5 + (vec2(vb(cs * 3.71 + 1.3), vb(cs * 5.37 + 2.9)) - .5) * .7) * 11.;
+  float etoile = m.w * vide * smoothstep(.5, .78, uv.y) * step(.84, vb(cs * 7.31 + 3.7)) * smoothstep(2.4, 1., length(px - ps)) * (1. - disque);
+  p = mix(p, vec3(1., .97, .86), etoile); // les étoiles : le papier, réservé
+  p = mix(p, vec3(.93, .94, .95), m.z * (.18 + .62 * smoothstep(.12, .75, uv.y))); // la brume : plus c’est loin, plus le papier revient
+  vec2 rp = mat2(.966, -.259, .259, .966) * px; // la pluie, en biais, en filets : assez épais pour se voir sur le téléphone
+  float colonne = floor(rp.x / 13.), hz = vb(vec2(colonne * 1.731, 3.17)), longueur = 50. + 90. * vb(vec2(colonne * .37, 9.1));
+  float filet = smoothstep(1.7, .7, abs(fract(rp.x / 13.) - .5) * 13.) * step(.58, fract(rp.y / longueur + hz * 7.)) * step(.35, hz);
+  p = mix(p, vec3(.4, .45, .54), filet * m.x * .55);
+  vec2 cf = floor(px / 24.), pf = (cf + .5 + (vec2(vb(cf * 2.31 + 1.7), vb(cf * 4.13 + 7.9)) - .5) * .8) * 24.;
+  float flocon = step(.45, vb(cf * 9.71 + 4.3)) * smoothstep(3.6, 1.8, length(px - pf)) * m.y;
+  p = mix(p, vec3(1.), flocon * .95); // la neige : des flocons de papier réservé
   float eclat = eau * smoothstep(.74, .8, trait) * smoothstep(.5, .75, vb(px / 26.)) * (1. - .75 * pres);
   vec3 fond = papier * (1. + (gx - gy) * .35);
   gl_FragColor = vec4(fond * mix(vec3(1.), p, lavis * dilue * (1. - .6 * eclat)), 1.);
@@ -225,12 +243,18 @@ export async function peindre(vue, graine = 1) {
 
 // Une tuile de la frise du chemin. vue : image, la tuile en couleurs ; silhouette, la terre en rouge et l’eau en vert, en
 // petit. decalage : la place de la tuile dans toute la frise, en pixels. jours : la teinte de trois jours, la veille, le jour,
-// le lendemain, à leur place : [{ x, teinte: [r, g, b, gris], ciel: [lourd, ombre, voile] }]
+// le lendemain, à leur place : [{ x, teinte: [r, g, b, gris], ciel: [lourd, ombre, voile], meteo: [pluie, neige, brume, nuit],
+// astres: [soleil, orage] }]. La nuit, une lune ; au grand soleil, le soleil : dans le ciel du jour, à une place tirée de la graine.
 export async function peindreFrise(vue, { graine = 1, decalage = [0, 0], jours }) {
+  const W = vue.image.width, H = vue.image.height, j = jours[1], nuit = (j.meteo?.[3] || 0) >= .5, soleil = (j.astres?.[0] || 0) >= .5;
+  const u = ((Math.sin((j.x + graine) * 12.9898) * 43758.5453) % 1 + 1) % 1, astre = nuit || soleil ? [j.x + (u - .5) * W * .45, H * (.84 + .05 * u), nuit ? 24 : 30, nuit ? 1 : 2] : [0, 0, 0, 0];
   return passer(vue.image, masques(vue.silhouette), graine, FRISE, (gl, p) => {
     gl.uniform3f(gl.getUniformLocation(p, 'jours'), ...jours.map(j => j.x));
     ['ta', 'tb', 'tc'].forEach((n, i) => gl.uniform4f(gl.getUniformLocation(p, n), ...jours[i].teinte));
     ['sa', 'sb', 'sc'].forEach((n, i) => gl.uniform4f(gl.getUniformLocation(p, n), ...jours[i].ciel, 0));
+    ['ma', 'mb', 'mc'].forEach((n, i) => gl.uniform4f(gl.getUniformLocation(p, n), ...(jours[i].meteo || [0, 0, 0, 0])));
+    ['na', 'nb', 'nc'].forEach((n, i) => gl.uniform4f(gl.getUniformLocation(p, n), ...(jours[i].astres || [0, 0, 0, 0])));
+    gl.uniform4f(gl.getUniformLocation(p, 'astre'), ...astre);
   }, decalage);
 }
 
