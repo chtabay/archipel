@@ -113,8 +113,8 @@ Avant de dormir, j’ai écrit une lettre à ma mère, sur le bureau, avec un st
   await attendre(p, async () => (await tuiles(p))[1].peinte, PEINTURE);
   const lieu = await p.evaluate(() => { const q = window.chemin.plans[1]; return { lieu: q.lieu, objets: q.objets.map(o => o.mot) }; });
   verifier(lieu.lieu === 'foret' && lieu.objets.length >= 2, `la tuile de la page est peinte : en forêt, avec ${lieu.objets.join(', ')}`);
-  await p.click('.tuile >> nth=1'); const jour = await p.textContent('#jour');
-  verifier(jour.includes(aujourdhui) && jour.includes('en forêt'), `toucher la tuile dit sa date, son lieu et ses mots (« ${jour} »)`);
+  await p.click('.tuile >> nth=1'); const jour = await p.textContent('#jour'), vue = await p.evaluate(() => ({ marque: document.querySelector('#blocs mark')?.textContent || '', blocs: [...document.querySelectorAll('#blocs .texte')].map(b => b.textContent).join('|') }));
+  verifier(jour.includes(aujourdhui) && jour.includes('en forêt') && !vue.marque && vue.blocs === PAGE, `toucher la tuile dit sa date, son lieu et ses mots (« ${jour} ») ; sa page est là, sous la frise`);
   await p.screenshot({ path: path.join(OUT, 'premiere-page.png') });
 
   // 4. à la visite suivante : la page revient du carnet, les tuiles aussi, sans repeindre
@@ -122,11 +122,30 @@ Avant de dormir, j’ai écrit une lettre à ma mère, sur le bureau, avec un st
   await attendre(p, () => p.evaluate(() => document.querySelector('#intro').hidden), 20000);
   await attendre(p, async () => (await tuiles(p)).every(x => x.peinte), 10000);
   t = await tuiles(p);
-  verifier(t.length === 2 && t.every(x => x.peinte && x.source === 'carnet') && await p.inputValue('#page') === PAGE, 'à la visite suivante, la page revient dans la zone d’écriture, et ses tuiles, gardées, sans repeindre');
+  const revenue = await p.evaluate(() => ({ blocs: [...document.querySelectorAll('#blocs .bloc .texte')].map(b => b.textContent), zone: document.querySelector('#page').value }));
+  verifier(t.length === 2 && t.every(x => x.peinte && x.source === 'carnet') && revenue.blocs.join('|') === PAGE && revenue.zone === '', 'à la visite suivante, la page revient sous la frise, la zone prête pour la suite, et ses tuiles, gardées, sans repeindre');
 
-  // 5. un long texte, collé d’un coup : des passages d’environ 14 mots porteurs, coupés aux chapitres et entre les phrases
+  // 4 bis. un deuxième bloc, le même jour : il s’ajoute à la page, à la suite du premier, avec son heure
+  const SUITE = 'Le soir, une soupe de légumes, puis un livre au lit.';
+  await p.fill('#page', SUITE); await p.click('#garder');
+  await attendre(p, () => p.evaluate(() => document.querySelectorAll('#blocs .bloc').length === 2 && /gardée/.test(document.querySelector('#dit').textContent)), 20000);
+  const suite = await p.evaluate(async () => ({ blocs: [...document.querySelectorAll('#blocs .bloc')].map(b => ({ heure: b.querySelector('.heure')?.textContent || '', texte: b.querySelector('.texte').textContent })), zone: document.querySelector('#page').value, bouton: document.querySelector('#garder').textContent, carnet: (await window.chemin.carnet.lirePages()).map(x => ({ texte: x.texte, blocs: x.blocs?.length })) }));
+  verifier(suite.blocs.map(b => b.texte).join('|') === `${PAGE}|${SUITE}` && suite.blocs.every(b => /^\d{1,2} h \d{2}$/.test(b.heure)) && suite.zone === '' && suite.bouton === 'Ajouter à la page' && suite.carnet.length === 1 && suite.carnet[0].blocs === 2 && suite.carnet[0].texte === `${PAGE}\n\n${SUITE}`,
+    `un deuxième bloc, le même jour, s’ajoute à la page avec son heure (${suite.blocs.map(b => b.heure).join(', ')}) ; la zone se vide pour la suite`);
+  await p.screenshot({ path: path.join(OUT, 'deux-blocs.png'), fullPage: true });
+
+  // 5. modifier un bloc : le second, vidé, s’efface ; le premier devient un long texte, collé d’un coup, qui fait des passages
+  // d’environ 14 mots porteurs, coupés aux chapitres et entre les phrases
+  await p.click('#blocs .bloc >> nth=1 >> button:has-text("Modifier")');
+  const enCours = await p.evaluate(() => ({ zone: document.querySelector('#page').value, consigne: document.querySelector('#consigne').textContent, annuler: !document.querySelector('#annuler').hidden }));
+  await p.screenshot({ path: path.join(OUT, 'modifier.png'), fullPage: true });
+  await p.fill('#page', ''); await p.click('#garder');
+  await attendre(p, () => p.evaluate(() => /effacé/.test(document.querySelector('#dit').textContent)), 20000);
+  const efface = await p.evaluate(async () => ({ blocs: document.querySelectorAll('#blocs .bloc').length, carnet: (await window.chemin.carnet.lirePages()).map(x => x.texte) }));
+  verifier(enCours.zone === SUITE && /Vidé, il s’efface/.test(enCours.consigne) && enCours.annuler && efface.blocs === 1 && efface.carnet.join('|') === PAGE, 'modifier un bloc le remet dans la zone d’écriture ; vidé puis gardé, il s’efface de la page et du carnet');
+  await p.click('#blocs .bloc >> nth=0 >> button:has-text("Modifier")');
   await p.fill('#page', LONG); await p.click('#garder');
-  await attendre(p, () => p.evaluate(() => /gardée/.test(document.querySelector('#dit').textContent)), 30000);
+  await attendre(p, () => p.evaluate(() => /modifié/.test(document.querySelector('#dit').textContent)), 30000);
   const l = await p.evaluate(() => { const C = window.chemin, ps = C.passages.filter(x => !x.depart && x.page === C.pages.length - 1); return { dit: document.querySelector('#dit').textContent, ps: ps.map(x => ({ titre: x.titre, porteurs: x.porteurs, texte: x.texte })), lieux: C.plans.filter(q => q.passage.page === C.pages.length - 1).map(q => q.lieu) }; });
   const titres = l.ps.filter(x => x.titre).map(x => x.titre), fins = l.ps.every(x => /[.!?…»]$/.test(x.texte.trim()));
   verifier(l.ps.length >= 5 && l.dit.includes(`${l.ps.length} tuiles`), `le long texte fait ${l.ps.length} tuiles (« ${l.dit} »)`);
@@ -137,6 +156,9 @@ Avant de dormir, j’ai écrit une lettre à ma mère, sur le bureau, avec un st
   verifier(l.lieux.includes('foret') && l.lieux.includes('rivage'), `les lieux suivent le texte : ${l.lieux.join(', ')}`);
   t = await tuiles(p);
   verifier(t.some(x => x.nom === `${aujourdhui} · Chapitre I`) && t.some(x => x.nom === 'Chapitre II'), 'la première tuile du texte porte sa date et son premier chapitre, les suivantes leur chapitre');
+  await p.click('.tuile:has(.date:text-is("Chapitre II"))');
+  const surligne = await p.evaluate(() => { const m = document.querySelector('#blocs mark'); return { marque: m?.textContent || '', ouvert: !!m?.closest('.bloc.ouvert') }; });
+  verifier(surligne.marque.startsWith('Le lendemain') && LONG.includes(surligne.marque) && surligne.ouvert, `dans une page de plusieurs tuiles, toucher l’une d’elles surligne son passage, le bloc ouvert (« ${surligne.marque.slice(0, 40)}… »)`);
   await attendre(p, () => p.evaluate(() => [...document.querySelectorAll('.tuile')].some((t, k) => k > 1 && t.classList.contains('peinte'))), PEINTURE);
   await p.screenshot({ path: path.join(OUT, 'long-texte.png') });
   const lues = await p.evaluate(() => new Promise(ok => { const r = indexedDB.open('chemin'); r.onsuccess = () => { const n = r.result.transaction('lectures').objectStore('lectures').count(); n.onsuccess = () => { ok(n.result); r.result.close(); }; }; r.onerror = () => ok(0); }));
@@ -175,6 +197,13 @@ Avant de dormir, j’ai écrit une lettre à ma mère, sur le bureau, avec un st
   await attendre(dm, () => dm.evaluate(() => /sans être gardée/.test(document.querySelector('#dit').textContent)), 30000);
   const ecrite = await dm.evaluate(async () => ({ dit: document.querySelector('#dit').textContent, pages: (await window.chemin.carnet.lirePages()).map(x => x.texte) }));
   verifier(ecrite.dit.startsWith('Démo') && ecrite.pages.length === 1 && ecrite.pages[0] === LONG, `une page écrite dans la démo s’ajoute au chemin sans être gardée ; le journal du téléphone n’a pas bougé (« ${ecrite.dit} »)`);
+  await dm.click('.tuile >> nth=3');
+  const lue = await dm.evaluate(() => { const x = window.chemin.plans[3].passage; return { titre: document.querySelector('#titre-page').textContent, etiquette: document.querySelectorAll('.tuile .date')[3].textContent, blocs: [...document.querySelectorAll('#blocs .texte')].map(b => b.textContent).join('\n\n'), page: window.chemin.pages[x.page].texte, retour: !document.querySelector('#retour').hidden, zone: !document.querySelector('#page').hidden }; });
+  await dm.screenshot({ path: path.join(OUT, 'relire.png') });
+  await dm.click('#retour');
+  const revenu = await dm.evaluate(() => ({ titre: document.querySelector('#titre-page').textContent, zone: !document.querySelector('#page').hidden }));
+  verifier(lue.titre === lue.etiquette && lue.blocs === lue.page && lue.retour && !lue.zone && revenu.titre === 'Aujourd’hui' && revenu.zone,
+    `toucher la tuile d’un autre jour ouvre sa page sous la frise (« ${lue.titre} ») ; on la lit, puis on revient à aujourd’hui`);
   await dm.close();
 
   verifier(!calme(e).length, `aucune erreur dans la console${calme(e).length ? ' : ' + calme(e).slice(0, 4).join(' | ') : ''}`);

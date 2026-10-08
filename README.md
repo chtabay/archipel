@@ -154,7 +154,8 @@ Une île de l’archipel peut se relier à d’autres, par des routes sur l’ea
 
 **→ https://chtabay.github.io/archipel/chemin/**, dans le dossier `chemin/`. Un journal : chaque page devient un bout de chemin, peint à l’aquarelle sur le téléphone, et le chemin s’allonge de page en page. `chemin/?demo` montre trente-deux pages d’exemple ; ce qu’on y écrit n’est pas gardé.
 
-- **Une seule façon d’écrire.** La zone « Aujourd’hui » prend quelques lignes, un courrier ou un roman entier. « Garder la page » la garde ; réécrire le même jour la remplace.
+- **Une seule façon d’écrire.** La zone « Aujourd’hui » prend quelques lignes, un courrier ou un roman entier. « Garder la page » la garde. On peut revenir le même jour : chaque bloc s’ajoute à la page du jour, avec son heure. Un bloc se modifie ; vidé, il s’efface.
+- **Relire.** Toucher une tuile ouvre sa page sous la frise, même d’un jour ancien ; dans une page de plusieurs tuiles, son passage est surligné.
 - **Le découpage.** Un texte se découpe en passages d’environ 14 mots porteurs, une tuile chacun : une page de journal fait une tuile, un roman quelques centaines. Un mot porteur fait une image : il est proche d’un objet du catalogue, ou d’un champ de la vie ordinaire. On coupe aux titres, chapitres ou dates, et aux séparateurs ; puis entre les paragraphes, puis entre les phrases. Les répliques d’un dialogue restent ensemble tant qu’on peut. Une page de garde rejoint le passage qui suit ; un jour vide garde sa tuile. La première tuile d’une page porte sa date, celle d’un chapitre son titre.
 - **La tuile.** Les mots du passage choisissent le lieu, le temps qu’il fait, et jusqu’à six objets parmi 1 713 modèles libres, par la distance de leur sens : ceux de Kenney, des KayKit, de Quaternius et d’OpenGameArt, et les choses de l’archipel. Chaque modèle a ses noms français, traduits une fois de ses noms anglais, dans le sens de l’objet : « can » y est une canette, « cup » une tasse. Un mot du texte retrouve ainsi l’objet qui porte son nom, ou le plus proche ; un pluriel compte comme son singulier. Un objet vu récemment devient moins probable. Tous les plans sont là, du premier plan au lointain, et le chemin ne s’interrompt pas d’une tuile à l’autre.
 - **Les paysages.** La maison, le village, la forêt, les champs, le bord de l’eau ; et, quand les mots y mènent, le désert, la savane, la jungle des tropiques, la montagne. Des modèles venus d’ailleurs : un baobab et des acacias, des bananiers, une paillote, une mosquée de terre du Mali, une pyramide maya, un gong chinois, des sushis.
@@ -165,10 +166,10 @@ Une île de l’archipel peut se relier à d’autres, par des routes sur l’ea
 
 | Fichier | Rôle |
 | --- | --- |
-| `chemin/app.js` | L’intro, la frise, la peinture et la garde des tuiles, la page du jour |
+| `chemin/app.js` | L’intro, la frise, la peinture et la garde des tuiles, la page du jour et ses blocs, la relecture |
 | `chemin/sens.js` | Le découpage, les mots porteurs, les objets les plus proches, les champs, le lieu, la tonalité, la météo |
 | `chemin/monde.js` | Le plan de chaque tuile, ses paysages, le sol, l’eau, le ciel, les maisons ouvertes, le temps qu’il fait, le rendu en 3D |
-| `chemin/carnet.js` | Les pages et les tuiles peintes, dans le stockage du téléphone |
+| `chemin/carnet.js` | Les pages, leurs blocs, et les tuiles peintes, dans le stockage du téléphone |
 | `chemin/sw.js` | Le service worker du chemin |
 | `chemin/sens/`, `chemin/catalogue.json` | Les vecteurs du sens, tirés de fastText (CC BY-SA 3.0), et le catalogue des objets |
 | `chemin/objets/` | Les modèles libres (CC0) : Kenney, KayKit, Quaternius, OpenGameArt, l’archipel ; et les poses. Leurs auteurs sont dans `chemin/objets/LISEZMOI.txt` |

@@ -24,18 +24,27 @@ const magasin = async (nom, mode = 'readonly') => { const db = await ouvrir(); i
 
 /* ───────── Les pages ───────── */
 
+// une page : sa date, son texte, et ses blocs s’il y en a, écrits à des heures différentes ; leur texte bout à bout est celui de la page
 const valide = p => p && typeof p.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(p.date) && typeof p.texte === 'string';
+const enBlocs = b => (Array.isArray(b) && b.length && b.every(x => typeof x?.texte === 'string') ? b.map(x => ({ heure: typeof x.heure === 'string' ? x.heure : '', texte: x.texte })) : null);
+const propre = p => { const blocs = enBlocs(p.blocs); return blocs ? { date: p.date, texte: p.texte, blocs } : { date: p.date, texte: p.texte }; };
 const ancien = () => { try { const p = JSON.parse(localStorage.getItem(VIEUX) || '[]'); return Array.isArray(p) ? p.filter(valide) : []; } catch { return []; } };
 export async function lirePages() {
   const m = await magasin('pages');
   const pages = m ? (await attendre(m.s.getAll())).filter(valide) : ancien();
-  return pages.sort((a, b) => a.date.localeCompare(b.date));
+  return pages.map(propre).sort((a, b) => a.date.localeCompare(b.date));
 }
 // garde une page ; rend vrai si elle est bien gardée
 export async function garderPage(page) {
+  const p = propre(page), m = await magasin('pages', 'readwrite');
+  if (m) { m.s.put(p); await fini(m.t); return true; }
+  try { const x = ancien().filter(y => y.date !== p.date); x.push(p); localStorage.setItem(VIEUX, JSON.stringify(x)); return true; } catch { return false; } // plein : la page reste à l’écran
+}
+// efface la page d’un jour, quand son dernier bloc s’en va
+export async function effacerPage(date) {
   const m = await magasin('pages', 'readwrite');
-  if (m) { m.s.put({ date: page.date, texte: page.texte }); await fini(m.t); return true; }
-  try { const p = ancien().filter(x => x.date !== page.date); p.push(page); localStorage.setItem(VIEUX, JSON.stringify(p)); return true; } catch { return false; } // plein : la page reste à l’écran
+  if (m) { m.s.delete(date); await fini(m.t); return true; }
+  try { localStorage.setItem(VIEUX, JSON.stringify(ancien().filter(y => y.date !== date))); return true; } catch { return false; }
 }
 // une fois, après la première page : demander au navigateur de ne pas effacer le carnet quand la place manque
 export function proteger() { try { navigator.storage?.persisted?.().then(oui => oui || navigator.storage.persist()).catch(() => {}); } catch { /* sans effet */ } }
