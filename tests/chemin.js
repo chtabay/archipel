@@ -124,6 +124,9 @@ Avant de dormir, j’ai écrit une lettre à ma mère, sur le bureau, avec un st
   t = await tuiles(p);
   const revenue = await p.evaluate(() => ({ blocs: [...document.querySelectorAll('#blocs .bloc .texte')].map(b => b.textContent), zone: document.querySelector('#page').value }));
   verifier(t.length === 2 && t.every(x => x.peinte && x.source === 'carnet') && revenue.blocs.join('|') === PAGE && revenue.zone === '', 'à la visite suivante, la page revient sous la frise, la zone prête pour la suite, et ses tuiles, gardées, sans repeindre');
+  const bout = () => p.evaluate(() => { const f = document.querySelector('#frise'); return { x: f.scrollLeft, fin: f.scrollWidth - f.clientWidth }; });
+  const arrivee = await bout(); await p.click('#debut'); const auDebut = await bout(); await p.click('#fin'); const aLaFin = await bout();
+  verifier(arrivee.fin > 0 && Math.abs(arrivee.x - arrivee.fin) <= 2 && auDebut.x === 0 && Math.abs(aLaFin.x - aLaFin.fin) <= 2, `le chemin s’ouvre à sa fin ; sous la frise, « Début » et « Fin » y mènent (${Math.round(arrivee.x)} sur ${Math.round(arrivee.fin)})`);
 
   // 4 bis. un deuxième bloc, le même jour : il s’ajoute à la page, à la suite du premier, avec son heure
   const SUITE = 'Le soir, une soupe de légumes, puis un livre au lit.';
@@ -204,6 +207,17 @@ Avant de dormir, j’ai écrit une lettre à ma mère, sur le bureau, avec un st
   const revenu = await dm.evaluate(() => ({ titre: document.querySelector('#titre-page').textContent, zone: !document.querySelector('#page').hidden }));
   verifier(lue.titre === lue.etiquette && lue.blocs === lue.page && lue.retour && !lue.zone && revenu.titre === 'Aujourd’hui' && revenu.zone,
     `toucher la tuile d’un autre jour ouvre sa page sous la frise (« ${lue.titre} ») ; on la lit, puis on revient à aujourd’hui`);
+
+  // le chemin se déroule seul, en grand, depuis le départ quand on était au bout, le texte de la tuile du milieu dessous ;
+  // il s’arrête, reprend, et se referme là où il en était
+  const etat = () => dm.evaluate(() => { const f = document.querySelector('#frise'); return { deroule: document.body.classList.contains('deroule'), recit: !document.querySelector('#recit').hidden, quand: document.querySelector('#recit-quand').textContent, texte: document.querySelector('#recit-texte').textContent, x: f.scrollLeft, haut: f.clientHeight, bouton: document.querySelector('#pause').textContent }; });
+  await dm.click('#derouler'); await dm.waitForTimeout(400);
+  const d0 = await etat(); await attendre(dm, async () => (await etat()).x > d0.x + 40, 20000); const d1 = await etat(); // sans carte graphique, le pinceau ralentit tout
+  await dm.click('#pause'); const d2 = await etat(); await dm.waitForTimeout(800); const d3 = await etat();
+  await dm.screenshot({ path: path.join(OUT, 'derouler.png') });
+  await dm.click('#fermer'); const d4 = await etat();
+  verifier(d0.deroule && d0.recit && d0.quand === 'Le départ' && d0.haut > 505 && d1.x > d0.x + 40 && d1.quand !== '' && Math.abs(d3.x - d2.x) < 2 && d3.bouton === 'Reprendre' && !d4.deroule && !d4.recit,
+    `« Dérouler » fait passer le chemin seul, en grand, depuis le départ, le texte de la tuile du milieu dessous (« ${d1.quand} ») ; il s’arrête, reprend, et se referme`);
   await dm.close();
 
   verifier(!calme(e).length, `aucune erreur dans la console${calme(e).length ? ' : ' + calme(e).slice(0, 4).join(' | ') : ''}`);

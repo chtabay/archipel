@@ -121,15 +121,15 @@ function montrer() {
   }, { root: frise, rootMargin: '0px 150% 0px 150%' });
   tuiles.forEach(u => { u.t.dataset.k = u.k; vues.observe(u.t); });
   if (!tuiles.length) premiere.pret();
+  $('#parcours').hidden = tuiles.length < 2;
   if (enDemo) return; // la démo ne range pas le carnet : ce qu’il garde du journal y reste
   carnet.elaguer('tuiles', new Set(tuiles.map(u => u.cle))).catch(() => {});
   carnet.elaguer('lectures', new Set(passages.map(x => cleLue(x.texte)))).catch(() => {});
 }
-// au départ, et après une page gardée : le début de la page, la dernière ou celle du jour qu’on vient de changer
+// à l’arrivée, et après un bloc de plus : la fin du chemin ; après un bloc changé un autre jour, le début de sa page
 function allerA(date) {
-  const n = date ? pages.findIndex(p => p.date === date) : pages.length - 1, premier = passages.findIndex(x => x.page === n && x.premier), t = tuiles[Math.max(0, premier)]?.t;
-  if (!t) return;
-  frise.scrollLeft = Math.min(t.offsetLeft - frise.offsetLeft - 8, frise.scrollWidth); // la frise ne va pas plus loin que son bout
+  const n = date ? pages.findIndex(p => p.date === date) : -1, premier = passages.findIndex(x => x.page === n && x.premier), t = tuiles[premier]?.t;
+  frise.scrollLeft = t ? t.offsetLeft - frise.offsetLeft - 8 : frise.scrollWidth; // la frise ne va pas plus loin que son bout
 }
 async function approcher(u) { // une tuile entre dans le champ : gardée, on la montre ; sinon, au pinceau
   if (u.etat !== 'vide') return;
@@ -177,11 +177,79 @@ async function peindre(k) {
 // les mots du passage dont l’objet a trouvé sa place sur la tuile
 const poses = p => [...new Set(p.objets.filter(o => p.items.some(it => it.id === o.objet.id)).map(o => o.mot))];
 function dire(k) { // toucher une tuile : son nom, son lieu, les mots qui l’ont fait pousser ; et sa page, sous la frise
+  if (lecture) return; // le chemin se déroule : toucher l’arrête, rien d’autre
   const p = plans[k], x = p.passage, mots = poses(p);
   $('#jour').textContent = [x.depart ? 'Le départ' : [quand(x.date), x.titre].filter(Boolean).join(' · '), LIEUX[p.lieu], mots.join(', ')].filter(Boolean).join(' · ');
   if (x.depart || edition) return; // pendant qu’on modifie un bloc, sa page reste
   vu = x.date; cible = passages.some(y => y !== x && !y.depart && y.page === x.page) ? x : null; montrerPage(); // une page d’une seule tuile : rien à surligner
   $('#blocs mark')?.scrollIntoView({ block: 'nearest' });
+}
+
+/* ───────── Parcourir : le début, la fin, et le chemin qui se déroule seul, en grand, le texte de chaque tuile à côté ───────── */
+
+const centre = () => (frise.scrollLeft + frise.clientWidth / 2) / Math.max(1, frise.scrollWidth); // le milieu de l’écran, de 0 à 1 sur le chemin
+const auCentre = c => { frise.scrollLeft = c * frise.scrollWidth - frise.clientWidth / 2; };
+const debut = () => frise.clientWidth / 2 / Math.max(1, frise.scrollWidth);
+const auBout = () => frise.scrollLeft >= frise.scrollWidth - frise.clientWidth - 2;
+// le temps qu’une tuile passe au milieu de l’écran : de quoi lire son passage, sans traîner
+const duree = k => { const x = plans[k]?.passage; return !x || x.depart ? 5 : Math.min(30, Math.max(7, x.texte.split(/\s+/).length * .4)); };
+const MOTS = { joue: 'Pause', pause: 'Reprendre', fin: 'Recommencer' };
+let lecture = null; // le chemin qui se déroule : où en est le milieu de l’écran, s’il joue, la tuile dont il dit le texte
+function raconter(k) {
+  const x = plans[k]?.passage; if (!x) return;
+  $('#recit-quand').textContent = x.depart ? 'Le départ' : [quand(x.date), x.titre].filter(Boolean).join(' · ');
+  $('#recit-texte').replaceChildren(el('p', { textContent: x.depart ? 'Ici commence le chemin.' : x.texte }));
+}
+function poser(etat) { // joue, pause ou fin ; relancé, il part du milieu de l’écran, ou du début s’il était au bout
+  if (!lecture) return;
+  if (etat === 'joue') lecture.c = lecture.etat === 'fin' ? debut() : centre();
+  lecture.etat = etat; $('#pause').textContent = MOTS[etat];
+}
+const basculer = () => poser(lecture?.etat === 'joue' ? 'pause' : 'joue');
+function derouler() {
+  if (lecture || tuiles.length < 2) return;
+  const bout = auBout(), c = centre(); // au bout, on repart du départ ; sinon, d’ici
+  document.body.classList.add('deroule'); $('#recit').hidden = false;
+  lecture = { etat: 'joue', c: 0, t: performance.now(), k: -1, tenu: null };
+  lecture.c = bout ? debut() : c; auCentre(lecture.c); $('#pause').textContent = MOTS.joue; $('#pause').focus({ preventScroll: true });
+  document.documentElement.requestFullscreen?.()?.then(() => { if (lecture) lecture.plein = true; }).catch(() => {}); // en plein écran, si le téléphone le permet
+  navigator.wakeLock?.request('screen').then(v => { if (lecture) lecture.veille = v; else v.release(); }).catch(() => {}); // et l’écran reste allumé
+  requestAnimationFrame(pas);
+}
+function pas(t) {
+  if (!lecture) return;
+  const dt = Math.max(0, Math.min(.1, (t - lecture.t) / 1000)), W = frise.scrollWidth, L = tuiles[0].t.offsetWidth || frise.clientWidth; lecture.t = t;
+  const joue = lecture.etat === 'joue' && !lecture.tenu;
+  if (joue) {
+    const fin = 1 - debut(), k = Math.min(tuiles.length - 1, Math.floor(lecture.c * W / L));
+    lecture.c = Math.min(fin, lecture.c + L / duree(k) * dt / W); auCentre(lecture.c);
+    if (lecture.c >= fin) poser('fin');
+  }
+  const k = Math.max(0, Math.min(tuiles.length - 1, Math.floor((joue ? lecture.c : centre()) * W / L)));
+  if (k !== lecture.k) { lecture.k = k; raconter(k); }
+  requestAnimationFrame(pas);
+}
+function arreter() {
+  if (!lecture) return;
+  const c = centre(), v = lecture.veille; lecture = null;
+  v?.release().catch(() => {});
+  document.body.classList.remove('deroule'); $('#recit').hidden = true; auCentre(c); $('#derouler').focus({ preventScroll: true });
+  if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
+}
+function preparerParcours() {
+  $('#debut').addEventListener('click', () => { frise.scrollLeft = 0; });
+  $('#fin').addEventListener('click', () => allerA());
+  $('#derouler').addEventListener('click', derouler);
+  $('#pause').addEventListener('click', basculer);
+  $('#fermer').addEventListener('click', arreter);
+  // pendant qu’il se déroule : toucher l’arrête ou le relance ; glisser, ou la molette, le met en pause
+  frise.addEventListener('pointerdown', e => { if (lecture) lecture.tenu = { x: e.clientX, t: performance.now() }; });
+  const lacher = (e, glisse) => { const h = lecture?.tenu; if (!h) return; lecture.tenu = null; if (!glisse && Math.abs(e.clientX - h.x) < 12 && performance.now() - h.t < 500) basculer(); else poser('pause'); };
+  frise.addEventListener('pointerup', e => lacher(e, false));
+  frise.addEventListener('pointercancel', e => lacher(e, true));
+  frise.addEventListener('wheel', () => { if (lecture?.etat === 'joue') poser('pause'); }, { passive: true });
+  addEventListener('keydown', e => { if (!lecture) return; if (e.key === 'Escape') arreter(); else if (e.key === ' ' && !e.target.closest?.('button')) { e.preventDefault(); basculer(); } });
+  document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement && lecture?.plein) arreter(); }); // sortir du plein écran, c’est sortir
 }
 
 /* ───────── La page d’un jour, sous la frise : ses blocs, chacun à son heure ; aujourd’hui, un bloc de plus ───────── */
@@ -265,7 +333,7 @@ function preparerEcriture() {
     edition = cible = null; vu = blocs.length && jour !== aujourdhui() ? jour : null; zone.value = e ? brouillon : ''; brouillon = ''; montrerPage(); // une page partie : retour à aujourd’hui
     dit(texte.length > 3000 ? 'Le texte se lit…' : e ? 'Le chemin change…' : 'Le chemin s’allonge…');
     if (await calculer((n, t) => dit(`Le texte se lit : ${n} passages sur ${t}`))) {
-      montrer(); allerA(blocs.length ? jour : null);
+      montrer(); allerA(e && blocs.length && jour !== aujourdhui() ? jour : null);
       const n = passages.filter(x => !x.depart && x.date === jour).length, tuilesDe = n > 1 ? `fait ${n} tuiles de chemin.` : '';
       dit(enDemo ? (e ? 'Démo : le bloc change, sans être gardé.' : 'Démo : ta page s’ajoute au chemin, sans être gardée.')
         : !garde ? 'Ta page n’a pas pu être gardée : la place manque sur ce téléphone.'
@@ -291,7 +359,7 @@ function garderHorsLigne() {
   try {
     const [s, p] = await Promise.all([chargerSens('./'), enDemo ? demo() : carnet.lirePages()]);
     S = s; pages = p.map(enBlocs); F = familles(S.catalogue); atelier = new Atelier(new Modeles('./'), F.parId);
-    preparerEcriture();
+    preparerEcriture(); preparerParcours();
     if (await calculer((n, t) => { if (t > 60) { intro.dire(`Le texte se relit : ${n} passages sur ${t}`); dit(`Le texte se relit : ${n} passages sur ${t}`); } })) { montrer(); allerA(); }
     dit(pages.length ? 'Chaque page devient un bout de chemin.' : 'Écris ta première page : le chemin commence là.');
     pret = premiere;

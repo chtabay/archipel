@@ -49,7 +49,31 @@ body.accueil { overflow: hidden; }
 .tuile .attente { position: absolute; inset: 0; display: grid; place-items: center; color: var(--pale); font-weight: 700; pointer-events: none; }
 .tuile .attente:empty { display: none; }
 .tuile .date { position: absolute; left: .7rem; right: .7rem; bottom: .45rem; overflow: hidden; color: rgba(70, 58, 46, .55); font-size: .78rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; text-overflow: ellipsis; }
-.jour { min-height: 1.4em; margin: .4rem 1rem 0; color: var(--doux); font-size: .92rem; }
+.jour { min-height: 1.4em; margin: .1rem 1rem 0; color: var(--doux); font-size: .92rem; }
+
+/* Sous la frise : le début, le chemin qui se déroule, la fin ; discrets */
+.parcours { display: flex; align-items: center; justify-content: space-between; padding: .15rem .55rem 0; }
+.parcours[hidden] { display: none; }
+.discret { display: inline-flex; align-items: center; gap: .35rem; padding: .5rem .45rem; border: 0; background: none; color: var(--pale); font: 700 .82rem/1 var(--sans); letter-spacing: .02em; cursor: pointer; }
+.discret svg { width: .62rem; height: .62rem; fill: currentColor; }
+.discret:hover { color: var(--accent); }
+.discret:focus-visible { color: var(--accent); outline: 2px solid var(--accent); outline-offset: 1px; border-radius: .3rem; }
+
+/* Le chemin qui se déroule : la frise en grand, le texte de la tuile du milieu dessous, ou à côté en paysage */
+body.deroule { overflow: hidden; }
+body.deroule .frise { position: fixed; z-index: 20; top: 0; left: 0; width: 100%; height: 62vh; height: 62dvh; }
+.recit { position: fixed; z-index: 20; top: 62vh; top: 62dvh; right: 0; bottom: 0; left: 0; display: flex; flex-direction: column; gap: .55rem; padding: 1rem 1.25rem max(.9rem, env(safe-area-inset-bottom)); background: var(--papier); }
+.recit[hidden] { display: none; }
+.recit .quand { margin: 0; color: var(--pale); font-size: .8rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+.recit .passage { flex: 1; min-height: 0; overflow: auto; font-size: 1.08rem; line-height: 1.55; }
+.recit .passage p { margin: 0; white-space: pre-wrap; animation: venir .8s ease; }
+.recit .commandes { display: flex; align-items: center; gap: 1.2rem; margin: 0; }
+@keyframes venir { from { opacity: 0; } }
+@media (orientation: landscape) {
+  body.deroule .frise { width: 66%; height: 100vh; height: 100dvh; }
+  .recit { top: 0; left: 66%; justify-content: center; padding-top: max(1.2rem, env(safe-area-inset-top)); }
+  .recit .passage { flex: 0 1 auto; }
+}
 
 .ecrire { max-width: 34rem; margin: 0 auto; padding: .6rem 1rem max(1.4rem, env(safe-area-inset-bottom)); }
 .titre { display: block; margin: .4rem 0 .35rem; font-size: 1.02rem; font-weight: 800; }
