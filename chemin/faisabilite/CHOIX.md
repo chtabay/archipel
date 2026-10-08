@@ -33,10 +33,11 @@ s’en souvienne au moment de construire. Les essais et les mesures sont dans le
 - Un délai de quelques minutes, un peu variable, entre l’écrit et son arrivée, pour qu’un voisin d’écran ne
   lise pas « il vient d’envoyer un mail ».
 
-## La dose : 28 mots porteurs par tuile
+## La dose : 14 mots porteurs par tuile, pour le moment
 
-- Les écrits du jour s’accumulent dans une tuile ouverte ; à **28 mots porteurs**, elle se ferme, se peint, et
-  arrive. Une tuile fermée ne se repeint jamais. À minuit, la tuile ouverte se ferme, même incomplète.
+- Les écrits du jour s’accumulent dans une tuile ouverte ; à **14 mots porteurs**, la dose du chemin
+  d’aujourd’hui, elle se ferme, se peint, et arrive. Une tuile fermée ne se repeint jamais. À minuit, la tuile
+  ouverte se ferme, même incomplète. Une dose à 28 a été envisagée, et reste possible plus tard.
 - Mesuré sur les quatre journées inventées de `mesure/corpus/`, texte nettoyé :
 
   | Journée | mots à soi | tuiles à 14 | tuiles à 28 |
@@ -54,5 +55,6 @@ s’en souvienne au moment de construire. Les essais et les mesures sont dans le
   (`vie-privee/filet-ambiant.mjs`). « Parler à quelqu’un » reste toujours visible.
 - Pour le public : des sites cochés plutôt que tous, et le texte brut effacé dès qu’il est lu.
 - L’anglais, les noms propres et le vélo absent du catalogue sont à traiter avant le public (`mesure/RESULTATS.md`).
-- Du poste au téléphone : un chemin par appareil, ou la lecture du jour portée par un code QR, sans réseau
+- Du poste au téléphone : remis à plus tard. Un jour, une connexion pour **sauvegarder** sera à envisager ;
+  une tuile n’a pas besoin du texte, et une sauvegarde peut ne porter que les lectures et les tuiles, scellées
   (`architecture/`).
