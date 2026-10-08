@@ -6,7 +6,7 @@
 import * as THREE from './vendor/three-chemin.min.js?v=1';
 import { rng, hash, melange, nuance } from '../outils.js?v=1';
 
-export const MOTEUR = 4; // la version du peintre, ici et dans l’aquarelle : on l’augmente quand une même page se peindrait autrement
+export const MOTEUR = 5; // la version du peintre, ici et dans l’aquarelle : on l’augmente quand une même page se peindrait autrement
 export const L = 14, V = 11, ELEV = 8 * Math.PI / 180, HAUT = 1000, LARGE = Math.round(HAUT * L / V), MARGE = 40; // un jour : 14 m de long, une tuile de 1273 × 1000 points, et une marge pour le pinceau
 const BAS = -2.2, CIBLE = (V / 2 + BAS) / Math.cos(ELEV); // le bas de l’image, en mètres, sous le chemin ; la hauteur que vise la caméra
 const PLANS = { avant: [1.4, 3], bord: [-2.2, -1.1], milieu: [-3.4, -11], fond: [-15, -26] };
@@ -31,7 +31,7 @@ const FAMILLES = {
   herbes: /^nature-kit\/grass|^kaykit-forest\/Grass_[12]/, fleurs: /^nature-kit\/flower_|^q-nature\/(Flowers|Plant_1|Plant_3)$|^archipel\/fleurs$/, herbesPlage: /^tropiques\/BeachGrass01$|^nature-kit\/grass_leafs/,
   cultures: /^nature-kit\/crops_(wheat|corn)Stage[BCD]|^q-crops\/(Wheat|Corn|Rice)_4$/, legumes: /^nature-kit\/crop_|^q-crops\/(Tomato|Lettuce|Pumpkin|Carrot|Beet|Watermelon)_4$/, fruitiers: /^q-crops\/(Apple|Orange)_4$|^archipel\/arbre-fleuri$/,
   clotures: /^nature-kit\/fence_(simple|planks|simpleHigh|simpleLow|planksDouble)$|^fantasy-town-kit\/fence(-curved|-broken)?$|^survival-kit\/fence$|^quaternius-farm\/Fence2?$|^city-kit-suburban\/fence-low$/,
-  haies: /^fantasy-town-kit\/hedge(-large)?$/, portails: /^fantasy-town-kit\/(hedge-gate|hedge-large-gate|fence-gate)$/, rails: /^train-kit\/track$/,
+  haies: /^fantasy-town-kit\/hedge(-large)?$/, portails: /^fantasy-town-kit\/(hedge-gate|hedge-large-gate|fence-gate)$/,
   maisons: /^city-kit-suburban\/building-type|^kaykit-medieval\/building_(home_[AB]|tavern|market|grain)|^q-buildings\/(House\d?|Shop)$|^textured-buildings\/[12]Story_|^archipel\/maison-(automne|lande|prairie|volets)$/,
   immeubles: /^city-kit-commercial\/building-[a-n]$|^textured-buildings\/(3Story_Slim|4Story|4Story_Center)$|^kaykit-city-builder-bits\/building_[A-H]_withoutBase$/,
   fermes: /^quaternius-farm\/(Barn|BigBarn|SmallBarn|OpenBarn|Silo|Silo_House|Windmill|TowerWindmill|WaterTower)$|^fantasy-town-kit\/(windmill|watermill)$|^kaykit-medieval\/building_(windmill|watermill)_blue$/,
@@ -52,6 +52,18 @@ const FAMILLES = {
   fougeres: /^tropiques\/(TropicFern|ElephantEar|Phila|BirdNestPlant)/, arbresJungle: /^tropiques\/(CecropiaTree|CiabaTree|CopalTree)/, paillotes: /^tropiques\/JungleHut/,
   montagnes: /^kaykit-medieval\/(mountain_|hills_A_trees)/, pinsNeige: /^(q-nature\/PineTree_Snow|platformer-kit\/tree-pine-snow)/,
   rochersMontagne: /^(q-nature\/Rock_(Moss|Snow)_1|nature-kit\/rock_(large|tall)\w*)$/, chalets: /^archipel\/maison-neige$/,
+  // les repères du second plan : ce qui se voit de loin, une fois de temps en temps
+  moulins: /^quaternius-farm\/(Windmill|TowerWindmill)$|^kaykit-medieval\/building_windmill_blue$|^fantasy-town-kit\/windmill$|^city-kit-industrial\/windmill-low$/,
+  clochers: /^kaykit-medieval\/building_church_blue$/, tours: /^kaykit-medieval\/building_tower_A_blue$|^mali\/mali_(defense|sentry)_tower$/,
+  chateauxEau: /^quaternius-farm\/(WaterTower|Silo)$|^kaykit-city-builder-bits\/watertower$|^city-kit-industrial\/water-tower$/, cheminees: /^city-kit-industrial\/chimney-large$/,
+  chateaux: /^kaykit-medieval\/building_castle_blue$|^mali\/mali_fortress$/, ruines: /^kaykit-medieval\/building_destroyed$|^nature-kit\/statue_(column|columnDamaged|ring)$/,
+  menhirs: /^archipel\/(menhir|cairn)$|^nature-kit\/statue_obelisk$|^q-desert\/Monument$/, tentes: /^nature-kit\/tent_|^survival-kit\/tent(-canvas)?$|^maya\/merchant-tent$/,
+  phares: /^archipel\/phare$/, navires: /^watercraft-kit\/ship-(cargo-[abc]|large|ocean-liner-small|small)$|^q-ships\/(Sail_ship|Viking_boat|BoatWSail)$|^pirate-kit\/ship-(small|medium)$/,
+  pontons: /^tropiques\/Tropical_Jetty0[12]$|^savane\/AfricaDock01$/, mosquees: /^mali\/mali_(temple|library|market|civic_center)$/, temples: /^maya\/mayan$/,
+  grandsBatiments: /^q-buildings\/(Bank|Hospital)$|^textured-buildings\/4Story(_Center)?$/, granges: /^quaternius-farm\/(Barn|BigBarn|OpenBarn|SmallBarn)$/,
+  troupeaux: /^poses\/bete-(cow|sheep|horse)$|^archipel\/bete-mouton$/, troupeauxSavane: /^poses\/bete-zebra$|^cube-pets\/animal-(giraffe|elephant)$/, caravanes: /^objets-oga\/chameau$/,
+  gens: /^poses\/(marche|course)-(femme|homme|kenney)$/, locomotives: /^train-kit\/train-(locomotive-[abc]|diesel-[abc]|electric-city-[abc])$/, wagons: /^train-kit\/train-carriage-(box|wood|container-\w+|flatbed-wood|tank)$/,
+  tracteurs: /^car-kit\/tractor(-shovel)?$/,
 };
 export function familles(catalogue) {
   const out = Object.fromEntries(Object.keys(FAMILLES).map(k => [k, []])), parId = new Map();
@@ -137,7 +149,7 @@ export function planifier(jour, veille, F, recents) {
     if (F.montagnes.includes(o)) continue; // une montagne nommée : ce sont les sommets du lointain, pas un rocher au bord du chemin
     if (/^watercraft|^pirate-kit\/(boat|ship)|^q-ships\/|^q-survival\/Raft/.test(o.id)) { if (lieu === 'rivage') poser(o, 'milieu', { z: -5 - r() * 4, profil: true, h: BATEAU }); } // loin de l’eau, pas de bateau
     else if (role === 'batiment') poser(o, 'milieu', { z: -5, profil: false, h: MAISON });
-    else if (/^train-kit|^holiday-kit\/train/.test(o.id)) { const z = lieu === 'rivage' ? -1.3 : -1.8, it = poser(o, 'bord', { z, profil: true, s: 1 }); if (it) poser(F.rails[0], 'bord', { x: it.x, z, profil: true, s: 1.2 }); } // au bord de l’eau, sur la plage
+    else if (/^train-kit|^holiday-kit\/train/.test(o.id)) { poser(o, 'bord', { z: lieu === 'rivage' ? -1.3 : -1.8, profil: true, s: 1 }); } // au bord de l’eau, sur la plage
     else if (role === 'personne') poser(o, 'chemin', { z: (r() - .5) * .5, h: /character/.test(o.id) ? GENS : [.3, 1.5, 1.5] });
     else if (role === 'ciel') poserCiel(o, /^kaykit-medieval\/cloud|^archipel\/nuage/.test(o.id) ? [1.5, 3, 7] : /avion-ligne/.test(o.id) ? [1.5, 3, 9] : TAILLES.ciel);
     else if (role === 'eau') poserEau(o);
@@ -160,6 +172,40 @@ export function planifier(jour, veille, F, recents) {
     else if (u < .75) { for (let i = 0, k = entre(2, 4); i < k; i++) poser(tirer(F.rochers, 2), 'bord', { h: [.3, .9, 2] }); }
   };
   const devant = (k = entre(3, 8)) => { for (let i = 0; i < k; i++) { const u = r(); poser(tirer(u < .45 ? F.herbes : u < .75 ? F.fleurs : u < .9 ? F.cailloux : F.champignons), 'avant', { s: 1.2 }); } };
+  // un repère, une fois sur deux : ce qui se voit de loin et dit un pays. Au fond, debout et de face, un moulin, un clocher, une tour,
+  // un château, un navire au large ; au milieu, groupés, un troupeau, un campement, des pierres levées. Chaque lieu a les siens, et
+  // un repère vu récemment devient moins probable. Le repère prend sa place avant le décor, qui pousse autour
+  const REPERES = {
+    foret: [['tours', 1, [7, 11, 8]], ['ruines', 1, [4, 7, 8]], ['clochers', 1, [9, 12, 10]], ['tentes', 2, [1.8, 2.6, 3.2], 'milieu'], ['menhirs', 3, [2, 3.5, 3], 'milieu']],
+    champs: [['moulins', 1, [8, 12, 12]], ['clochers', 1, [9, 12, 10]], ['chateauxEau', 1, [7, 11, 8]], ['granges', 1, [5, 8, 12]], ['chateaux', 1, [9, 14, 16]], ['tours', 1, [7, 11, 8]], ['troupeaux', 4, [1, 1.5, 2.6], 'milieu'], ['menhirs', 2, [2.5, 3.5, 3], 'milieu']],
+    village: [['clochers', 1, [9, 12, 10]], ['chateaux', 1, [9, 14, 16]], ['chateauxEau', 1, [7, 11, 8]], ['moulins', 1, [8, 12, 12]], ['grandsBatiments', 1, [9, 13, 18]], ['cheminees', 1, [10, 14, 10]], ['tours', 1, [7, 11, 8]]],
+    rivage: [['navires', 1, [3, 6, 11]], ['navires', 2, [2.5, 4.5, 9]], ['phares', 1, [8, 11, 6]], ['pontons', 1, [1.6, 2.4, 6], 'milieu']],
+    interieur: [['moulins', 1, [8, 12, 12]], ['clochers', 1, [9, 12, 10]], ['chateauxEau', 1, [7, 11, 8]]],
+    desert: [['mosquees', 1, [8, 12, 18]], ['tours', 1, [7, 11, 8]], ['menhirs', 1, [3, 5, 3]], ['tentes', 2, [2, 2.8, 3.5], 'milieu'], ['caravanes', 3, [1.8, 2.4, 3], 'milieu']],
+    savane: [['tours', 1, [7, 11, 8]], ['troupeauxSavane', 3, [1.4, 2.8, 3.6], 'milieu'], ['tentes', 1, [2, 2.8, 3.5], 'milieu']],
+    tropiques: [['temples', 1, [7, 11, 18]], ['tentes', 1, [1.8, 2.6, 3.2], 'milieu']],
+    montagne: [['chateaux', 1, [9, 14, 16]], ['clochers', 1, [8, 12, 10]], ['tours', 1, [7, 11, 8]], ['troupeaux', 4, [1, 1.5, 2.6], 'milieu'], ['menhirs', 2, [2, 3.5, 3], 'milieu'], ['tentes', 1, [1.8, 2.6, 3.2], 'milieu']],
+  }[lieu] || [];
+  if (REPERES.length && r() < .55) {
+    const [fam, n, h, plan = 'fond'] = REPERES[Math.floor(r() * REPERES.length)], liste = F[fam];
+    if (fam === 'navires') { const o = tirer(liste, 6); for (let i = 0; i < n; i++) poser(o, 'fond', { z: -16 - r() * 8, profil: true, h }); } // au large, un navire, ou deux qui se suivent
+    else if (plan === 'fond') { // un seul, debout, de face : il se reconnaît de loin
+      const it = poser(tirer(liste, 6), 'fond', { z: -17 - r() * 7, profil: false, h });
+      if (it && fam === 'phares') for (const dx of [1.8, -1.5]) poser(tirer(F.rochersSable), 'fond', { x: it.x + dx, z: it.z + .4, h: [1.5, 3, 4] }); // le phare, sur son îlot
+    } else { // groupés, un peu en retrait du chemin
+      const o = tirer(liste, 4), xc = x0 + 2.5 + r() * (L - 5), z = -5.5 - r() * 3;
+      for (let i = 0; i < n; i++) poser(r() < .7 ? o : tirer(liste, 4), 'milieu', { x: xc + (r() - .5) * 5, z: z - r() * 1.5, h });
+    }
+  }
+  if (lieu !== 'interieur' && r() < .4) { // un peu de vie, plus loin que le chemin : des promeneurs ; dans les champs, un tracteur, ou un train qui passe
+    const u = lieu === 'champs' ? r() : 1, zv = -4.2 - r() * 3;
+    if (u < .3) { // un train qui passe, droit, au fond du pré : chaque wagon à la suite de la locomotive
+      const z = -7.5, l = tirer(F.locomotives, 6), w = tirer(F.wagons, 4), it = l && w && poser(l, 'milieu', { z, profil: true, s: 1, h: [2.4, 3.2, 5] });
+      if (it) { const sens = it.ry > 0 ? 1 : -1, pas = Math.max(w.taille[2], l.taille[2]) * it.s * 1.02; it.ry = sens * Math.PI / 2;
+        for (let i = 1, k = entre(1, 3); i <= k; i++) { const q = poser(w, 'milieu', { x: it.x - sens * pas * i, z, profil: true, s: 1, h: [0, 1e3, 1e3] }); if (q) { q.s = it.s; q.ry = it.ry; } } }
+    } else if (u < .5) poser(tirer(F.tracteurs, 4), 'milieu', { z: zv, profil: true, h: [1.6, 2.2, 3.5] });
+    else { const o = tirer(F.gens, 2); for (let i = 0, k = entre(1, 2); i < k; i++) { const q = r() < .6 ? o : tirer(F.gens, 2); if (lieu === 'rivage') poser(q, 'bord', { h: GENS }); else poser(q, 'milieu', { z: zv - r() * 1.5, h: [1.5, 1.8, 1.6] }); } } // au bord de l’eau, sur la plage
+  }
   if (lieu === 'foret') {
     const m = quelques(['futaie', 'clairiere', 'sousbois', 'rochers'], 1)[0], dense = m === 'futaie' ? entre(10, 14) : m === 'clairiere' ? entre(4, 7) : entre(7, 10);
     for (let i = 0; i < dense; i++) poser(tirer(r() < .4 ? F.pins : arbres), 'milieu', { s: 1.1 + r() * .5, h: ARBRE });
