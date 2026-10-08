@@ -108,7 +108,7 @@ function montrer() {
   vues?.disconnect(); for (const u of tuiles) if (u.url) URL.revokeObjectURL(u.url);
   frise.replaceChildren(); tuiles.length = 0;
   plans.forEach((p, k) => {
-    const x = p.passage, img = el('img', { alt: '', decoding: 'async', width: LARGE, height: HAUT }), t = el('div', { className: 'tuile' }, img, el('div', { className: 'attente' }), el('div', { className: 'date', textContent: etiquette(x) }));
+    const x = p.passage, img = el('img', { alt: '', decoding: 'async', draggable: false, width: LARGE, height: HAUT }), t = el('div', { className: 'tuile' }, img, el('div', { className: 'attente' }), el('div', { className: 'date', textContent: etiquette(x) }));
     const mots = poses(p);
     t.setAttribute('role', 'img'); t.setAttribute('aria-label', `${etiquette(x) || quand(x.date)} : ${LIEUX[p.lieu]}${mots.length ? `, ${mots.join(', ')}` : ''}`);
     t.addEventListener('click', () => dire(k));
@@ -248,6 +248,28 @@ function preparerParcours() {
   frise.addEventListener('pointerup', e => lacher(e, false));
   frise.addEventListener('pointercancel', e => lacher(e, true));
   frise.addEventListener('wheel', () => { if (lecture?.etat === 'joue') poser('pause'); }, { passive: true });
+  // sur ordinateur : la molette fait avancer le chemin, et au bout rend la main à la page ; la souris le tire
+  frise.addEventListener('wheel', e => {
+    if (e.ctrlKey || Math.abs(e.deltaX) >= Math.abs(e.deltaY)) return; // le pavé tactile glisse déjà de côté ; Ctrl et la molette, c’est le zoom
+    const d = e.deltaY * (e.deltaMode === 1 ? 40 : e.deltaMode === 2 ? frise.clientWidth : 1), max = frise.scrollWidth - frise.clientWidth;
+    if ((d < 0 && frise.scrollLeft <= 0) || (d > 0 && frise.scrollLeft >= max - 1)) return;
+    e.preventDefault(); frise.scrollLeft += d;
+  }, { passive: false });
+  let tire = null;
+  frise.addEventListener('pointerdown', e => { if (e.pointerType === 'mouse' && e.button === 0) tire = { x: e.clientX, gauche: frise.scrollLeft, bouge: false }; });
+  frise.addEventListener('pointermove', e => {
+    if (!tire || (!tire.bouge && Math.abs(e.clientX - tire.x) < 5)) return;
+    if (!tire.bouge) { tire.bouge = true; frise.setPointerCapture(e.pointerId); frise.classList.add('tiree'); }
+    frise.scrollLeft = tire.gauche - (e.clientX - tire.x);
+  });
+  const lacherSouris = () => {
+    if (!tire) return;
+    const bouge = tire.bouge; tire = null; frise.classList.remove('tiree');
+    if (!bouge) return;
+    const taire = e => e.stopPropagation(); // le clic qui finit un glissé n’ouvre pas de tuile
+    frise.addEventListener('click', taire, true); setTimeout(() => frise.removeEventListener('click', taire, true), 0);
+  };
+  frise.addEventListener('pointerup', lacherSouris); frise.addEventListener('pointercancel', lacherSouris);
   addEventListener('keydown', e => { if (!lecture) return; if (e.key === 'Escape') arreter(); else if (e.key === ' ' && !e.target.closest?.('button')) { e.preventDefault(); basculer(); } });
   document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement && lecture?.plein) arreter(); }); // sortir du plein écran, c’est sortir
 }

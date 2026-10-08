@@ -220,6 +220,22 @@ Avant de dormir, j’ai écrit une lettre à ma mère, sur le bureau, avec un st
     `« Dérouler » fait passer le chemin seul, en grand, depuis le départ, le texte de la tuile du milieu dessous (« ${d1.quand} ») ; il s’arrête, reprend, et se referme`);
   await dm.close();
 
+  // 9. sur ordinateur : la molette fait reculer le chemin, la souris le tire ; au bout, la page reprend la main ; un clic ouvre la tuile
+  const co = await b.newContext({ viewport: { width: 1280, height: 800 } }), o = await co.newPage(); surveiller(o, e, x);
+  await o.goto(BASE + 'chemin/?demo');
+  await attendre(o, () => o.evaluate(() => document.querySelector('#intro').hidden && window.chemin?.tuiles.length > 2), 60000);
+  const ici = () => o.evaluate(() => ({ x: Math.round(document.querySelector('#frise').scrollLeft), page: Math.round(scrollY), jour: document.querySelector('#jour').textContent }));
+  const cadre = await o.locator('#frise').boundingBox(), cx = cadre.x + cadre.width / 2, cy = cadre.y + cadre.height / 2;
+  await o.mouse.move(cx, cy);
+  const o0 = await ici(); await o.mouse.wheel(0, 300); await o.waitForTimeout(300); const o1 = await ici();
+  await o.evaluate(() => scrollTo(0, 0)); await o.waitForTimeout(100);
+  await o.mouse.wheel(0, -400); await o.waitForTimeout(300); const o2 = await ici();
+  await o.mouse.down(); await o.mouse.move(cx + 300, cy, { steps: 8 }); await o.mouse.up(); await o.waitForTimeout(200); const o3 = await ici();
+  await o.mouse.click(cx, cy); const o4 = await ici();
+  verifier(o1.x === o0.x && o1.page > 0 && o2.x <= o0.x - 350 && o3.x <= o2.x - 250 && !o3.jour && o4.jour,
+    `sur ordinateur, au bout, la molette rend la main à la page ; elle fait reculer le chemin (${o0.x - o2.x} points), la souris le tire (${o2.x - o3.x}) sans ouvrir de tuile, un clic l’ouvre`);
+  await co.close();
+
   verifier(!calme(e).length, `aucune erreur dans la console${calme(e).length ? ' : ' + calme(e).slice(0, 4).join(' | ') : ''}`);
   verifier(!x.length, `aucune requête vers l’extérieur${x.length ? ' : ' + x.slice(0, 3).join(' ') : ''}`);
   await b.close(); local.fermer(); bilan();
