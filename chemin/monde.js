@@ -6,7 +6,7 @@
 import * as THREE from './vendor/three-chemin.min.js?v=1';
 import { rng, hash, melange, nuance } from '../outils.js?v=1';
 
-export const MOTEUR = 2; // la version du peintre, ici et dans l’aquarelle : on l’augmente quand une même page se peindrait autrement
+export const MOTEUR = 3; // la version du peintre, ici et dans l’aquarelle : on l’augmente quand une même page se peindrait autrement
 export const L = 14, V = 11, ELEV = 8 * Math.PI / 180, HAUT = 1000, LARGE = Math.round(HAUT * L / V), MARGE = 40; // un jour : 14 m de long, une tuile de 1273 × 1000 points, et une marge pour le pinceau
 const BAS = -2.2, CIBLE = (V / 2 + BAS) / Math.cos(ELEV); // le bas de l’image, en mètres, sous le chemin ; la hauteur que vise la caméra
 const PLANS = { avant: [1.4, 3], bord: [-2.2, -1.1], milieu: [-3.4, -11], fond: [-15, -26] };
@@ -93,7 +93,7 @@ export function planifier(jour, veille, F, recents) {
     if (!o) return null;
     const [hmin, hmax, wmax] = h || TAILLES[plan] || TAILLES.chemin, haut = Math.max(o.taille[1], .02), large = Math.max(o.taille[0], o.taille[2], .02);
     s = Math.min(Math.max(s, hmin / haut), hmax / haut, wmax / large); // ni trop petit, ni trop grand, pour son plan
-    const [zA, zB] = plan === 'bord' && lieu === 'rivage' ? [-1.5, -1.1] : PLANS[plan] || [-.4, .4], zz = z ?? zA + r() * (zB - zA), k = recul(zz) * s, larg = large * k; // au bord de l’eau, le bord du chemin est la plage
+    const [zA, zB] = plan === 'bord' && lieu === 'rivage' ? [-1.5, -1.1] : PLANS[plan] || [-.4, .4], zz = z ?? zA + r() * (zB - zA), k = recul(zz) * s * (plan === 'fond' ? .8 : 1), larg = large * k; // au bord de l’eau, le bord du chemin est la plage ; le fond, un peu plus petit, laisse voir le lointain
     const xx = x ?? place(plan, larg * .9, de, a); if (xx == null) return null;
     const long = o.taille[2] > o.taille[0] * 1.3, ry = (profil ?? long ? Math.PI / 2 * (r() < .5 ? 1 : -1) : 0) + (r() - .5) * .5;
     const it = { id: o.id, x: xx, z: zz, y, ry, s: k, plan }; items.push(it); return it;
@@ -121,6 +121,7 @@ export function planifier(jour, veille, F, recents) {
   // ce que la page appelle, d’abord : il a sa place avant le décor ; au bord du chemin, sur le chemin, devant, dans le ciel ou sur l’eau
   for (const { objet: o } of jour.objets) {
     const role = o.role;
+    if (F.montagnes.includes(o)) continue; // une montagne nommée : ce sont les sommets du lointain, pas un rocher au bord du chemin
     if (/^watercraft|^pirate-kit\/(boat|ship)|^q-ships\/|^q-survival\/Raft/.test(o.id)) { if (lieu === 'rivage') poser(o, 'milieu', { z: -5 - r() * 4, profil: true, h: BATEAU }); } // loin de l’eau, pas de bateau
     else if (role === 'batiment') poser(o, 'milieu', { z: -5, profil: false, h: MAISON });
     else if (/^train-kit|^holiday-kit\/train/.test(o.id)) { const z = lieu === 'rivage' ? -1.3 : -1.8, it = poser(o, 'bord', { z, profil: true, s: 1 }); if (it) poser(F.rails[0], 'bord', { x: it.x, z, profil: true, s: 1.2 }); } // au bord de l’eau, sur la plage
@@ -188,7 +189,7 @@ export function planifier(jour, veille, F, recents) {
     for (let n = 0; n < 3; n++) poser(tirer(F.fougeres), 'avant', { z: 2.3, h: [.6, 1.2, 2] });
     if (r() < .3) poser(tirer(F.paillotes), 'milieu', { z: -8, profil: false, h: [4, 6, 9] });
   } else if (lieu === 'montagne') { // les sommets au loin, les sapins, les rochers ; l’hiver, la neige
-    for (let n = 0; n < 3; n++) poser(tirer(F.montagnes), 'fond', { z: -25 - r() * 4, profil: false, h: [9, 15, 30] });
+    for (let n = 0; n < 2; n++) poser(tirer(F.montagnes), 'fond', { z: -22 - r() * 4, profil: false, h: [4, 6.5, 14] }); // des rochers ; les sommets, eux, sont au lointain
     const pins = saison === 'hiver' && F.pinsNeige.length ? [...F.pinsNeige, ...F.sapinsNeige] : F.pins;
     for (let n = 0; n < 8; n++) poser(tirer(pins), 'milieu', { h: ARBRE });
     for (let n = 0; n < 4; n++) poser(tirer(F.rochersMontagne), 'bord', { h: [.5, 1.6, 3] });
@@ -206,7 +207,7 @@ export function planifier(jour, veille, F, recents) {
     const o = choix && tirer(choix);
     if (o) { const h = /tree|pine|palm|acacia/i.test(o.id) ? 8 : /lantern/.test(o.id) ? 3 : /gate|hedge/.test(o.id) ? 2.2 : 1.3; raccord = { id: o.id, x: x0, z: 1.9, y: 0, ry: /gate/.test(o.id) ? 0 : (r() - .5) * .6, s: h / Math.max(o.taille[1], .05), plan: 'avant' }; items.push(raccord); }
   }
-  return { i: jour.i, x0, date: jour.date, lieu, saison, climat: jour.climat, items, piece, sol: solDe(lieu, saison, r) };
+  return { i: jour.i, x0, date: jour.date, lieu, saison, climat: jour.climat, items, piece, sol: solDe(lieu, saison, r), fond: fondDe(lieu, jour.horizon, r) };
 }
 function solDe(lieu, saison, r) { // la couleur du sol, et celle du chemin
   const herbe = { printemps: '#8fbf5e', ete: '#9cbf56', automne: '#bfa253', hiver: '#eef2f4' }[saison];
@@ -222,6 +223,72 @@ function solDe(lieu, saison, r) { // la couleur du sol, et celle du chemin
     montagne: { sol: saison === 'hiver' ? '#eef2f4' : nuance(herbe, -.06), chemin: saison === 'hiver' ? '#f6f7f8' : '#c4b79c' },
   }[lieu] || { sol: herbe, chemin: '#d2b98c' };
   return { ...S, relief: { foret: 1.2, champs: .7, village: .5, rivage: 0, interieur: .7, desert: 1.5, savane: .5, tropiques: 1, montagne: 2.4 }[lieu] ?? .7, eau: lieu === 'rivage' };
+}
+
+/* ───────── Le lointain : entre le bout du sol et le ciel, des silhouettes pâlies par la distance ───────── */
+
+// par le lieu, puis par les mots de la page : une lisière, des collines, des montagnes, la mer, des toits ; chacun de 0 à 1
+function fondDe(lieu, horizon, r) {
+  const f = { lisiere: 0, collines: 0, montagnes: 0, mer: 0, toits: 0, ...({
+    foret: { lisiere: .9, collines: .3 }, champs: { collines: .45 + .45 * r(), lisiere: .3 * r() }, village: { toits: .4 + .35 * r(), collines: .35 },
+    rivage: { mer: 1, collines: .15 * r() }, interieur: { collines: .45 }, desert: { collines: .5 + .4 * r() }, savane: { collines: .3 + .3 * r() },
+    tropiques: { lisiere: .8, montagnes: .3 + .3 * r() }, montagne: { montagnes: .8 + .2 * r(), collines: .4 },
+  }[lieu] || { collines: .45 }) };
+  for (const k in f) if (horizon?.[k]) f[k] = Math.max(f[k], .5 + .5 * horizon[k]); // nommé une fois, c’est déjà presque tout l’horizon
+  for (const k in f) f[k] = Math.round(f[k] * 100) / 100;
+  return f;
+}
+const COS = Math.cos(ELEV), SIN = Math.sin(ELEV), yDeV = (v, z) => CIBLE + (v + z * SIN) / COS; // la hauteur, à z, d’un point vu à v dans l’image (depuis son milieu, en mètres)
+const b1 = (x, l, s) => bruit(x / l, .5, s); // du bruit le long de x
+function pics(x, l, s) { // des sommets pointus, un tous les l mètres environ, chacun à sa hauteur et sa pente
+  const i0 = Math.floor(x / l); let v = 0;
+  for (let i = i0 - 1; i <= i0 + 1; i++) { const xi = (i + .5 + (hash(`${s}:${i}`) - .5) * .6) * l, hi = .35 + .65 * hash(`${s}:h${i}`), wi = l * (.6 + .6 * hash(`${s}:w${i}`)); v = Math.max(v, hi * Math.max(0, 1 - Math.abs(x - xi) / wi)); }
+  return v;
+}
+function toits(x) { // des toits plats, des pignons, un clocher de loin en loin
+  const seg = Math.floor(x / 3), u = x / 3 - seg, h = hash(`toit:${seg}`), k = hash(`clocher:${seg}`);
+  return .35 + .45 * h + (k > .92 ? .6 * Math.max(0, 1 - Math.abs(u - .5) * 5) : k > .6 ? .18 * Math.max(0, 1 - Math.abs(u - .5) * 2.4) : 0);
+}
+// chaque bande : sa profondeur, sa part de brume, sa teinte, et le haut de sa silhouette en hauteur d’image pour une part a ;
+// le bout du sol se voit à 2,77 : une bande sans part reste cachée derrière
+const SOL_LOIN = 2.6, LISIERE = { printemps: '#3f6f44', ete: '#36613c', automne: '#6f5d34', hiver: '#4f5e66' };
+const BANDES = [ // teinte : par le lieu ou donnée ; les mélanges se font en couleurs d’écran, comme le ciel
+  { nom: 'lisiere', z: -37, brume: .3, teinte: p => LISIERE[p.saison] || LISIERE.ete, haut: (x, a) => SOL_LOIN + a * (.6 + .3 * b1(x, .7, 23) + .25 * b1(x, 5, 24)) },
+  { nom: 'toits', z: -41, brume: .35, teinte: () => '#7d7066', haut: (x, a) => SOL_LOIN + a * toits(x) },
+  { nom: 'collines', z: -45, brume: .3, teinte: p => nuance(p.sol.sol, -.45), haut: (x, a) => SOL_LOIN + Math.min(1.6, a * (.8 + 1.5 * (.5 * b1(x, 14, 27) + .35 * b1(x, 5, 28) + .15 * b1(x, 1.8, 29)))) },
+  { nom: 'mer', z: -50, brume: .25, teinte: () => '#5f9fbf', eau: true, haut: (x, a) => SOL_LOIN + .9 * a },
+  { nom: 'montagnes', z: -56, brume: .35, teinte: () => '#4a566e', neige: '#e4e9ef', haut: (x, a) => SOL_LOIN + Math.min(2, a * (1 + 1.3 * (.7 * pics(x, 4, 31) + .2 * pics(x, 1.4, 32) + .1 * b1(x, 12, 33)))) },
+];
+// comme parts, mais fondu sur toute la largeur d’un jour : le lointain change lentement, d’un jour à l’autre
+function partsLoin(plans, x) {
+  const out = []; for (const p of plans) { const c = p.x0 + L / 2, w = lisse(L / 2 + 6, L / 2 - 6, Math.abs(x - c)); if (w > 0) out.push([p, w]); }
+  const t = out.reduce((a, [, w]) => a + w, 0) || 1; return out.map(([p, w]) => [p, w / t]);
+}
+function lointain(plans, de, a) {
+  const g = new THREE.Group(), xs = []; for (let x = de; x <= a + 1e-6; x += .5) xs.push(x);
+  const t = new THREE.Color(), brumeDe = p => melange('#cdd6de', p.climat.bas, .45); // la brume, entre le gris et le bas du ciel du jour
+  for (const B of BANDES) {
+    const cols = xs.map(x => { // à chaque x : la part de la bande, fondue d’un jour à l’autre, et ses couleurs, pâlies par la brume
+      let part = 0, neige = 0; const couleur = new THREE.Color(0, 0, 0), neigeC = new THREE.Color(0, 0, 0);
+      for (const [p, w] of partsLoin(plans, x)) {
+        const brume = brumeDe(p); part += w * (p.fond?.[B.nom] || 0); neige += w * (p.saison === 'hiver' ? 1 : 0);
+        couleur.add(t.set(melange(B.teinte(p), brume, B.brume)).multiplyScalar(w)); if (B.neige) neigeC.add(t.set(melange(B.neige, brume, .3)).multiplyScalar(w));
+      }
+      return { x, part, neige, haut: B.haut(x, part), couleur, neigeC };
+    });
+    if (!cols.some(c => c.part > .02)) continue;
+    const pos = [], col = [], idx = [], rangs = B.neige ? 3 : 2;
+    for (const c of cols) {
+      const ligne = B.neige ? Math.max(SOL_LOIN, c.haut - (.22 + .35 * c.neige) * Math.max(0, c.haut - 2.77)) : c.haut; // la neige : le haut de ce qui dépasse du sol, davantage l’hiver
+      (rangs === 3 ? [1.6, ligne, c.haut] : [1.6, c.haut]).forEach((v, j) => { pos.push(c.x, yDeV(v, B.z), B.z); const k = j === 2 ? c.neigeC : c.couleur; col.push(k.r, k.g, k.b); });
+    }
+    for (let i = 0; i < cols.length - 1; i++) for (let j = 0; j < rangs - 1; j++) { const a0 = i * rangs + j, b0 = a0 + rangs; idx.push(a0, b0, a0 + 1, a0 + 1, b0, b0 + 1); }
+    const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); geo.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); geo.setIndex(idx);
+    const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ vertexColors: true, fog: false, toneMapped: false, side: THREE.DoubleSide }));
+    m.userData.genere = true; if (B.eau) m.userData.eau = true;
+    g.add(m);
+  }
+  return g;
 }
 
 /* ───────── Le sol, l’eau, le ciel ───────── */
@@ -240,7 +307,7 @@ function hauteur(plans, x, z) {
   if (eau > 0 && eau < 1) eau = lisse(0, 1, eau + (bruit(z / 3.5, x / 6, 11) - .5) * .7); // une côte qui serpente, pas une ligne droite
   const dz = z - meandre(x), loin = Math.max(0, -dz - 2);
   let h = (bruit(x * .35, z * .35, 3) - .5) * .12 + lisse(-1.2, -4, dz) * .1 * relief;
-  h += relief * Math.pow(loin / 26, 1.4) * 1.2 * bruit(x / 14, z / 9, 7); // les collines, au loin, sous le ciel
+  h += Math.min(relief, 1.5) * Math.pow(loin / 26, 1.4) * .36 * bruit(x / 14, z / 9, 7); // le sol ondule vers le fond ; les collines et les sommets, eux, sont au lointain, derrière
   if (eau > 0) h = h * (1 - eau) + eau * (dz > -1.6 ? .04 - lisse(.4, -1.6, dz) * .1 : -.4); // le rivage : la plage, puis la mer
   for (const p of plans) if (p.piece && x > p.piece.de - 1 && x < p.piece.a + 1) { const w = lisse(p.piece.de - 1, p.piece.de, x) * lisse(p.piece.a + 1, p.piece.a, x) * lisse(p.piece.fond - 1.5, p.piece.fond - .2, z) * lisse(3.2, 2.4, z); return (1 - w) * (rampe(z) + h) + w * .02; } // sous la maison, le sol est plat
   return rampe(z) + h;
@@ -335,7 +402,7 @@ export class Atelier {
   async tuile(plans, k) {
     const W = LARGE + 2 * MARGE, l = W * V / HAUT, xc = k * L + L / 2, de = xc - l / 2 - 1, a = xc + l / 2 + 1;
     const voisins = plans.filter(p => p && p.x0 < a + 2 && p.x0 + L > de - 2), s = new THREE.Scene(), F = this.catalogue;
-    s.add(terrain(voisins, de - 1, a + 1), eau(voisins, de - 4, a + 4), ciel(voisins, de - 4, a + 4));
+    s.add(terrain(voisins, de - 1, a + 1), eau(voisins, de - 4, a + 4), ciel(voisins, de - 4, a + 4), lointain(voisins, de - 4, a + 4));
     for (const p of voisins) if (p.piece) s.add(maison(p.piece));
     const items = voisins.flatMap(p => p.items).filter(it => it.x > de - 6 && it.x < a + 6);
     const modeles = await Promise.all(items.map(it => this.modeles.charger(F.get(it.id))));

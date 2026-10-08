@@ -4,7 +4,7 @@
 // passage et sa tonalité. Les vecteurs viennent de fastText, alignés et réduits : voir outils/sens.py.
 
 export const D = 96, PORTEURS = 14; // un passage, une tuile : environ 14 mots porteurs
-export const LECTURE = 3; // la version de la lecture d’un passage : on l’augmente quand un même passage se lirait autrement
+export const LECTURE = 4; // la version de la lecture d’un passage : on l’augmente quand un même passage se lirait autrement
 const IMAGE = Math.round(.55 * 255); // un mot fait une image s’il est à plus de 0,55 d’un objet
 const SEUIL = .7; // un objet vient sur la tuile si son score dépasse 0,7 : son nom est tout près d’un mot du passage
 const ECHELLE = 127 * 127; // les vecteurs sont quantifiés sur un octet, de longueur 127
@@ -30,6 +30,14 @@ const METEO = Object.fromEntries(Object.entries({
   neige: 'neige neiges neigeait neiger neigé neigeux enneigé enneigée flocon flocons poudreuse verglas givre gel gelé gelée bonhomme-de-neige',
   brume: 'brume brumes brumeux brumeuse brouillard brouillards embrumé embrumée',
   soleil: 'soleil ensoleillé ensoleillée chaleur chaud chaude canicule brûlant brûlante radieux radieuse lumineux',
+}).map(([k, v]) => [k, new Set(v.split(/\s+/))]));
+// ce qu’on voit au loin, entre le bout du sol et le ciel : des mots, et leurs formes ; deux mentions, et c’est tout l’horizon
+const HORIZON = Object.fromEntries(Object.entries({
+  mer: 'mer océan horizon voile voiles voilier voiliers phare île îles baie côte falaise falaises marée',
+  montagnes: 'montagne montagnes sommet sommets pic pics cime cimes crête crêtes alpes pyrénées glacier glaciers volcan',
+  collines: 'colline collines vallon vallons vallée vallées coteau coteaux plateau dune dunes plaine plaines',
+  lisiere: 'forêt forêts bois lisière orée sapins pins futaie bosquet bosquets',
+  toits: 'ville toits clocher église cathédrale immeubles gratte-ciel usine cheminées faubourg banlieue',
 }).map(([k, v]) => [k, new Set(v.split(/\s+/))]));
 
 // Les champs de la vie ordinaire : quelques mots chacun, le reste vient des voisins dans l’espace des vecteurs
@@ -116,13 +124,14 @@ function* jetons(S, texte) {
   }
 }
 
-// Lire un passage : ses mots porteurs, son contexte, ses champs, sa tonalité, son heure, le temps qu’il fait
+// Lire un passage : ses mots porteurs, son contexte, ses champs, sa tonalité, son heure, le temps qu’il fait, ce qu’on voit au loin
 export function lirePage(S, texte) {
   const brut = mots(texte), n = new Map();
-  let heure = null; const meteo = {};
+  let heure = null; const meteo = {}, horizon = {};
   for (const m of brut) {
     if (QUAND[m]) heure = QUAND[m];
     for (const [k, l] of Object.entries(METEO)) if (l.has(m)) meteo[k] = Math.min(1, (meteo[k] || 0) + .5);
+    for (const [k, l] of Object.entries(HORIZON)) if (l.has(m)) horizon[k] = Math.min(1, (horizon[k] || 0) + .5);
   }
   for (const [, i] of jetons(S, texte)) n.set(i, (n.get(i) || 0) + 1);
   const liste = [...n].map(([i, k]) => ({ i, k, poids: (1 + Math.log(k)) * Math.log(1 + i / 60) * (porteur(S, i) ? 1 : .3) })); // les porteurs d’abord ; les autres, s’il en manque
@@ -138,7 +147,7 @@ export function lirePage(S, texte) {
     for (const x of pris) { s += 2.5 * x.p * (scal(S.V, x.i, S.ton[a]) - scal(S.V, x.i, S.ton[b])); t += x.p; }
     return Math.max(-1, Math.min(1, s / Math.max(2, t)));
   };
-  return { mots: pris, contexte: ctx, champs, valence: axe('plus', 'moins'), energie: axe('vif', 'lent'), heure, meteo };
+  return { mots: pris, contexte: ctx, champs, valence: axe('plus', 'moins'), energie: axe('vif', 'lent'), heure, meteo, horizon };
 }
 
 // Les objets les plus proches des mots du passage, au-dessus d’un seuil ; un objet vu récemment est moins probable.

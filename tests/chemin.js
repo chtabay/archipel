@@ -73,7 +73,7 @@ Avant de dormir, j’ai écrit une lettre à ma mère, sur le bureau, avec un st
 
   // 2. le découpage, dans la page : une page courte reste entière ; les dates, les séparateurs coupent
   const d = await p.evaluate(async () => {
-    const { decouper } = await import('./sens.js?v=4'), S = window.chemin.S;
+    const { decouper } = await import('./sens.js?v=5'), S = window.chemin.S;
     return {
       court: decouper(S, 'Café au soleil sur le balcon, le chat dort sur le canapé.').length, vide: decouper(S, '  \n ').length,
       dates: decouper(S, 'Lundi 3 mars\n\nRéveil difficile, métro bondé, bureau, réunion.\n\nMardi 4 mars\n\nRien.\n\nMercredi 5 mars\n\nForêt, champignons, mousse.').map(x => x.titre),
@@ -87,7 +87,7 @@ Avant de dormir, j’ai écrit une lettre à ma mère, sur le bureau, avec un st
 
   // 2 bis. au-delà des choses : un verbe conjugué trouve sa pose, le temps qu’il fait change le ciel, les mots mènent ailleurs
   const v = await p.evaluate(async () => {
-    const { lirePage, objetsDeLaPage, lieuDeLaPage } = await import('./sens.js?v=4'), { climatDe, planifier } = await import('./monde.js?v=3'), S = window.chemin.S, F = window.chemin.F;
+    const { lirePage, objetsDeLaPage, lieuDeLaPage } = await import('./sens.js?v=5'), { climatDe, planifier } = await import('./monde.js?v=4'), S = window.chemin.S, F = window.chemin.F;
     const lire = t => { const l = lirePage(S, t), o = objetsDeLaPage(S, l); return { l, o, mots: l.mots.map(x => x.m), lieu: lieuDeLaPage(l, o) }; };
     const mer = lire('Une baleine au loin, des mouettes dans le ciel, et nous avons nagé.');
     const plan = planifier({ i: 0, date: '2026-07-01', lieu: 'rivage', objets: mer.o, climat: climatDe(mer.l) }, null, F, new Map());
@@ -95,13 +95,17 @@ Avant de dormir, j’ai écrit une lettre à ma mère, sur le bureau, avec un st
     return { dormi: lire('Hier soir, j’ai dormi longtemps.').mots, marche: lire('J’ai marché jusqu’au marché.').mots, lit: lire('Il lit dans son lit.').mots,
       pluie: climatDe(lire('Il pleut, une averse, nous sommes trempés.').l).meteo, neige: climatDe(lire('Il neigeait, des flocons partout.').l),
       nuit: climatDe(lire('La nuit, les étoiles.').l).meteo, desert: lire('Le désert, le sable, les dunes, un chameau près de l’oasis.').lieu,
-      ciel: plan.items.filter(it => it.vol).map(it => it.id), eau: plan.items.filter(it => it.eau).map(it => it.id), eauAuxChamps: champs.items.filter(it => it.eau).length };
+      ciel: plan.items.filter(it => it.vol).map(it => it.id), eau: plan.items.filter(it => it.eau).map(it => it.id), eauAuxChamps: champs.items.filter(it => it.eau).length,
+      loin: lire('Depuis la colline, on voyait la mer au loin et les sommets enneigés.').l.horizon, fondMer: plan.fond,
+      fondMontagne: planifier({ i: 2, date: '2026-01-10', lieu: 'montagne', objets: [], climat: climatDe(lire('Le sommet.').l), horizon: {} }, null, F, new Map()).fond };
   });
   verifier(v.dormi.includes('dormir') && v.marche.includes('marcher') && v.marche.includes('marché') && v.lit.includes('lire') && v.lit.includes('lit'),
     `un verbe conjugué compte par son infinitif ; « marché » et « lit » restent des noms, sauf après un auxiliaire ou un pronom (${v.marche.join(', ')} ; ${v.lit.join(', ')})`);
   verifier(v.pluie[0] >= .5 && v.neige.meteo[1] >= .5 && v.nuit[3] === 1, `le temps qu’il fait vient des mots : la pluie, la neige, la nuit (${v.pluie} · ${v.neige.meteo} · ${v.nuit})`);
   verifier(v.desert === 'desert', 'les mots mènent ailleurs : le sable, les dunes et le chameau font le désert');
   verifier(v.ciel.some(id => /mouette/.test(id)) && v.eau.some(id => /whale/.test(id)) && !v.eauAuxChamps, `au bord de l’eau, les mouettes volent et la baleine nage (${v.ciel.concat(v.eau).join(', ')}) ; loin de l’eau, pas de baleine`);
+  verifier(v.loin.mer >= .5 && v.loin.montagnes >= .5 && v.loin.collines >= .5 && v.fondMontagne.montagnes >= .8 && v.fondMer.mer === 1,
+    `le lointain vient du lieu et des mots : la mer, les sommets, la colline (${Object.entries(v.loin).map(([k, x]) => k + ' ' + x).join(', ')}) ; en montagne, des sommets ; au bord de l’eau, la mer jusqu’à l’horizon`);
 
   // 3. la première page : gardée sur le téléphone, une tuile de plus, peinte
   await p.fill('#page', PAGE); await p.click('#garder');
@@ -200,6 +204,14 @@ Avant de dormir, j’ai écrit une lettre à ma mère, sur le bureau, avec un st
   await attendre(dm, () => dm.evaluate(() => /sans être gardée/.test(document.querySelector('#dit').textContent)), 30000);
   const ecrite = await dm.evaluate(async () => ({ dit: document.querySelector('#dit').textContent, pages: (await window.chemin.carnet.lirePages()).map(x => x.texte) }));
   verifier(ecrite.dit.startsWith('Démo') && ecrite.pages.length === 1 && ecrite.pages[0] === LONG, `une page écrite dans la démo s’ajoute au chemin sans être gardée ; le journal du téléphone n’a pas bougé (« ${ecrite.dit} »)`);
+  // le lointain, dans la scène : les sommets au-dessus du sol en montagne, la mer jusqu’à l’horizon au rivage, le ciel ouvert dans la plaine
+  const loin = await dm.evaluate(async () => {
+    const C = window.chemin, k = i => C.plans.findIndex(q => q.passage.texte.startsWith(i));
+    const ligne = async (k, y) => { const v = await C.atelier.tuile(C.plans, k), s = v.silhouette, d = s.getContext('2d').getImageData(0, Math.round(s.height * y), s.width, 1).data; let r = 0, vert = 0; for (let i = 0; i < d.length; i += 4) { if (d[i] > 128) r++; if (d[i + 1] > 128) vert++; } return { terre: Math.round(r / s.width * 100) / 100, eau: Math.round(vert / s.width * 100) / 100, lieu: C.plans[k].lieu, fond: C.plans[k].fond }; };
+    return { montagne: await ligne(k('Randonnée en montagne'), .2), mer: await ligne(k('Baignade'), .22), plaine: await ligne(k('J’ai fait du vélo'), .1) };
+  });
+  verifier(loin.montagne.fond.montagnes >= .5 && loin.montagne.terre >= .4 && loin.mer.lieu === 'rivage' && loin.mer.eau >= .5 && loin.plaine.lieu === 'champs' && loin.plaine.terre <= .1,
+    `le lointain se voit : la page de montagne (${loin.montagne.lieu}) a des sommets sur ${Math.round(loin.montagne.terre * 100)} % de la largeur à 80 % de hauteur ; au rivage, la mer jusqu’à l’horizon (${Math.round(loin.mer.eau * 100)} %) ; dans la plaine (${loin.plaine.lieu}), le ciel reste ouvert (${Math.round(loin.plaine.terre * 100)} % de terre à 90 %)`);
   await dm.click('.tuile >> nth=3');
   const lue = await dm.evaluate(() => { const x = window.chemin.plans[3].passage; return { titre: document.querySelector('#titre-page').textContent, etiquette: document.querySelectorAll('.tuile .date')[3].textContent, blocs: [...document.querySelectorAll('#blocs .texte')].map(b => b.textContent).join('\n\n'), page: window.chemin.pages[x.page].texte, retour: !document.querySelector('#retour').hidden, zone: !document.querySelector('#page').hidden }; });
   await dm.screenshot({ path: path.join(OUT, 'relire.png') });
