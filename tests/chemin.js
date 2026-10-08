@@ -164,6 +164,19 @@ Avant de dormir, j’ai écrit une lettre à ma mère, sur le bureau, avec un st
   verifier(!!deux, `l’archipel garde ses fichiers à côté, sans toucher à ceux du chemin (${deux || 'manque un cache'})`);
   await q.close();
 
+  // 8. la démo : elle se dit démo, et ce qu’on y écrit ne touche pas au journal du téléphone
+  const dm = await c.newPage(); surveiller(dm, e, x);
+  await dm.goto(BASE + 'chemin/?demo');
+  await attendre(dm, () => dm.evaluate(() => document.querySelector('#intro').hidden && window.chemin?.pages.length > 0), 60000);
+  const demo = await dm.evaluate(() => { const b = document.querySelector('#demo'); return { vue: !b.hidden && b.getBoundingClientRect().height > 0, liens: [...document.querySelectorAll('#demo a, #promesse a')].map(a => a.href), zone: document.querySelector('#page').value, pages: window.chemin.pages.length }; });
+  verifier(demo.vue && demo.liens.length === 2 && demo.liens.every(h => h === BASE + 'chemin/') && demo.zone === '' && demo.pages === 32, `la démo se dit démo, avec ses ${demo.pages} pages d’exemple et un lien vers son propre journal ; la zone d’écriture reste vide`);
+  await dm.screenshot({ path: path.join(OUT, 'demo.png') });
+  await dm.fill('#page', PAGE); await dm.click('#garder');
+  await attendre(dm, () => dm.evaluate(() => /sans être gardée/.test(document.querySelector('#dit').textContent)), 30000);
+  const ecrite = await dm.evaluate(async () => ({ dit: document.querySelector('#dit').textContent, pages: (await window.chemin.carnet.lirePages()).map(x => x.texte) }));
+  verifier(ecrite.dit.startsWith('Démo') && ecrite.pages.length === 1 && ecrite.pages[0] === LONG, `une page écrite dans la démo s’ajoute au chemin sans être gardée ; le journal du téléphone n’a pas bougé (« ${ecrite.dit} »)`);
+  await dm.close();
+
   verifier(!calme(e).length, `aucune erreur dans la console${calme(e).length ? ' : ' + calme(e).slice(0, 4).join(' | ') : ''}`);
   verifier(!x.length, `aucune requête vers l’extérieur${x.length ? ' : ' + x.slice(0, 3).join(' ') : ''}`);
   await b.close(); local.fermer(); bilan();

@@ -121,6 +121,7 @@ function montrer() {
   }, { root: frise, rootMargin: '0px 150% 0px 150%' });
   tuiles.forEach(u => { u.t.dataset.k = u.k; vues.observe(u.t); });
   if (!tuiles.length) premiere.pret();
+  if (enDemo) return; // la démo ne range pas le carnet : ce qu’il garde du journal y reste
   carnet.elaguer('tuiles', new Set(tuiles.map(u => u.cle))).catch(() => {});
   carnet.elaguer('lectures', new Set(passages.map(x => cleLue(x.texte)))).catch(() => {});
 }
@@ -189,9 +190,13 @@ function aide(texte) { // le filet de sécurité d’Archipel : des gens à qui 
   box.replaceChildren(el('p', { textContent: 'Ce que tu écris compte. Des gens peuvent t’écouter, maintenant :' }), ...g.items.map(([nom, href, sous]) => el('p', {}, el('a', { href, textContent: nom }), ` · ${sous}`)));
   box.hidden = false;
 }
+if (enDemo) { // la démo le dit : ses pages sont des exemples, et ce qu’on y écrit n’est pas gardé
+  $('#demo').hidden = false;
+  $('#promesse').replaceChildren('Dans la démo, ta page n’est pas gardée. ', el('a', { href: './', textContent: 'Commencer mon journal' }));
+}
 function preparerEcriture() {
   const zone = $('#page'), bouton = $('#garder'), jour = aujourdhui(), deja = pages.find(p => p.date === jour);
-  if (deja) zone.value = deja.texte;
+  if (deja && !enDemo) zone.value = deja.texte;
   let attente = null;
   zone.addEventListener('input', () => { clearTimeout(attente); attente = setTimeout(() => aide(zone.value), 250); });
   bouton.addEventListener('click', async () => {
@@ -206,7 +211,7 @@ function preparerEcriture() {
     if (await calculer((n, t) => dit(`Le texte se lit : ${n} passages sur ${t}`))) {
       montrer(); allerAuBout();
       const n = passages.filter(x => !x.depart && x.date === jour).length;
-      dit(!garde ? 'Ta page n’a pas pu être gardée : la place manque sur ce téléphone.' : n > 1 ? `Ta page est gardée. Elle fait ${n} tuiles de chemin.` : 'Ta page est gardée. Le chemin s’allonge.');
+      dit(enDemo ? 'Démo : ta page s’ajoute au chemin, sans être gardée.' : !garde ? 'Ta page n’a pas pu être gardée : la place manque sur ce téléphone.' : n > 1 ? `Ta page est gardée. Elle fait ${n} tuiles de chemin.` : 'Ta page est gardée. Le chemin s’allonge.');
     }
     bouton.disabled = false;
   });

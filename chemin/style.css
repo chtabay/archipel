@@ -63,6 +63,8 @@ textarea:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3
 .aide { margin: .7rem 0 0; padding: .7rem .85rem; border-left: 3px solid #c9823f; border-radius: .4rem; background: #fbf0e6; }
 .aide p { margin: 0 0 .3rem; }
 .aide a { color: var(--accent); font-weight: 700; }
+.demo { margin: .45rem 0 0; padding: .5rem .75rem; border-radius: .6rem; background: var(--accent-doux); font-size: .92rem; }
+.demo a, .tiny a { color: var(--accent); font-weight: 700; white-space: nowrap; }
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }
   .intro .trait { stroke-dashoffset: 0; }

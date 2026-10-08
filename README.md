@@ -152,7 +152,7 @@ Une île de l’archipel peut se relier à d’autres, par des routes sur l’ea
 
 ## Le chemin, une autre app sur le même site
 
-**→ https://chtabay.github.io/archipel/chemin/**, dans le dossier `chemin/`. Un journal : chaque page devient un bout de chemin, peint à l’aquarelle sur le téléphone, et le chemin s’allonge de page en page. `chemin/?demo` montre trente-deux pages d’exemple.
+**→ https://chtabay.github.io/archipel/chemin/**, dans le dossier `chemin/`. Un journal : chaque page devient un bout de chemin, peint à l’aquarelle sur le téléphone, et le chemin s’allonge de page en page. `chemin/?demo` montre trente-deux pages d’exemple ; ce qu’on y écrit n’est pas gardé.
 
 - **Une seule façon d’écrire.** La zone « Aujourd’hui » prend quelques lignes, un courrier ou un roman entier. « Garder la page » la garde ; réécrire le même jour la remplace.
 - **Le découpage.** Un texte se découpe en passages d’environ 14 mots porteurs, une tuile chacun : une page de journal fait une tuile, un roman quelques centaines. Un mot porteur fait une image : il est proche d’un objet du catalogue, ou d’un champ de la vie ordinaire. On coupe aux titres, chapitres ou dates, et aux séparateurs ; puis entre les paragraphes, puis entre les phrases. Les répliques d’un dialogue restent ensemble tant qu’on peut. Une page de garde rejoint le passage qui suit ; un jour vide garde sa tuile. La première tuile d’une page porte sa date, celle d’un chapitre son titre.
