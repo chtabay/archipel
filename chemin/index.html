@@ -8,8 +8,8 @@
   <title>Le chemin</title>
   <meta name="description" content="Un journal : chaque page devient un bout de chemin, peint à l’aquarelle. Rien ne quitte ce téléphone.">
   <link rel="preload" href="../fonts/nunito.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="style.css?v=2">
-  <script type="module" src="app.js?v=4"></script>
+  <link rel="stylesheet" href="style.css?v=3">
+  <script type="module" src="app.js?v=5"></script>
 </head>
 <body class="accueil">
   <div class="intro trace" id="intro" aria-hidden="true">
@@ -37,15 +37,18 @@
   <header class="tete">
     <h1>Le chemin</h1>
     <p class="dit" id="dit" aria-live="polite">Chaque page devient un bout de chemin.</p>
+    <p class="demo" id="demo" hidden>Démo : trente-deux pages d’exemple. Ce que tu écris ici n’est pas gardé. <a href="./">Commencer mon journal</a></p>
   </header>
   <section class="frise" id="frise" aria-label="Le chemin de tes pages, du plus ancien au plus récent" tabindex="0"></section>
   <p class="jour" id="jour" aria-live="polite"></p>
   <main class="ecrire">
-    <label for="page" class="titre" id="titre-page">Aujourd’hui</label>
-    <textarea id="page" rows="5" placeholder="Quelques lignes sur ta journée, ou tout un texte…" spellcheck="true"></textarea>
+    <div class="entete"><h2 class="titre" id="titre-page">Aujourd’hui</h2><button type="button" class="lien" id="retour" hidden>Revenir à aujourd’hui</button></div>
+    <div class="blocs" id="blocs"></div>
+    <p class="consigne" id="consigne" hidden></p>
+    <textarea id="page" rows="5" placeholder="Quelques lignes sur ta journée, ou tout un texte…" spellcheck="true" aria-label="Ta page du jour"></textarea>
     <div class="aide" id="aide" hidden></div>
-    <p class="gestes"><button type="button" class="btn" id="garder">Garder la page</button></p>
-    <p class="tiny">Ta page reste sur ce téléphone. Elle est lue ici, jamais ailleurs, et seuls ses mots choisissent ce qui pousse sur le chemin. Un long texte se découpe en passages : une tuile pour chacun.</p>
+    <p class="gestes"><button type="button" class="btn" id="garder">Garder la page</button><button type="button" class="lien" id="annuler" hidden>Annuler</button></p>
+    <p class="tiny" id="promesse">Ta page reste sur ce téléphone. Elle est lue ici, jamais ailleurs, et seuls ses mots choisissent ce qui pousse sur le chemin. Un long texte se découpe en passages : une tuile pour chacun. Touche une tuile pour relire sa page.</p>
   </main>
 </body>
 </html>

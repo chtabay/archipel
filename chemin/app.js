@@ -5,7 +5,7 @@
 import { chargerSens, decouper, lirePage, candidats, objetsDeLaPage, lieuDeLaPage, LECTURE } from './sens.js?v=4';
 import { familles, planifier, climatDe, Atelier, Modeles, LARGE, HAUT, MARGE, MOTEUR } from './monde.js?v=3';
 import { demo } from './demo.js?v=2';
-import * as carnet from './carnet.js?v=1';
+import * as carnet from './carnet.js?v=2';
 import { peindreFrise } from '../aquarelle.js?v=3';
 import { LEX, HUMANS } from '../contenu.js?v=2';
 
@@ -121,12 +121,13 @@ function montrer() {
   }, { root: frise, rootMargin: '0px 150% 0px 150%' });
   tuiles.forEach(u => { u.t.dataset.k = u.k; vues.observe(u.t); });
   if (!tuiles.length) premiere.pret();
+  if (enDemo) return; // la démo ne range pas le carnet : ce qu’il garde du journal y reste
   carnet.elaguer('tuiles', new Set(tuiles.map(u => u.cle))).catch(() => {});
   carnet.elaguer('lectures', new Set(passages.map(x => cleLue(x.texte)))).catch(() => {});
 }
-// au départ, et après une page gardée : le début de la dernière page, au bord droit de l’écran s’il tient
-function allerAuBout() {
-  const dernier = passages.findIndex(x => x.page === pages.length - 1 && x.premier), t = tuiles[Math.max(0, dernier)]?.t;
+// au départ, et après une page gardée : le début de la page, la dernière ou celle du jour qu’on vient de changer
+function allerA(date) {
+  const n = date ? pages.findIndex(p => p.date === date) : pages.length - 1, premier = passages.findIndex(x => x.page === n && x.premier), t = tuiles[Math.max(0, premier)]?.t;
   if (!t) return;
   frise.scrollLeft = Math.min(t.offsetLeft - frise.offsetLeft - 8, frise.scrollWidth); // la frise ne va pas plus loin que son bout
 }
@@ -175,12 +176,22 @@ async function peindre(k) {
 }
 // les mots du passage dont l’objet a trouvé sa place sur la tuile
 const poses = p => [...new Set(p.objets.filter(o => p.items.some(it => it.id === o.objet.id)).map(o => o.mot))];
-function dire(k) { // toucher une tuile : son nom, son lieu, et les mots qui l’ont fait pousser
+function dire(k) { // toucher une tuile : son nom, son lieu, les mots qui l’ont fait pousser ; et sa page, sous la frise
   const p = plans[k], x = p.passage, mots = poses(p);
   $('#jour').textContent = [x.depart ? 'Le départ' : [quand(x.date), x.titre].filter(Boolean).join(' · '), LIEUX[p.lieu], mots.join(', ')].filter(Boolean).join(' · ');
+  if (x.depart || edition) return; // pendant qu’on modifie un bloc, sa page reste
+  vu = x.date; cible = passages.some(y => y !== x && !y.depart && y.page === x.page) ? x : null; montrerPage(); // une page d’une seule tuile : rien à surligner
+  $('#blocs mark')?.scrollIntoView({ block: 'nearest' });
 }
 
-/* ───────── Écrire la page du jour : elle remplace celle d’aujourd’hui s’il y en a une ───────── */
+/* ───────── La page d’un jour, sous la frise : ses blocs, chacun à son heure ; aujourd’hui, un bloc de plus ───────── */
+
+// une page : ses blocs ; son texte, qui fait les tuiles, les met bout à bout, comme des paragraphes
+const joindre = (date, blocs) => ({ date, blocs, texte: blocs.map(b => b.texte).join('\n\n') });
+const enBlocs = p => joindre(p.date, p.blocs?.length ? p.blocs : [{ heure: '', texte: p.texte }]); // une page d’avant les blocs : un seul, sans heure
+const maintenant = () => { const d = new Date(); return `${deux(d.getHours())}:${deux(d.getMinutes())}`; };
+const aLHeure = h => (h ? `${+h.slice(0, 2)} h ${h.slice(3, 5)}` : '');
+let vu = null, edition = null, cible = null, brouillon = ''; // le jour montré ; le bloc qu’on modifie ; le passage de la tuile touchée ; ce qu’on écrivait avant
 
 function aide(texte) { // le filet de sécurité d’Archipel : des gens à qui parler, si les mots le disent
   const t = norm(texte), quoi = LEX.self.some(k => t.includes(k)) ? 'self' : LEX.other.some(k => t.includes(k)) ? 'other' : null, box = $('#aide');
@@ -189,27 +200,81 @@ function aide(texte) { // le filet de sécurité d’Archipel : des gens à qui 
   box.replaceChildren(el('p', { textContent: 'Ce que tu écris compte. Des gens peuvent t’écouter, maintenant :' }), ...g.items.map(([nom, href, sous]) => el('p', {}, el('a', { href, textContent: nom }), ` · ${sous}`)));
   box.hidden = false;
 }
+if (enDemo) { // la démo le dit : ses pages sont des exemples, et ce qu’on y écrit n’est pas gardé
+  $('#demo').hidden = false;
+  $('#promesse').replaceChildren('Dans la démo, ta page n’est pas gardée. ', el('a', { href: './', textContent: 'Commencer mon journal' }));
+}
+// où le passage d’une tuile se trouve dans le texte de sa page : ses morceaux, retrouvés dans l’ordre des passages
+function etendue(x) {
+  const texte = pages[x.page]?.texte || ''; let de = 0;
+  for (const y of passages) {
+    if (y.depart || y.page !== x.page) continue;
+    let a = -1, b = de;
+    for (const m of y.texte.split('\n\n')) { const i = texte.indexOf(m, b); if (i < 0) return null; if (a < 0) a = i; b = i + m.length; }
+    if (y === x) return [a, b];
+    de = b;
+  }
+  return null;
+}
+function montrerPage() { // le jour montré, aujourd’hui ou celui d’une tuile touchée : ses blocs, le passage de la tuile surligné
+  const auj = aujourdhui(), jour = edition?.date || vu || auj, page = pages.find(p => p.date === jour), zone = $('#page'), r = cible?.date === jour ? etendue(cible) : null;
+  $('#titre-page').textContent = jour === auj ? 'Aujourd’hui' : quand(jour);
+  $('#retour').hidden = jour === auj;
+  let o = 0;
+  $('#blocs').replaceChildren(...(page?.blocs || []).map((b, i) => {
+    const d = o, f = o + b.texte.length, texte = el('p', { className: 'texte' }); o = f + 2; // la place du bloc dans le texte de la page
+    if (r && r[0] < f && r[1] > d) { const a = Math.max(r[0], d) - d, z = Math.min(r[1], f) - d; texte.append(b.texte.slice(0, a), el('mark', { textContent: b.texte.slice(a, z) }), b.texte.slice(z)); }
+    else texte.textContent = b.texte;
+    const long = b.texte.length > 600, ouvert = !!texte.firstElementChild, gestes = el('p', { className: 'gestes-bloc' });
+    const bloc = el('article', { className: ['bloc', long && 'long', ouvert && 'ouvert', edition?.date === jour && edition.i === i && 'en-cours'].filter(Boolean).join(' ') },
+      ...(b.heure ? [el('p', { className: 'heure', textContent: aLHeure(b.heure) })] : []), texte, gestes);
+    if (long) gestes.append(el('button', { type: 'button', className: 'lien', textContent: ouvert ? 'Replier' : 'Lire tout', onclick: e => { e.target.textContent = bloc.classList.toggle('ouvert') ? 'Replier' : 'Lire tout'; } }));
+    if (!edition) gestes.append(el('button', { type: 'button', className: 'lien', textContent: 'Modifier', ariaLabel: b.heure ? `Modifier le bloc de ${aLHeure(b.heure)}` : 'Modifier ce bloc', onclick: () => modifier(jour, i) }));
+    return bloc;
+  }));
+  const ecrit = jour === auj || !!edition; // un autre jour se lit ; on n’y écrit qu’en modifiant un de ses blocs
+  zone.hidden = $('#garder').hidden = !ecrit; $('#annuler').hidden = $('#consigne').hidden = !edition;
+  if (edition) { const h = page.blocs[edition.i].heure; $('#consigne').textContent = `Tu modifies ${h ? `le bloc de ${aLHeure(h)}` : 'ce bloc'}. Vidé, il s’efface.`; }
+  zone.placeholder = page ? 'La suite de ta journée…' : 'Quelques lignes sur ta journée, ou tout un texte…';
+  zone.setAttribute('aria-label', edition ? 'Le bloc à modifier' : page ? 'La suite de ta journée' : 'Ta page du jour');
+  $('#garder').textContent = edition ? 'Garder le bloc' : page ? 'Ajouter à la page' : 'Garder la page';
+}
+function modifier(jour, i) { // un bloc revient dans la zone d’écriture ; ce qu’on y écrivait attend la fin
+  const zone = $('#page');
+  brouillon = zone.value; edition = { date: jour, i }; zone.value = pages.find(p => p.date === jour).blocs[i].texte; aide(zone.value);
+  montrerPage(); zone.focus();
+}
 function preparerEcriture() {
-  const zone = $('#page'), bouton = $('#garder'), jour = aujourdhui(), deja = pages.find(p => p.date === jour);
-  if (deja) zone.value = deja.texte;
+  const zone = $('#page'), bouton = $('#garder');
+  const quitter = () => { if (edition) { edition = null; zone.value = brouillon; brouillon = ''; aide(zone.value); } };
   let attente = null;
   zone.addEventListener('input', () => { clearTimeout(attente); attente = setTimeout(() => aide(zone.value), 250); });
-  bouton.addEventListener('click', async () => {
-    const texte = zone.value.replace(/\r\n?/g, '\n').trim(); if (!texte) { zone.focus(); return; }
+  $('#annuler').addEventListener('click', () => { quitter(); montrerPage(); });
+  $('#retour').addEventListener('click', () => { quitter(); vu = cible = null; $('#jour').textContent = ''; montrerPage(); allerA(); });
+  bouton.addEventListener('click', async () => { // un bloc de plus aujourd’hui, ou le bloc modifié ; vidé, il s’efface, et sa page avec lui s’il était seul
+    const texte = zone.value.replace(/\r\n?/g, '\n').trim(), e = edition;
+    if (!texte && !e) { zone.focus(); return; }
     aide(texte); bouton.disabled = true;
-    const i = pages.findIndex(p => p.date === jour), premiere = !pages.length;
-    if (i >= 0) pages[i].texte = texte; else pages.push({ date: jour, texte });
+    const jour = e?.date || aujourdhui(), i = pages.findIndex(p => p.date === jour), premiere = !pages.length, blocs = i >= 0 ? [...pages[i].blocs] : [];
+    if (!e) blocs.push({ heure: maintenant(), texte }); else if (texte) blocs[e.i] = { ...blocs[e.i], texte }; else blocs.splice(e.i, 1);
+    const page = joindre(jour, blocs);
+    if (i < 0) pages.push(page); else if (blocs.length) pages[i] = page; else pages.splice(i, 1);
     pages.sort((a, b) => a.date.localeCompare(b.date));
-    const garde = enDemo || await carnet.garderPage({ date: jour, texte });
+    const garde = enDemo || await (blocs.length ? carnet.garderPage(page) : carnet.effacerPage(jour)).catch(() => false);
     if (premiere && !enDemo) carnet.proteger();
-    dit(texte.length > 3000 ? 'Le texte se lit…' : 'Le chemin s’allonge…');
+    edition = cible = null; vu = blocs.length && jour !== aujourdhui() ? jour : null; zone.value = e ? brouillon : ''; brouillon = ''; montrerPage(); // une page partie : retour à aujourd’hui
+    dit(texte.length > 3000 ? 'Le texte se lit…' : e ? 'Le chemin change…' : 'Le chemin s’allonge…');
     if (await calculer((n, t) => dit(`Le texte se lit : ${n} passages sur ${t}`))) {
-      montrer(); allerAuBout();
-      const n = passages.filter(x => !x.depart && x.date === jour).length;
-      dit(!garde ? 'Ta page n’a pas pu être gardée : la place manque sur ce téléphone.' : n > 1 ? `Ta page est gardée. Elle fait ${n} tuiles de chemin.` : 'Ta page est gardée. Le chemin s’allonge.');
+      montrer(); allerA(blocs.length ? jour : null);
+      const n = passages.filter(x => !x.depart && x.date === jour).length, tuilesDe = n > 1 ? `fait ${n} tuiles de chemin.` : '';
+      dit(enDemo ? (e ? 'Démo : le bloc change, sans être gardé.' : 'Démo : ta page s’ajoute au chemin, sans être gardée.')
+        : !garde ? 'Ta page n’a pas pu être gardée : la place manque sur ce téléphone.'
+        : e ? (texte ? `Le bloc est modifié.${tuilesDe && ` La page ${tuilesDe}`}` : 'Le bloc est effacé.')
+        : tuilesDe ? `Ta page est gardée. Elle ${tuilesDe}` : 'Ta page est gardée. Le chemin s’allonge.');
     }
     bouton.disabled = false;
   });
+  montrerPage();
 }
 
 /* ───────── Hors ligne : le service worker garde l’app et les objets déjà vus ───────── */
@@ -225,9 +290,9 @@ function garderHorsLigne() {
   let pret = Promise.resolve();
   try {
     const [s, p] = await Promise.all([chargerSens('./'), enDemo ? demo() : carnet.lirePages()]);
-    S = s; pages = p; F = familles(S.catalogue); atelier = new Atelier(new Modeles('./'), F.parId);
+    S = s; pages = p.map(enBlocs); F = familles(S.catalogue); atelier = new Atelier(new Modeles('./'), F.parId);
     preparerEcriture();
-    if (await calculer((n, t) => { if (t > 60) { intro.dire(`Le texte se relit : ${n} passages sur ${t}`); dit(`Le texte se relit : ${n} passages sur ${t}`); } })) { montrer(); allerAuBout(); }
+    if (await calculer((n, t) => { if (t > 60) { intro.dire(`Le texte se relit : ${n} passages sur ${t}`); dit(`Le texte se relit : ${n} passages sur ${t}`); } })) { montrer(); allerA(); }
     dit(pages.length ? 'Chaque page devient un bout de chemin.' : 'Écris ta première page : le chemin commence là.');
     pret = premiere;
   } catch (e) { console.error(e); dit('Le chemin ne s’ouvre pas sur cet appareil.'); }
