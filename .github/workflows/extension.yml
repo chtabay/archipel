@@ -19,10 +19,10 @@ jobs:
           node-version: 22
       - run: node chemin/extension/fabriquer.js
       - run: cd chemin/extension/dist && zip -qr ../chemin-extension.zip . && ls -la ../chemin-extension.zip
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4 # GitHub zippe lui-même la pièce jointe : on lui donne le dossier, un seul dézippage
         with:
           name: chemin-extension
-          path: chemin/extension/chemin-extension.zip
+          path: chemin/extension/dist
           retention-days: 30
       - if: github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v2
