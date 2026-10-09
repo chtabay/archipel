@@ -673,7 +673,7 @@ geste main
 serrer main
 frapper main
 désigner doigt
-genou jambe
+genou accroupi
 cuisse jambe
 épaule bras
 lèvre bouche
@@ -900,3 +900,6 @@ orteil pied
 reine couronne
 étincelle magie
 palette couleurs
+# le corps par les personnages : un genou à terre, quelqu’un de dos qui regarde
+contempler dos
+admirer dos

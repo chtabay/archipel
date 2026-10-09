@@ -199,6 +199,9 @@ KITS.update({
     lieux_par={r'^dino': ['reve'], r'^bete-(cow|horse|llama|pig|sheep)|^galop|^mange': ['champs'], r'^bete-(wolf|red-fox)': ['foret'], r'^bete-zebra': ['savane'],
                r'^nage-|^peche': ['rivage'], r'^(dort|assis-chaise|bricole|fauteuil)': ['interieur', 'champs', 'village'], r'^creuse': ['champs']}),
 })
+# les mêmes modèles, autrement : une personne de dos, qui regarde le paysage, c’est « le dos ». Même fichier, un autre nom,
+# et un demi-tour (tourne, en degrés) au moment de la poser
+ALIAS = {f'poses/dos-{n}': (f'poses/debout-{n}', dict(tourne=180)) for n in ('casual-female', 'casual2-female', 'casual-male', 'casual2-male')}
 # les tailles réelles de quelques bêtes, en mètres de haut : les cubes sont tous pareils
 BETES = {'cow': 1.5, 'elephant': 2.8, 'giraffe': 4, 'lion': 1.2, 'tiger': 1.1, 'deer': 1.4, 'panda': 1.2, 'polar': 1.4, 'hog': .9, 'pig': .9,
          'beaver': .5, 'bee': .3, 'bunny': .4, 'cat': .45, 'caterpillar': .25, 'chick': .3, 'crab': .3, 'dog': .65, 'fish': .4, 'fox': .55,
@@ -282,6 +285,9 @@ if __name__ == '__main__':
     if SEULS: # les autres collections restent, dans leur ordre ; les rebâties prennent leur place, ou viennent à la fin
         avant = json.load(open(os.path.join(ICI, 'catalogue-brut.json'))); garde = [o for o in avant if o['id'].split('/')[0] not in SEULS]
         print(len(avant) - len(garde), 'objets remplacés dans', ', '.join(sorted(SEULS))); objets = garde + objets
+    objets = [o for o in objets if o['id'] not in ALIAS]; parId = {o['id']: o for o in objets}
+    for a, (source, plus) in ALIAS.items():
+        if source in parId: objets.append({**parId[source], 'id': a, 'mots': mots(a.split('/')[1]), **plus})
     json.dump(objets, open(os.path.join(ICI, 'catalogue-brut.json'), 'w'), ensure_ascii=False)
     from collections import Counter
     print(len(objets), 'objets', dict(Counter(o['role'] for o in objets)))

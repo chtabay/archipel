@@ -73,7 +73,7 @@ Avant de dormir, j’ai écrit une lettre à ma mère, sur le bureau, avec un st
 
   // 2. le découpage, dans la page : une page courte reste entière ; les dates, les séparateurs coupent
   const d = await p.evaluate(async () => {
-    const { decouper } = await import('./sens.js?v=7'), S = window.chemin.S;
+    const { decouper } = await import('./sens.js?v=8'), S = window.chemin.S;
     return {
       court: decouper(S, 'Café au soleil sur le balcon, le chat dort sur le canapé.').length, vide: decouper(S, '  \n ').length,
       dates: decouper(S, 'Lundi 3 mars\n\nRéveil difficile, métro bondé, bureau, réunion.\n\nMardi 4 mars\n\nRien.\n\nMercredi 5 mars\n\nForêt, champignons, mousse.').map(x => x.titre),
@@ -87,7 +87,7 @@ Avant de dormir, j’ai écrit une lettre à ma mère, sur le bureau, avec un st
 
   // 2 bis. au-delà des choses : un verbe conjugué trouve sa pose, le temps qu’il fait change le ciel, les mots mènent ailleurs
   const v = await p.evaluate(async () => {
-    const { lirePage, objetsDeLaPage, lieuDeLaPage } = await import('./sens.js?v=7'), { climatDe, planifier } = await import('./monde.js?v=6'), S = window.chemin.S, F = window.chemin.F;
+    const { lirePage, objetsDeLaPage, lieuDeLaPage } = await import('./sens.js?v=8'), { climatDe, planifier } = await import('./monde.js?v=7'), S = window.chemin.S, F = window.chemin.F;
     const lire = t => { const l = lirePage(S, t), o = objetsDeLaPage(S, l); return { l, o, mots: l.mots.map(x => x.m), lieu: lieuDeLaPage(l, o) }; };
     const mer = lire('Une baleine au loin, des mouettes dans le ciel, et nous avons nagé.');
     const plan = planifier({ i: 0, date: '2026-07-01', lieu: 'rivage', objets: mer.o, climat: climatDe(mer.l) }, null, F, new Map());
@@ -101,6 +101,11 @@ Avant de dormir, j’ai écrit une lettre à ma mère, sur le bureau, avec un st
       symboles: (() => { const x = lire('Le temps passe. Ma soeur et mon grand-père sont là, et j’ai peur.'); return { mots: x.mots, porteurs: x.l.mots.filter(m => m.p > .3).length, objets: x.o.map(o => `${o.mot}:${o.objet.id.split('/')[1]}`) }; })(),
       pictos: (() => { const x = lire('Une idée me trotte : une question de justice. J’ai mis ma robe et mes bottes.'), q = planifier({ i: 3, date: '2026-05-04', lieu: 'champs', objets: x.o, climat: climatDe(x.l), horizon: {} }, null, F, new Map());
         return { objets: x.o.map(o => o.objet.id), poses: q.items.filter(it => /^pictos\//.test(it.id)).map(it => ({ plan: it.plan, ry: it.ry })), tous: lire('Tout le monde était là.').o.map(o => o.objet.id), monde: lire('Le monde est vaste.').o.map(o => o.objet.id) }; })(),
+      varie: (() => { // un même mot, d’une page à l’autre : des modèles qui changent ; la même page, le même modèle
+        const x = lire('Une maison, une femme.'), tirage = g => objetsDeLaPage(S, x.l, { graine: g, saison: 'printemps' }).map(o => o.objet.id).join(' + ');
+        const tirages = Array.from({ length: 12 }, (_, k) => tirage(`2026-04-${k + 1}:${k}`)), dos = lire('J’ai mal au dos.'), q = planifier({ i: 4, date: '2026-04-20', lieu: 'champs', objets: dos.o, climat: climatDe(dos.l), horizon: {} }, null, F, new Map()).items.find(it => /^poses\/dos-/.test(it.id));
+        return { maisons: new Set(tirages.map(t => t.split(' + ').find(id => /maison|building|House|Story/.test(id)))).size, femmes: new Set(tirages.map(t => t.split(' + ').find(id => /female|femme/.test(id)))).size, stable: tirage('2026-04-3:2') === tirage('2026-04-3:2'), dos: dos.o.map(o => o.objet.id), ry: q?.ry };
+      })(),
       reperes: (() => { // vingt-quatre jours de champs, vingt-quatre de rivage : ce qui se pose au second plan
         const voir = (lieu, n) => { const recents = new Map(), out = []; let veille = null; for (let i = 0; i < n; i++) { const q = planifier({ i, date: `2026-03-${String(1 + i).padStart(2, '0')}`, lieu, objets: [], climat: climatDe(lire('Une journée.').l), horizon: {} }, veille, F, recents); veille = q; out.push(...q.items); } return out; };
         const champs = voir('champs', 24), rivage = voir('rivage', 24);
@@ -120,6 +125,8 @@ Avant de dormir, j’ai écrit une lettre à ma mère, sur le bureau, avec un st
   const pictos = v.pictos.objets.filter(id => /^pictos\/(ampoule|question|balance|robe|bottes)$/.test(id));
   verifier(pictos.length >= 4 && v.pictos.poses.length >= 4 && v.pictos.poses.every(p => p.plan === 'bord' && Math.abs(p.ry) <= .26) && !v.pictos.tous.includes('pictos/globe') && v.pictos.monde.includes('pictos/globe'),
     `ce qui n’a pas d’objet en 3D a son picto, planté au bord du chemin, face à nous : ${pictos.join(', ')} ; « tout le monde » est des gens (${v.pictos.tous.join(', ') || 'rien'}), « le monde », le globe`);
+  verifier(v.varie.maisons >= 3 && v.varie.femmes >= 3 && v.varie.stable && v.varie.dos.some(id => /^poses\/dos-/.test(id)) && Math.abs((v.varie.ry ?? 0) - Math.PI) < .2,
+    `pour un même mot, le modèle change d’une page à l’autre (${v.varie.maisons} maisons, ${v.varie.femmes} femmes sur douze pages), et reste le même pour la même page ; « le dos », c’est une personne de dos (${v.varie.dos.join(', ')}), tournée d’un demi-tour`);
   verifier(v.reperes.champs.length >= 2 && v.reperes.vie >= 1 && v.reperes.large.length >= 1 && !v.reperes.surEau,
     `au second plan, des repères : sur vingt-quatre jours de champs, ${v.reperes.champs.length} au fond (${[...new Set(v.reperes.champs)].slice(0, 4).join(', ')}) et ${v.reperes.vie} promeneurs, tracteurs ou trains au milieu ; au bord de l’eau, ${v.reperes.large.length} navires ou phares au large (${[...new Set(v.reperes.large)].slice(0, 3).join(', ')}), et personne ne marche sur l’eau`);
 

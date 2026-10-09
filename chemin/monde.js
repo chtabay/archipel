@@ -120,7 +120,7 @@ export function planifier(jour, veille, F, recents) {
     s = Math.min(Math.max(s, hmin / haut), hmax / haut, wmax / large); // ni trop petit, ni trop grand, pour son plan
     const [zA, zB] = plan === 'bord' && lieu === 'rivage' ? [-1.5, -1.1] : PLANS[plan] || [-.4, .4], zz = z ?? zA + r() * (zB - zA), k = recul(zz) * s * (plan === 'fond' ? .8 : 1), larg = large * k; // au bord de l’eau, le bord du chemin est la plage ; le fond, un peu plus petit, laisse voir le lointain
     const xx = x ?? place(plan, larg * .9, de, a); if (xx == null) return null;
-    const long = o.taille[2] > o.taille[0] * 1.3, ry = (profil ?? long ? Math.PI / 2 * (r() < .5 ? 1 : -1) : 0) + (r() - .5) * .5;
+    const long = o.taille[2] > o.taille[0] * 1.3, ry = o.tourne ? o.tourne * Math.PI / 180 + (r() - .5) * .3 : (profil ?? long ? Math.PI / 2 * (r() < .5 ? 1 : -1) : 0) + (r() - .5) * .5; // tourne : un demi-tour, une personne de dos
     const it = { id: o.id, x: xx, z: zz, y, ry, s: k, plan }; items.push(it); return it;
   };
   const taille = (o, [hmin, hmax, wmax]) => { const haut = Math.max(o.taille[1], .02), large = Math.max(o.taille[0], o.taille[2], .02); return [Math.min(Math.max(1, hmin / haut), hmax / haut, wmax / large), haut, large]; };

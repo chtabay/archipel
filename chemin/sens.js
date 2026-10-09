@@ -4,7 +4,7 @@
 // passage et sa tonalité. Les vecteurs viennent de fastText, alignés et réduits : voir outils/sens.py.
 
 export const D = 96, PORTEURS = 14; // un passage, une tuile : environ 14 mots porteurs
-export const LECTURE = 6; // la version de la lecture d’un passage : on l’augmente quand un même passage se lirait autrement
+export const LECTURE = 7; // la version de la lecture d’un passage : on l’augmente quand un même passage se lirait autrement
 const IMAGE = Math.round(.55 * 255), OBJET = Math.round(.7 * 255); // un mot fait une image s’il est à plus de 0,55 d’un objet ; à 0,7, il le nomme
 const SEUIL = .7; // un objet vient sur la tuile si son score dépasse 0,7 : son nom est tout près d’un mot du passage
 const ECHELLE = 127 * 127; // les vecteurs sont quantifiés sur un octet, de longueur 127
@@ -71,7 +71,7 @@ const TON = {
   lent: 'calme lent paisible doux repos silence tranquille sieste lenteur',
 };
 
-export const FICHIERS_SENS = ['sens/mots.txt?v=4', 'sens/vecteurs.bin?v=4', 'sens/objets.bin?v=5', 'sens/images.bin?v=4', 'catalogue.json?v=5', 'sens/formes.txt?v=1', 'sens/symboles.txt?v=2'];
+export const FICHIERS_SENS = ['sens/mots.txt?v=4', 'sens/vecteurs.bin?v=4', 'sens/objets.bin?v=6', 'sens/images.bin?v=5', 'catalogue.json?v=6', 'sens/formes.txt?v=1', 'sens/symboles.txt?v=3'];
 export async function chargerSens(base = './') {
   const lire = (f, comment) => fetch(new URL(f, new URL(base, location.href))).then(r => { if (!r.ok) throw new Error(`${f} : ${r.status}`); return r[comment](); });
   const [mots, V, O, I, catalogue, formes, symboles] = await Promise.all(FICHIERS_SENS.map((f, n) => lire(f, ['text', 'arrayBuffer', 'arrayBuffer', 'arrayBuffer', 'json', 'text', 'text'][n])));
@@ -118,7 +118,7 @@ export function porteur(S, i) {
 const SUJETS = new Set('je j tu il elle on nous vous ils elles me m te t se s en ai as a avons avez ont avais avait avions aviez avaient eu aurai auras aura aurons aurez auront aurais aurait suis es est sommes êtes sont étais était étions étiez étaient'.split(' '));
 // Un mot qui a ses symboles (sens/symboles.txt) compte par le premier qui nomme un objet : « le temps » met un sablier, « la
 // peur », un loup. Il compte même s’il est vide ailleurs, ou inconnu du vocabulaire : « grand-père » se montre en papi.
-const LOCUTIONS = new Map([['tout le monde', 'gens']]); // « tout le monde » : des gens, pas la planète
+const LOCUTIONS = new Map([['tout le monde', 'gens'], ['sac à dos', 'randonnée']]); // « tout le monde » : des gens, pas la planète ; « sac à dos » : un sac de randonnée, pas une personne de dos
 function* jetons(S, texte) {
   let avant = '', avant2 = '';
   for (const lu of mots(texte)) {
@@ -187,12 +187,30 @@ export function candidats(S, lecture, seuil = SEUIL) {
   }
   return out;
 }
-export function objetsDeLaPage(S, lecture, { seuil = SEUIL, max = 6, recents = new Map(), jour = 0, liste = null } = {}) {
-  const out = (liste || candidats(S, lecture, seuil)).map(o => { const vu = recents.get(o.objet.id), oubli = vu == null ? 1 : 1 - .8 * Math.exp(-(jour - vu) / 5); return { ...o, score: o.brut * oubli }; });
-  out.sort((a, b) => b.score - a.score);
-  const pris = new Set(), choisis = [];
-  for (const o of out) { if (pris.has(o.mot)) continue; pris.add(o.mot); choisis.push(o); if (choisis.length >= max) break; } // un objet par mot : la place va aux autres mots
-  return choisis;
+// Un objet par mot, et la place va aux autres mots. Avec une graine, celle du jour : parmi les modèles presque aussi proches
+// du mot et du même rôle, un au hasard, le même pour la même page ; ceux du lieu que disent les mots, et de la saison,
+// plus souvent. « maison » n’est pas toujours la même maison, ni « femme » la même femme
+const graineDe = s => { let h = 2166136261; for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619); return h >>> 0; };
+const alea = s => { let t = graineDe(s) + 0x6D2B79F5; t = Math.imul(t ^ t >>> 15, t | 1); t ^= t + Math.imul(t ^ t >>> 7, t | 61); return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+export function objetsDeLaPage(S, lecture, { seuil = SEUIL, max = 6, recents = new Map(), jour = 0, liste = null, graine = null, saison = null } = {}) {
+  const parMot = new Map();
+  for (const c of liste || candidats(S, lecture, seuil)) {
+    const vu = recents.get(c.objet.id), oubli = vu == null ? 1 : 1 - .8 * Math.exp(-(jour - vu) / 5), o = { ...c, score: c.brut * oubli };
+    if (!parMot.has(o.mot)) parMot.set(o.mot, []); parMot.get(o.mot).push(o);
+  }
+  const choix = [], lieu = graine != null ? lieuDeLaPage(lecture, []) : null; // le lieu que disent les mots seuls
+  for (const [mot, l] of parMot) {
+    l.sort((a, b) => b.score - a.score); let o = l[0];
+    if (graine != null && l.length > 1) {
+      const haut = Math.max(...l.map(x => x.brut)), pool = l.filter(x => x.brut >= haut - .1 && x.objet.role === o.objet.role);
+      const poids = pool.map(x => Math.exp((x.score - o.score) / .05) * (x.objet.saison && saison && x.objet.saison !== saison ? .05 : 1) // hors de sa saison, presque jamais
+        * (!x.objet.lieux?.length || x.objet.lieux.includes(lieu) ? 1 : .15)); // d’un autre lieu, rarement
+      let u = alea(`${graine}|${mot}`) * poids.reduce((a, b) => a + b, 0);
+      for (let k = 0; k < pool.length; k++) { u -= poids[k]; if (u <= 0) { o = pool[k]; break; } }
+    }
+    choix.push([l[0].score, o]);
+  }
+  return choix.sort((a, b) => b[0] - a[0]).slice(0, max).map(([, o]) => o);
 }
 
 // Le lieu du passage : celui de ses champs, et de ses objets ; sinon celui d’avant, pour que le chemin ne saute pas

@@ -288,6 +288,7 @@ NOMS.update({
   r'archipel/puits': 'puits', r'archipel/feu': 'feu camp', r'archipel/nuage-orage': 'orage nuage', r'archipel/nuage-pluie': 'pluie nuage averse',
   r'archipel/etang': 'étang mare', r'archipel/fleurs': 'fleurs', r'archipel/arbre-fleuri': 'arbre fleuri cerisier', r'archipel/arbre-nu': 'arbre nu',
   r'archipel/cairn': 'cairn pierres', r'archipel/menhir': 'menhir', r'archipel/ronce': 'ronces', r'archipel/baies': 'baies',
+  r'poses/dos-': 'dos', # une personne de dos
   # les pictos : ce que chaque emoji montre
   r'pictos/main$': 'main',
   r'pictos/doigt$': 'doigt',

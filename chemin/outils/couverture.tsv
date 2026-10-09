@@ -85,7 +85,7 @@ rang	mot	nature	fréquence	via	lemme	score	verdict	objet le plus proche	ses noms
 84	sûr	adjectif	1356.5		sûr	0.52	rien	pictos/doute	doute
 85	nuit	nom	1324.8	symbole	étoile	0.97	objet	platformer-kit/star	étoile
 86	coup	nom	1309.5	vide			vide		
-87	mourir	verbe	1307.5	symbole	mort	0.85	objet	kaykit-halloween-bits/tree_dead_large	arbre mort
+87	mourir	verbe	1307.5	symbole	mort	0.86	objet	kaykit-halloween-bits/tree_dead_large	arbre mort
 88	dieu	nom	1299.9	symbole	église	0.98	objet	kaykit-medieval/building_church_blue	église
 89	beau	adjectif	1291.9	symbole	fleur	0.97	objet	kaykit-mixed-bag-1/flax_flower_A	fleur
 90	sentir	verbe	1254.2	symbole	fleur	0.97	objet	kaykit-mixed-bag-1/flax_flower_A	fleur
@@ -118,7 +118,7 @@ rang	mot	nature	fréquence	via	lemme	score	verdict	objet le plus proche	ses noms
 117	porte	nom	951.3		porte	0.95	objet	platformer-kit/door-large-open	porte
 118	comme	adverbe	943.3	vide			vide		
 119	perdre	verbe	923.4	symbole	boussole	0.97	objet	q-survival/Compass_Open	boussole
-120	mort	nom	912.8		mort	0.85	objet	kaykit-halloween-bits/tree_dead_large	arbre mort
+120	mort	nom	912.8		mort	0.86	objet	kaykit-halloween-bits/tree_dead_large	arbre mort
 121	jouer	verbe	907.4	symbole	jeu	0.74	objet	mini-arcade/basketball-game	basket jeu
 122	ouvrir	verbe	905.8	symbole	porte	0.95	objet	platformer-kit/door-large-open	porte
 123	accord	nom	902.4		accord	1.01	objet	pictos/accord	accord
@@ -401,7 +401,7 @@ rang	mot	nature	fréquence	via	lemme	score	verdict	objet le plus proche	ses noms
 400	sourire	verbe	316.9	symbole	joie	0.87	objet	poses/joie-femme	joie heureux bonheur
 401	hier	adverbe	316.4		hier	0.48	rien	poses/joie-femme	joie heureux bonheur
 402	important	adjectif	316.1		important	0.36	rien	pictos/doute	doute
-403	dos	nom	314.3		dos	0.45	rien	objets-oga/maison-scissors	ciseaux
+403	dos	nom	314.3		dos	1.00	objet	poses/dos-casual-female	dos
 404	conduire	verbe	314.3	symbole	voiture	0.97	objet	toy-car-kit/vehicle-suv	voiture
 405	approcher	verbe	313.8		approcher	0.52	rien	poses/saut-femme	sauter saut bondir
 406	travers	nom	313.2		travers	0.40	rien	q-survival/Backpack	sac randonnée
@@ -639,7 +639,7 @@ rang	mot	nature	fréquence	via	lemme	score	verdict	objet le plus proche	ses noms
 638	prévenir	verbe	203		prévenir	0.42	rien	q-survival/FirstAidKit_Hard	trousse secours
 639	protéger	verbe	202.9	symbole	cadenas	0.95	objet	platformer-kit/lock	cadenas
 640	haut	nom	202.9		haut	0.51	rien	pictos/pied	pied
-641	mort	adjectif	202.5		mort	0.85	objet	kaykit-halloween-bits/tree_dead_large	arbre mort
+641	mort	adjectif	202.5		mort	0.86	objet	kaykit-halloween-bits/tree_dead_large	arbre mort
 642	cri	nom	201		cri	1.00	objet	pictos/porte-voix	cri
 643	front	nom	200.2		front	0.38	rien	fantasy-town-kit/banner-red	bannière rouge
 644	prince	nom	200.1	symbole	château	0.97	objet	kaykit-medieval/building_castle_blue	château
@@ -681,7 +681,7 @@ rang	mot	nature	fréquence	via	lemme	score	verdict	objet le plus proche	ses noms
 680	annoncer	verbe	189.6	symbole	cri	1.00	objet	pictos/porte-voix	cri
 681	filer	verbe	189.5		filer	0.57	porteur	poses/bricole-barbare	bricoler réparer bricolage
 682	étrange	adjectif	189.2		étrange	0.54	rien	pictos/etonnement	étonnement
-683	ventre	nom	188.9		ventre	0.54	rien	pictos/yeux	yeux
+683	ventre	nom	188.9		ventre	0.59	porteur	poses/dos-casual-female	dos
 684	léger	adjectif	188.8		léger	0.41	rien	furniture-kit/coatRackStanding	portemanteau manteau
 685	atteindre	verbe	188.6		atteindre	0.43	rien	poses/saut-femme	sauter saut bondir
 686	traîner	verbe	188.3		traîner	0.58	porteur	poses/lance-ranger	lancer jeter
@@ -702,7 +702,7 @@ rang	mot	nature	fréquence	via	lemme	score	verdict	objet le plus proche	ses noms
 701	fumer	verbe	182.9		fumer	0.60	porteur	furniture-kit/toilet	toilettes bain
 702	supposer	verbe	182.8		supposer	0.68	porteur	pictos/doute	doute
 703	loi	nom	182.4	symbole	justice	1.00	objet	pictos/balance	justice
-704	genou	nom	182.2	symbole	jambe	1.00	objet	pictos/jambe	jambe
+704	genou	nom	182.2	symbole	accroupi	0.77	objet	poses/accroupi-kenney	accroupi cacher
 705	escalier	nom	181.1		escalier	0.67	porteur	q-interior/Fireplace	cheminée
 706	présence	nom	180.6		présence	0.39	rien	pictos/traces	traces
 707	cigarette	nom	180.5		cigarette	0.58	porteur	q-interior/Bathroom_Towel	serviette
@@ -1277,7 +1277,7 @@ rang	mot	nature	fréquence	via	lemme	score	verdict	objet le plus proche	ses noms
 1276	croix	nom	100.7		croix	0.52	rien	kaykit-medieval/building_church_blue	église
 1277	curieux	adjectif	100.6		curieux	0.46	rien	pictos/etonnement	étonnement
 1278	ravir	verbe	100.6	symbole	joie	0.87	objet	poses/joie-femme	joie heureux bonheur
-1279	admirer	verbe	100.6		admirer	0.43	rien	coaster-kit/park-entrance	parc attractions
+1279	admirer	verbe	100.6	symbole	dos	1.00	objet	poses/dos-casual-female	dos
 1280	franc	nom	100.5	symbole	monnaie	0.87	objet	kaykit-board-game-bits/coin_10_gold	pièces monnaie
 1281	différence	nom	100.3		différence	0.42	rien	furniture-kit/lampWall	applique lampe
 1282	quart	nom	100.3		quart	0.41	rien	archipel/bete-poule	poule
@@ -1708,7 +1708,7 @@ rang	mot	nature	fréquence	via	lemme	score	verdict	objet le plus proche	ses noms
 1707	complet	adjectif	73.3		complet	0.40	rien	objets-oga/chess_knight	échecs cavalier
 1708	mystérieux	adjectif	73.3		mystérieux	0.58	porteur	poses/debout-wizard	magicien sorcier
 1709	voyager	verbe	73.2	symbole	valise	1.01	objet	pictos/valise	valise
-1710	contempler	verbe	73		contempler	0.51	rien	poses/assis-sol-kenney-f	assis asseoir repos
+1710	contempler	verbe	73	symbole	dos	1.00	objet	poses/dos-casual-female	dos
 1711	vers	nom	73	vide			vide		
 1712	énergie	nom	72.7	symbole	pile	0.77	objet	q-survival/Battery_Big	pile batterie
 1713	carrière	nom	72.7		carrière	0.30	rien	kaykit-holiday-bits/basketball	ballon basket
@@ -2029,7 +2029,7 @@ rang	mot	nature	fréquence	via	lemme	score	verdict	objet le plus proche	ses noms
 2028	exercer	verbe	58.8		exercer	0.38	rien	poses/assis-sol-kenney-f	assis asseoir repos
 2029	in	adjectif	58.8				hors vocabulaire		
 2030	instrument	nom	58.8	symbole	guitare	0.99	objet	kaykit-mixed-bag-1/guitar_A	guitare
-2031	nuque	nom	58.8		nuque	0.54	rien	pictos/visage	visage
+2031	nuque	nom	58.8		nuque	0.55	porteur	poses/dos-casual-female	dos
 2032	envoler	verbe	58.7	symbole	oiseau	1.00	objet	archipel/oiseau-fou	oiseau
 2033	violer	verbe	58.6		violer	0.42	rien	pictos/interdit	interdit
 2034	poète	nom	58.6	symbole	stylo	0.81	objet	objets-oga/stylo-crayon	stylo crayon écrire
