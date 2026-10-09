@@ -2,8 +2,8 @@
 // choisissent le lieu, les objets et le temps qu’il fait. Une page courte fait une tuile ; un long texte, un roman collé
 // d’un coup, se découpe en passages d’environ 14 mots porteurs, une tuile chacun. Les pages restent ici ; rien ne part.
 
-import { chargerSens, decouper, lirePage, candidats, objetsDeLaPage, lieuDeLaPage, LECTURE } from './sens.js?v=7';
-import { familles, planifier, climatDe, Atelier, Modeles, LARGE, HAUT, MARGE, MOTEUR } from './monde.js?v=6';
+import { chargerSens, decouper, lirePage, candidats, objetsDeLaPage, lieuDeLaPage, LECTURE } from './sens.js?v=8';
+import { familles, planifier, climatDe, saisonDe, Atelier, Modeles, LARGE, HAUT, MARGE, MOTEUR } from './monde.js?v=7';
 import { demo } from './demo.js?v=2';
 import * as carnet from './carnet.js?v=2';
 import { peindreFrise } from '../aquarelle.js?v=5';
@@ -79,9 +79,10 @@ async function calculer(suivre = () => {}) {
   for (const [i, x] of out.entries()) {
     let l = lus.get(x.texte);
     if (!l) { const lecture = lirePage(S, x.texte); l = { lecture, liste: candidats(S, lecture) }; lus.set(x.texte, l); nouvelles.push([cleLue(x.texte), ecrire(l)]); }
-    const objets = objetsDeLaPage(S, l.lecture, { recents, jour: i, liste: l.liste });
+    const climat = climatDe(l.lecture), saison = climat.meteo[1] >= .5 ? 'hiver' : saisonDe(x.date); // comme le plan du jour
+    const objets = objetsDeLaPage(S, l.lecture, { recents, jour: i, liste: l.liste, graine: `${x.date}:${i}`, saison });
     for (const o of objets) recents.set(o.objet.id, i);
-    const lieu = x.depart ? 'champs' : lieuDeLaPage(l.lecture, objets, veille?.lieu), jour = { i, date: x.date, lieu, objets, climat: climatDe(l.lecture), horizon: l.lecture.horizon };
+    const lieu = x.depart ? 'champs' : lieuDeLaPage(l.lecture, objets, veille?.lieu), jour = { i, date: x.date, lieu, objets, climat, horizon: l.lecture.horizon };
     veille = planifier(jour, veille, F, decor); veille.lecture = l.lecture; veille.objets = objets; veille.passage = x;
     faits.push(veille);
     if (i % 20 === 0) suivre(i, out.length);
