@@ -34,7 +34,7 @@ SENS = {
   'rolling': [], 'pin': ['dough', 'baking'], 'in': [], 'built': [], 'upper': [], 'whole': [], 'packed': [], 'vision': [], 'group': [],
 }
 NOMS = {r'food-kit/hot-dog': ['sausage']} # des noms entiers qui trompent : « hot dog » n’est pas un chien
-FRANCAIS = {'archipel', 'poses'} # les collections nommées en français : leurs noms ne valent rien en anglais
+FRANCAIS = {'archipel', 'poses', 'pictos'} # les collections nommées en français : leurs noms ne valent rien en anglais
 # les mots qui précisent sans nommer : couleurs, formes, états ; ils comptent peu, l’objet compte
 NUANCES = set('''red green blue yellow purple white black orange pink brown dark colored thin fat curved diagonal broken damaged deep triangle
 rectangle hanging crushed stacked stack speed luxury design fortified cross power head standing stand floor display future return block

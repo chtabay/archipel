@@ -7,7 +7,9 @@ sys.path.insert(0, os.path.dirname(__file__))
 from boites import boite
 
 ICI = os.path.dirname(os.path.abspath(__file__)); RACINE = os.path.dirname(ICI)
-SOURCES = sys.argv[1:] or ['kits'] # un kit se cherche dans chaque dossier, dans l’ordre
+ARGS = sys.argv[1:] # --seulement pictos,archipel : rebâtir ces collections-là, et garder les autres telles qu’elles sont, déjà allégées
+SEULS = set(ARGS[1].split(',')) if ARGS[:1] == ['--seulement'] and len(ARGS) > 1 else None
+SOURCES = (ARGS[2:] if SEULS else ARGS) or ['kits'] # un kit se cherche dans chaque dossier, dans l’ordre
 
 # chaque collection : son échelle vers des mètres, son rôle par défaut, ses lieux, ce qu’on écarte, et les exceptions par motif
 KITS = {
@@ -189,6 +191,9 @@ KITS.update({
     lieux_par={r'^(phare|bete-crabe|oiseau-(mouette|goeland|fou|fregate))': ['rivage'], r'maison-tropique': ['tropiques'], r'maison-neige': ['montagne'],
                r'maison-automne|bete-(renard|chevreuil|lievre|rougegorge)|arbre': ['foret'], r'^(maison-volets|banc|puits)': ['village'], r'^cairn|^menhir': ['champs', 'montagne']},
     saisons={r'maison-automne': 'automne', r'maison-neige': 'hiver'}),
+  # les pictos : des emoji de Twemoji (CC BY 4.0, pas CC0 : voir objets/LISEZMOI.txt), extrudés en panneaux sur un piquet par
+  # pictos.mjs, déjà à leur taille ; ils ne disent aucun lieu
+  'pictos': dict(echelle=1, role='picto', lieux=[]),
   'poses': dict(echelle=1, role='personne', lieux=['village', 'champs', 'foret', 'rivage', 'interieur'],
     roles={r'^(bete|galop|mange|danse-cube|course-cube|marche-dog|dino)': 'animal', r'^vol-': 'ciel', r'^nage-': 'eau'},
     lieux_par={r'^dino': ['reve'], r'^bete-(cow|horse|llama|pig|sheep)|^galop|^mange': ['champs'], r'^bete-(wolf|red-fox)': ['foret'], r'^bete-zebra': ['savane'],
@@ -234,8 +239,10 @@ def textures(f): # les images qu’un modèle va chercher à côté de lui
 
 def construire():
     objets, dest = [], os.path.join(RACINE, 'objets')
-    for d in glob.glob(os.path.join(dest, '*/')): shutil.rmtree(d) # les collections ; le LISEZMOI reste
+    for d in glob.glob(os.path.join(dest, '*/')): # les collections ; le LISEZMOI reste
+        if SEULS is None or os.path.basename(os.path.normpath(d)) in SEULS: shutil.rmtree(d)
     for kit, K in KITS.items():
+        if SEULS and kit not in SEULS: continue
         source = next((d for d in SOURCES if os.path.isdir(f'{d}/{kit}')), None)
         if not source: print('collection absente :', kit); continue
         fs = sorted(glob.glob(f'{source}/{kit}/**/*.glb', recursive=True))
@@ -272,6 +279,9 @@ def construire():
 
 if __name__ == '__main__':
     objets = construire()
+    if SEULS: # les autres collections restent, dans leur ordre ; les rebâties prennent leur place, ou viennent à la fin
+        avant = json.load(open(os.path.join(ICI, 'catalogue-brut.json'))); garde = [o for o in avant if o['id'].split('/')[0] not in SEULS]
+        print(len(avant) - len(garde), 'objets remplacés dans', ', '.join(sorted(SEULS))); objets = garde + objets
     json.dump(objets, open(os.path.join(ICI, 'catalogue-brut.json'), 'w'), ensure_ascii=False)
     from collections import Counter
     print(len(objets), 'objets', dict(Counter(o['role'] for o in objets)))

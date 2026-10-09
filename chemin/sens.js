@@ -4,7 +4,7 @@
 // passage et sa tonalité. Les vecteurs viennent de fastText, alignés et réduits : voir outils/sens.py.
 
 export const D = 96, PORTEURS = 14; // un passage, une tuile : environ 14 mots porteurs
-export const LECTURE = 5; // la version de la lecture d’un passage : on l’augmente quand un même passage se lirait autrement
+export const LECTURE = 6; // la version de la lecture d’un passage : on l’augmente quand un même passage se lirait autrement
 const IMAGE = Math.round(.55 * 255), OBJET = Math.round(.7 * 255); // un mot fait une image s’il est à plus de 0,55 d’un objet ; à 0,7, il le nomme
 const SEUIL = .7; // un objet vient sur la tuile si son score dépasse 0,7 : son nom est tout près d’un mot du passage
 const ECHELLE = 127 * 127; // les vecteurs sont quantifiés sur un octet, de longueur 127
@@ -71,7 +71,7 @@ const TON = {
   lent: 'calme lent paisible doux repos silence tranquille sieste lenteur',
 };
 
-export const FICHIERS_SENS = ['sens/mots.txt?v=4', 'sens/vecteurs.bin?v=4', 'sens/objets.bin?v=4', 'sens/images.bin?v=3', 'catalogue.json?v=4', 'sens/formes.txt?v=1', 'sens/symboles.txt?v=1'];
+export const FICHIERS_SENS = ['sens/mots.txt?v=4', 'sens/vecteurs.bin?v=4', 'sens/objets.bin?v=5', 'sens/images.bin?v=4', 'catalogue.json?v=5', 'sens/formes.txt?v=1', 'sens/symboles.txt?v=2'];
 export async function chargerSens(base = './') {
   const lire = (f, comment) => fetch(new URL(f, new URL(base, location.href))).then(r => { if (!r.ok) throw new Error(`${f} : ${r.status}`); return r[comment](); });
   const [mots, V, O, I, catalogue, formes, symboles] = await Promise.all(FICHIERS_SENS.map((f, n) => lire(f, ['text', 'arrayBuffer', 'arrayBuffer', 'arrayBuffer', 'json', 'text', 'text'][n])));
@@ -118,11 +118,12 @@ export function porteur(S, i) {
 const SUJETS = new Set('je j tu il elle on nous vous ils elles me m te t se s en ai as a avons avez ont avais avait avions aviez avaient eu aurai auras aura aurons aurez auront aurais aurait suis es est sommes êtes sont étais était étions étiez étaient'.split(' '));
 // Un mot qui a ses symboles (sens/symboles.txt) compte par le premier qui nomme un objet : « le temps » met un sablier, « la
 // peur », un loup. Il compte même s’il est vide ailleurs, ou inconnu du vocabulaire : « grand-père » se montre en papi.
+const LOCUTIONS = new Map([['tout le monde', 'gens']]); // « tout le monde » : des gens, pas la planète
 function* jetons(S, texte) {
-  let avant = '';
-  for (const m of mots(texte)) {
-    const sujet = SUJETS.has(avant); avant = m;
-    if (m.length < 3 || (VIDES.has(m) && !S.symboles.has(m))) continue;
+  let avant = '', avant2 = '';
+  for (const lu of mots(texte)) {
+    const sujet = SUJETS.has(avant), m = LOCUTIONS.get(`${avant2} ${avant} ${lu}`) ?? lu; avant2 = avant; avant = lu;
+    if ((m.length < 3 || VIDES.has(m)) && !S.symboles.has(m)) continue; // un mot court ou vide ne compte pas, sauf s’il a ses symboles : « un an »
     let i = S.index.get(m), via = null;
     if (m.includes('oe')) { const j = S.index.get(m.replace(/oe/g, 'œ')); if (j != null && (i == null || S.I[j] > S.I[i])) i = j; } // « soeur », « coeur » : sœur, cœur
     const f = S.formes?.get(m);
