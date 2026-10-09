@@ -153,6 +153,7 @@ export function planifier(jour, veille, F, recents) {
     else if (role === 'personne') poser(o, 'chemin', { z: (r() - .5) * .5, h: /character/.test(o.id) ? GENS : [.3, 1.5, 1.5] });
     else if (role === 'ciel') poserCiel(o, /^kaykit-medieval\/cloud|^archipel\/nuage/.test(o.id) ? [1.5, 3, 7] : /avion-ligne/.test(o.id) ? [1.5, 3, 9] : TAILLES.ciel);
     else if (role === 'eau') poserEau(o);
+    else if (role === 'picto') poser(o, 'bord', { profil: false, h: [1.45, 1.8, 1.8] }); // un panneau peint, planté au bord du chemin, face à nous
     else if (role === 'animal' && o.taille[1] > 2.6) poser(o, 'milieu', { z: -4 - r() * 3, h: [2.6, 6, 12] }); // un éléphant, un dinosaure : un peu en retrait
     else if (role === 'animal') poser(o, 'chemin', { z: (r() - .5) * .5, h: [.45, 1.8, 2.4] });
     else if (role === 'petit') { // une petite chose : en grand, au premier plan, comme une nature morte ; dans une maison, sur une table

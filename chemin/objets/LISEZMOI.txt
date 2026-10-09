@@ -1,5 +1,6 @@
 Les objets du chemin : des modèles 3D libres de droits, sous licence Creative Commons Zero (CC0 1.0), sans obligation
-de citer. Merci à leurs auteurs.
+de citer ; sauf les pictos (pictos/), sous licence Creative Commons Attribution 4.0 (CC BY 4.0), qui demande de citer
+leurs auteurs. Merci à tous.
 
 - Kenney (www.kenney.nl) : furniture-kit, nature-kit, city-kit-suburban, city-kit-commercial, city-kit-industrial, food-kit,
   car-kit, watercraft-kit, holiday-kit, survival-kit, fantasy-town-kit, cube-pets, mini-characters, mini-market, mini-arcade,
@@ -11,6 +12,9 @@ de citer. Merci à leurs auteurs.
   vehicules (ipoly3d, weirdybeardyman, clint-bellanger, tehbucket, rgsdev) ; objets-oga (drummyfish, clint-bellanger,
   mixazzz, noway).
 - archipel : les choses de L’archipel, sur ce même site, exportées par ../outils/archipel.mjs.
+- pictos : des emoji de Twemoji, © Twitter, Inc et les contributeurs de Twemoji (github.com/jdecked/twemoji), dont les
+  graphismes sont sous licence CC BY 4.0 (creativecommons.org/licenses/by/4.0/). Modifiés : chaque couleur découpée en
+  plaque, extrudée, et le panneau planté sur un piquet, par ../outils/pictos.mjs. Ces fichiers restent sous CC BY 4.0.
 - poses : des gens et des bêtes figés dans un instant d’une de leurs animations, par ../outils/poser.mjs, d’après
   ../outils/poses.json : les personnages, les animaux, les dinosaures et la Universal Animation Library de Quaternius ; les
   aventuriers et leurs animations des KayKit ; les mini-characters et les cube-pets de Kenney.
