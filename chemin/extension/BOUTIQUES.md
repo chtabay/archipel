@@ -11,10 +11,13 @@ arrive que par le lien. La relecture, elle, est la même que pour une fiche publ
 
 - **Le résumé du manifeste** fait 128 caractères, dans la limite de 132 de Chrome ; c’est lui que la boutique affiche
   comme résumé (Edge aussi).
-- **Le paquet** : `node chemin/extension/fabriquer.js`, puis un zip du *contenu* de `dist/` (le `manifest.json` à la racine
-  du zip, pas dans un dossier). Environ 47 Mo. Chrome accepte jusqu’à 2 Go, Mozilla jusqu’à 200 Mo. Le même zip sert aux
-  trois boutiques (Chrome et Edge ignorent `background.scripts`, Firefox ignore `background.service_worker`).
-- **Les images** sont dans `chemin/extension/boutique/` : les trois captures en 1280×800, le logo 300×300 pour Edge,
+- **Le paquet** : GitHub le fabrique. Sur `main`, la version « extension-essai » du dépôt porte `chemin-<version>.zip`,
+  le contenu de `dist/` avec le `manifest.json` à la racine : environ 30 Mo zippé, 48 Mo une fois ouvert. Chrome accepte
+  jusqu’à 2 Go, Mozilla jusqu’à 200 Mo. Le même zip sert aux trois boutiques (Chrome et Edge ignorent
+  `background.scripts`, Firefox ignore `background.service_worker`). À la main : `node chemin/extension/fabriquer.js`,
+  puis un zip du *contenu* de `dist/`.
+- **Les images** sont dans `chemin/extension/boutique/` : les trois captures en 1280×800, refaites par
+  `node chemin/extension/boutique/captures.js` quand l’écran change, le logo 300×300 pour Edge,
   l’icône 64×64 pour Firefox ; l’icône 128×128 de Chrome est dans le manifeste (`icones/icone-128.png`).
 - **La politique de confidentialité** : `chemin/extension/confidentialite.html`, servie à
   https://chtabay.github.io/archipel/chemin/extension/confidentialite.html. Vérifier qu’elle répond avant de soumettre :
@@ -165,7 +168,7 @@ La même adresse va aussi dans la page « Account » du tableau de bord : les de
 ### L’onglet « Test instructions »
 
 ```
-Pas de compte à créer, pas de serveur. 1) À l’installation, l’écran de l’accord s’ouvre : cliquer « Oui, lire ce que j’écris » (Chrome demande l’accès aux sites). 2) Sur duckduckgo.com ou qwant.com (moteurs choisis d’office), taper une recherche de deux mots ou plus, Entrée. Ou, sur n’importe quel site, écrire au moins quatre mots dans un champ de commentaire, puis cliquer ailleurs. 3) Cliquer sur l’icône de l’extension : le chemin s’ouvre ; sous la frise, la page du jour contient l’écrit, marqué « écrit ailleurs », et l’icône porte le nombre d’écrits du jour. 4) L’icône de l’extension ouvre l’accord et les réglages : la pause, les sites exclus, les moteurs, l’encart, « Tout effacer ». Aucune requête réseau : l’onglet Network des outils de développement reste vide, la CSP n’autorise que connect-src 'self'. Les modèles 3D (41 Mo, CC0) et les vecteurs de mots sont dans le paquet.
+Pas de compte à créer, pas de serveur. 1) À l’installation, l’écran de l’accord s’ouvre : cliquer « Oui, lire ce que j’écris » (Chrome demande l’accès aux sites). 2) Sur duckduckgo.com ou qwant.com (moteurs choisis d’office), taper une recherche de deux mots ou plus, Entrée. Ou, sur n’importe quel site, écrire au moins quatre mots dans un champ de commentaire, puis cliquer ailleurs. 3) Cliquer sur l’icône de l’extension : le chemin s’ouvre ; sous la frise, la page du jour contient l’écrit, marqué « écrit ailleurs », et l’icône porte le nombre d’écrits du jour. 4) Au pied de cette page, le lien « L’accord et les réglages de l’extension » ouvre la pause, les sites exclus, les moteurs, l’encart, « Tout effacer » ; c’est aussi la page des options de l’extension. Aucune requête réseau : l’onglet Network des outils de développement reste vide, la CSP n’autorise que connect-src 'self'. Les modèles 3D (41 Mo, CC0) et les vecteurs de mots sont dans le paquet.
 ```
 
 ### Si le relecteur préfère l’anglais
@@ -216,7 +219,7 @@ répertoriée, on le retire.
   Mozilla, « collecter » veut dire transmettre hors de l’appareil ; ce que l’extension garde dans son propre stockage n’en
   est pas (non vérifié mot à mot, c’est le sens de la doc). Les Firefox 128 à 139 ignorent la clé : l’écran de l’accord
   fait office de consentement, comme la règle 6.2 le demande.
-- `incognito: "not_allowed"`, `chrome_url_overrides.newtab`, `web_accessible_resources` : pris en charge.
+- `incognito: "not_allowed"`, `web_accessible_resources` : pris en charge.
 - `update_url` : déjà dans le manifeste, vers `https://chtabay.github.io/archipel/chemin/extension/updates.json`, servi
   en HTTPS par GitHub Pages. Le fichier `chemin/extension/updates.json` est dans le dépôt ; à chaque version, on y ajoute
   la nouvelle, avec le lien du `.xpi` signé, déposé dans la version « extension-essai » du dépôt GitHub
@@ -243,20 +246,24 @@ donc traité comme du code à soi, et doit se reconstruire à l’identique. À 
 - Les 41 Mo de modèles 3D sont des données, pas du code ; leurs auteurs et licences (CC0) sont dans
   `chemin/objets/LISEZMOI.txt`, les vecteurs de fastText (CC BY-SA 3.0) dans `chemin/sens/`.
 
+GitHub le fabrique : `chemin-<version>-sources.zip`, dans la version « extension-essai », avec `SOURCES.md`, la notice
+pour les relecteurs, en anglais, à sa racine. À chaque fabrication, il vérifie que ce paquet refait l’extension à
+l’identique.
+
 ### Les notes au relecteur (*Notes for Reviewers*)
 
 En français, puis la même chose en anglais, pour coller à la suite : les relecteurs d’AMO lisent surtout l’anglais.
 
 ```
-Le chemin est un journal local : ce que la personne écrit elle-même dans les pages (courriels, messages, notes) devient des blocs de la page du jour, peinte à l’aquarelle dans le nouvel onglet. Tout reste dans le stockage de l’extension (IndexedDB, storage.local). Aucune requête vers l’extérieur : la CSP est connect-src 'self', et les seuls fetch du code chargent des fichiers de l’extension elle-même (les vecteurs de mots, le catalogue, les modèles 3D). Pas de compte, pas de serveur.
+Le chemin est un journal local : ce que la personne écrit elle-même dans les pages (courriels, messages, notes) devient des blocs de la page du jour, peinte à l’aquarelle dans la page du chemin, qui s’ouvre d’un clic sur l’icône. Tout reste dans le stockage de l’extension (IndexedDB, storage.local). Aucune requête vers l’extérieur : la CSP est connect-src 'self', et les seuls fetch du code chargent des fichiers de l’extension elle-même (les vecteurs de mots, le catalogue, les modèles 3D). Pas de compte, pas de serveur.
 
 <all_urls> : on écrit partout, sur des sites inconnus d’avance. Le script de contenu (glaneur.js) n’est enregistré par scripting.registerContentScripts qu’après le oui sur l’écran de l’accord (accord.html, ouvert à l’installation), et désenregistré en pause. Il ne suit pas les touches : il compare la zone de texte à l’entrée et à la sortie. Il écarte les champs sensibles (autocomplete, noms de champs, formulaires avec mot de passe), l’objet et les destinataires d’un courriel, le texte collé ou cité, les boîtes de recherche hors des moteurs choisis, la navigation privée (incognito: not_allowed) et les sites exclus. Si la personne retire l’accès aux sites, l’icône porte « ! » et l’accord propose de le redonner.
 
-'wasm-unsafe-eval' : la page du chemin peint des tuiles en 3D avec three.js (chemin/vendor/three-chemin.min.js, three.js 0.186.1 réduit aux modules utilisés, avec GLTFLoader et MeshoptDecoder, assemblé par esbuild). Le WebAssembly est le décodeur meshopt embarqué dans three.js, qui décompresse les modèles 3D du paquet (chemin/objets/, CC0). Rien n’est chargé depuis le web. Le paquet de sources joint reconstruit ce fichier et le paquet entier.
+'wasm-unsafe-eval' : la page du chemin peint des tuiles en 3D avec three.js (chemin/vendor/three-chemin.min.js, three.js 0.186.1 réduit aux modules utilisés, avec GLTFLoader et MeshoptDecoder, assemblé par esbuild). Le WebAssembly est le décodeur meshopt embarqué dans three.js, qui décompresse les modèles 3D du paquet (chemin/objets/, CC0). Rien n’est chargé depuis le web. Le paquet de sources joint reconstruit ce fichier et le paquet entier ; la marche à suivre est dans SOURCES.md, à sa racine.
 
 background : service_worker pour Chrome, scripts pour Firefox, dans le même manifeste. update_url : auto-distribution, le fichier de mises à jour est sur le site de l’extension, en HTTPS.
 
-Pour essayer : installer, dire oui, taper une recherche de deux mots sur duckduckgo.com (moteur choisi d’office) et Entrée, ou quatre mots dans un champ de commentaire n’importe où ; cliquer sur l’icône : le bloc est dans la page du jour, marqué « écrit ailleurs ». L’icône ouvre les réglages et « Tout effacer ». Le code est public : https://github.com/chtabay/archipel, dossier chemin/extension. Politique : https://chtabay.github.io/archipel/chemin/extension/confidentialite.html
+Pour essayer : installer, dire oui, taper une recherche de deux mots sur duckduckgo.com (moteur choisi d’office) et Entrée, ou quatre mots dans un champ de commentaire n’importe où ; cliquer sur l’icône : le bloc est dans la page du jour, marqué « écrit ailleurs ». Au pied de cette page, le lien « L’accord et les réglages de l’extension » ouvre les réglages et « Tout effacer ». Le code est public : https://github.com/chtabay/archipel, dossier chemin/extension. Politique : https://chtabay.github.io/archipel/chemin/extension/confidentialite.html
 ```
 
 ```
@@ -264,11 +271,11 @@ Le chemin is a local-only journal: what the person writes themselves in web page
 
 <all_urls>: people write everywhere, on sites unknown in advance. The content script (glaneur.js) is registered with scripting.registerContentScripts only after the person clicks “yes” on the consent screen (accord.html, opened on install), and unregistered while paused. It does not log keystrokes: it compares the text field on focus in and focus out. It skips sensitive fields (autocomplete, field names, forms with a password field), email subject and recipients, pasted or quoted text, search boxes outside the chosen engines, private browsing (incognito: not_allowed) and excluded sites. If the person revokes site access, the badge shows “!” and the consent page offers to grant it again.
 
-'wasm-unsafe-eval': the path page paints 3D tiles with three.js (chemin/vendor/three-chemin.min.js: three.js 0.186.1 reduced to the modules used, with GLTFLoader and MeshoptDecoder, bundled with esbuild). The WebAssembly is the meshopt decoder embedded in three.js, which decompresses the packaged 3D models (chemin/objets/, CC0). Nothing is loaded from the web. The attached source package rebuilds this file and the whole package.
+'wasm-unsafe-eval': the path page paints 3D tiles with three.js (chemin/vendor/three-chemin.min.js: three.js 0.186.1 reduced to the modules used, with GLTFLoader and MeshoptDecoder, bundled with esbuild). The WebAssembly is the meshopt decoder embedded in three.js, which decompresses the packaged 3D models (chemin/objets/, CC0). Nothing is loaded from the web. The attached source package rebuilds this file and the whole package; the steps are in SOURCES.md, at its root.
 
 background: service_worker for Chrome, scripts for Firefox, in the same manifest. update_url: self-distributed, the update manifest is on the extension’s site, over HTTPS.
 
-To test: install, click yes, type a two-word search on duckduckgo.com (a default chosen engine) and press Enter, or four words in any comment field; click the toolbar icon: the block is in today’s page, marked “écrit ailleurs” (written elsewhere). The toolbar icon opens the settings and “Tout effacer” (erase everything). Source: https://github.com/chtabay/archipel, folder chemin/extension. Privacy policy: https://chtabay.github.io/archipel/chemin/extension/confidentialite.html
+To test: install, click yes, type a two-word search on duckduckgo.com (a default chosen engine) and press Enter, or four words in any comment field; click the toolbar icon: the block is in today’s page, marked “écrit ailleurs” (written elsewhere). At the bottom of that page, the link “L’accord et les réglages de l’extension” opens the settings and “Tout effacer” (erase everything). Source: https://github.com/chtabay/archipel, folder chemin/extension. Privacy policy: https://chtabay.github.io/archipel/chemin/extension/confidentialite.html
 ```
 
 ### La fiche, le jour où elle est répertoriée
@@ -328,9 +335,10 @@ Le Partner Center de Microsoft suit le même plan que Chrome : mêmes textes, m�
 
 ## La liste des pas
 
-**Avant** : raccourcir `description` dans le manifeste ; exporter les icônes (128, 300, 64, 32) ; faire les trois
-captures ; mettre en ligne `confidentialite.html` et un lien vers elle depuis la page du chemin ; fabriquer et zipper ;
-écrire la recette esbuild de `three-chemin.min.js` et zipper les sources pour Mozilla.
+**Avant** : tout est prêt dans le dépôt, le résumé, les icônes, les captures, la politique, les paquets. Reste une
+chose : fusionner la branche de l’extension dans `main`. La politique de confidentialité est alors en ligne, et GitHub
+publie les paquets dans la version « extension-essai » :
+https://github.com/chtabay/archipel/releases/tag/extension-essai
 
 **Chrome Web Store**
 
@@ -338,7 +346,7 @@ captures ; mettre en ligne `confidentialite.html` et un lien vers elle depuis la
 2. S’inscrire sur le tableau de bord développeur : des frais uniques, 5 $ US d’après des sources tierces ; la page
    officielle ne donne plus le montant (non vérifié). L’adresse du compte ne se change plus ensuite.
 3. Le compte : le nom d’éditeur, l’adresse de la politique, la déclaration non-commerçant.
-4. « Add new item », le zip ; puis les quatre onglets ci-dessus ; « Submit for review ». Un nouvel éditeur a droit à
+4. « Add new item », `chemin-0.1.0.zip` ; puis les quatre onglets ci-dessus ; « Submit for review ». Un nouvel éditeur a droit à
    deux extensions.
 5. La relecture : « quelques jours, jusqu’à quelques semaines » ; `<all_urls>` la rallonge. Au-delà de trois semaines,
    écrire au support. Une fois acceptée, on a 30 jours pour publier si on a choisi la publication différée.
@@ -347,20 +355,34 @@ captures ; mettre en ligne `confidentialite.html` et un lien vers elle depuis la
 
 1. Un compte Mozilla avec la validation en deux étapes : obligatoire pour les développeurs depuis le 15 mars 2021.
    Garder les codes de secours : un compte perdu ne se récupère pas.
-2. Le Developer Hub, « Submit a New Add-on », « On your own ». Le zip ; le validateur ; « oui » au paquet de sources, et le
-   zip des sources ; les notes au relecteur.
-3. Attendre le courriel de signature, télécharger le `.xpi` signé, le poser sur le site avec `mises-a-jour.json`.
-4. Les délais : la signature d’une extension auto-distribuée est automatique après validation ; une relecture humaine
+2. Les clés de l’API, sur https://addons.mozilla.org/developers/addon/api/key/ : on y crée un émetteur (*JWT issuer*)
+   et un secret (*JWT secret*).
+3. Sur GitHub, dans le dépôt : « Settings », « Secrets and variables », « Actions », « New repository secret », deux
+   fois : `AMO_JWT_ISSUER` avec l’émetteur, `AMO_JWT_SECRET` avec le secret.
+4. Relancer la fabrication sur `main` : « Actions », « Extension », « Run workflow », branche `main`. GitHub envoie le
+   paquet et les sources à Mozilla, attend la signature, et pose `chemin-0.1.0.xpi` dans la version « extension-essai ».
+   C’est le lien à donner, et celui que `updates.json` attend. À la main, si on préfère : « Submit a New Add-on », « On
+   your own », le zip, « oui » au paquet de sources et le zip des sources, les notes au relecteur ; puis joindre le `.xpi`
+   signé à la version « extension-essai », sous le nom `chemin-0.1.0.xpi`.
+5. Les délais : la signature d’une extension auto-distribuée est automatique après validation ; une relecture humaine
    peut venir à tout moment. Aucune durée officielle n’est publiée (non vérifié) ; les forums parlent de jours à semaines
    quand il y a beaucoup de dépôts.
-5. Une mise à jour s’envoie depuis la page de l’extension sur AMO, jamais comme une nouvelle extension.
+6. Une mise à jour suit le même chemin : GitHub la signe toute seule, et Firefox la trouve par `updates.json`.
 
 **Edge**
 
 1. Partner Center, inscription au programme Edge : gratuit, compte individuel.
-2. « Create new extension », le zip, puis Availability, Properties, Privacy, Store listings, et les notes de
+2. « Create new extension », `chemin-0.1.0.zip`, puis Availability, Properties, Privacy, Store listings, et les notes de
    certification. « Publish ».
 3. Jusqu’à sept jours ouvrés.
+
+**Une nouvelle version**
+
+1. Monter `version` dans `manifest.json`, et ajouter cette version et son lien dans `updates.json` : sans la ligne,
+   GitHub refuse de fabriquer, puisque Firefox ne recevrait pas la mise à jour.
+2. Fusionner dans `main`. GitHub fabrique les paquets et signe celui de Firefox.
+3. Sur Chrome et sur Edge, déposer le nouveau `chemin-<version>.zip` sur la page de l’extension. Chaque version repasse
+   par la relecture.
 
 ## Les pages ouvertes
 
@@ -412,6 +434,10 @@ Firefox :
   `'wasm-unsafe-eval'` permis en MV3.
 - https://blog.mozilla.org/addons/2021/03/11/two-factor-authentication-required-for-extension-developers (par
   recherche) : la validation en deux étapes depuis le 15 mars 2021.
+- https://extensionworkshop.com/documentation/develop/web-ext-command-reference/ (lu le 10 octobre 2026) : `web-ext
+  sign`, les clés à créer sur https://addons.mozilla.org/developers/addon/api/key/, l’émetteur et le secret JWT,
+  `$WEB_EXT_API_KEY` et `$WEB_EXT_API_SECRET`, `--channel unlisted` qui télécharge la copie signée, `--upload-source-code`.
+  Les options de `web-ext sign --help` en version 10.6.0, la version épinglée dans `.github/workflows/extension.yml`.
 
 Edge :
 

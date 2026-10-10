@@ -12,12 +12,15 @@ devient un bloc de plus dans la page du jour, et le chemin s’allonge. Rien ne 
 - `accord.html` : l’accord, la pause, les sites exclus, les moteurs de recherche où ce qu’on cherche compte, les sites de
   l’encart, tout effacer ; et la version avec des comptes, sans un mot, pour dire où on en est.
 - `updates.json` : où Firefox cherche une nouvelle version (`update_url`), pour une extension signée hors boutique.
-- `confidentialite.html` : la politique de confidentialité, servie par le site ; `BOUTIQUES.md`, les textes des fiches.
+- `confidentialite.html` : la politique de confidentialité, servie par le site ; `BOUTIQUES.md`, les textes des fiches et
+  la liste des pas ; `SOURCES.md`, la notice du paquet de sources, pour les relecteurs de Mozilla ; `boutique/`, les
+  images des fiches, refaites par `node chemin/extension/boutique/captures.js`.
 - `fabriquer.js` : assemble `dist/` (ignoré par git), le même pour Chrome, Edge et Firefox, à charger dans le navigateur.
-  Environ 47 Mo, dont 41 Mo d’objets 3D.
+  Environ 48 Mo, dont 41 Mo d’objets 3D.
 
 Sans rien installer : GitHub fabrique l’extension à chaque changement (`.github/workflows/extension.yml`) ; le dossier
-fabriqué est une pièce jointe de l’exécution, et, depuis `main`, un zip dans la version « extension-essai ». Sinon,
+fabriqué est une pièce jointe de l’exécution. Depuis `main`, la version « extension-essai » porte le paquet des boutiques,
+le paquet de sources, et le `.xpi` signé pour Firefox dès que les clés de Mozilla sont dans les secrets du dépôt. Sinon,
 `node chemin/extension/fabriquer.js`, puis dans Chrome, `chrome://extensions`, mode développeur,
 « Charger l’extension non empaquetée », le dossier `chemin/extension/dist`. Dans Firefox, `about:debugging`, « Charger
 un module temporaire », le fichier `dist/manifest.json` ; si l’icône porte un « ! », donner l’accès aux sites depuis l’accord.
