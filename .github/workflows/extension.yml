@@ -42,6 +42,21 @@ jobs:
           name: chemin-extension
           path: chemin/extension/dist
           retention-days: 30
+      - name: les paquets, dans la version « extension-essai », avant la signature
+        if: github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: extension-essai
+          name: Le chemin, l’extension (essai)
+          prerelease: true
+          body: |
+            L’extension du chemin, fabriquée depuis main.
+            - chemin-<version>.zip : le paquet à déposer au Chrome Web Store, dans les modules d’Edge et sur addons.mozilla.org. Pour l’essayer sans boutique : le dézipper, puis dans Chrome ou Edge, le mode développeur, « Charger l’extension non empaquetée », le dossier.
+            - chemin-<version>-sources.zip : le paquet de sources, pour les relecteurs de Mozilla.
+            - chemin-<version>.xpi : l’extension pour Firefox, signée par Mozilla. L’enregistrer, puis dans Firefox, about:addons, la roue dentée, « Installer un module depuis un fichier ». Les mises à jour arrivent ensuite toutes seules.
+          files: |
+            chemin/extension/chemin-${{ steps.version.outputs.v }}.zip
+            chemin/extension/chemin-${{ steps.version.outputs.v }}-sources.zip
       - id: amo
         name: Firefox, faut-il signer ?
         if: github.ref == 'refs/heads/main'
@@ -56,24 +71,20 @@ jobs:
       - name: Firefox, la signature par Mozilla (auto-distribuée)
         if: steps.amo.outputs.signer == 'oui'
         env: # les clés ne sont données qu’ici, à l’outil de Mozilla
-          WEB_EXT_API_KEY: ${{ secrets.AMO_JWT_ISSUER }}
-          WEB_EXT_API_SECRET: ${{ secrets.AMO_JWT_SECRET }}
+          EMETTEUR: ${{ secrets.AMO_JWT_ISSUER }}
+          SECRET: ${{ secrets.AMO_JWT_SECRET }}
         run: |
           V=${{ steps.version.outputs.v }}
+          # un retour à la ligne collé avec une clé la rend inconnue de Mozilla (« Unknown JWT iss ») : ni l’une ni l’autre n’a d’espace
+          export WEB_EXT_API_KEY="$(printf '%s' "$EMETTEUR" | tr -d '[:space:]')" WEB_EXT_API_SECRET="$(printf '%s' "$SECRET" | tr -d '[:space:]')"
+          unset EMETTEUR SECRET
           npx --yes web-ext@10.6.0 sign --channel=unlisted --source-dir chemin/extension/dist --artifacts-dir "$RUNNER_TEMP/signe" --upload-source-code chemin/extension/chemin-$V-sources.zip --approval-timeout 1800000
           mv "$RUNNER_TEMP"/signe/*.xpi chemin/extension/chemin-$V.xpi && ls -la chemin/extension/chemin-$V.xpi
-      - if: github.ref == 'refs/heads/main'
+      - name: le .xpi signé, dans la version « extension-essai »
+        if: steps.amo.outputs.signer == 'oui'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: extension-essai
           name: Le chemin, l’extension (essai)
           prerelease: true
-          body: |
-            L’extension du chemin, fabriquée depuis main.
-            - chemin-<version>.zip : le paquet à déposer au Chrome Web Store, dans les modules d’Edge et sur addons.mozilla.org. Pour l’essayer sans boutique : le dézipper, puis dans Chrome ou Edge, le mode développeur, « Charger l’extension non empaquetée », le dossier.
-            - chemin-<version>-sources.zip : le paquet de sources, pour les relecteurs de Mozilla.
-            - chemin-<version>.xpi : l’extension pour Firefox, signée par Mozilla. L’enregistrer, puis dans Firefox, about:addons, la roue dentée, « Installer un module depuis un fichier ». Les mises à jour arrivent ensuite toutes seules.
-          files: |
-            chemin/extension/chemin-${{ steps.version.outputs.v }}.zip
-            chemin/extension/chemin-${{ steps.version.outputs.v }}-sources.zip
-            chemin/extension/chemin-${{ steps.version.outputs.v }}.xpi
+          files: chemin/extension/chemin-${{ steps.version.outputs.v }}.xpi
