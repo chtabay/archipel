@@ -83,7 +83,7 @@ C’est un essai, fait par une personne, pas une entreprise. Le code est public 
 | Langue | Français |
 | Icône | 128×128, PNG |
 | Captures | les trois ci-dessus, 1280×800 (cinq au plus) |
-| Petite vignette | 440×280, PNG ou JPEG : la doc la liste sans la dire facultative ; en prévoir une (la frise, recadrée) |
+| Petite vignette | 440×280 : `boutique/4-vignette.png`, la frise recadrée et le nom, refaite par `node chemin/extension/boutique/vignette.js` |
 | Grande vignette | 1400×560, facultative : non |
 | Vidéo | non |
 | URL officielle | demande un site vérifié dans la Search Console de Google ; sinon, laisser vide |
