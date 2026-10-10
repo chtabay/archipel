@@ -1,2 +1,17 @@
 three.js 0.186.1, réduit aux pièces utilisées par le chemin, avec GLTFLoader et le décodeur meshopt (esbuild, minifié).
 Source : https://github.com/mrdoob/three.js — licence MIT, voir ../../vendor/LICENSE-three.txt.
+Le décodeur meshopt est celui que three.js livre (examples/jsm/libs/meshopt_decoder.module.js, meshoptimizer 1.1, MIT,
+Arseny Kapoulkine).
+
+Pour refaire three-chemin.min.js à l’identique (648 259 octets,
+sha256 4315d97fdeb75a7bdadf3cac76beffc15cd511a900832b6c5a2f13074c2463dd), depuis la racine du dépôt :
+
+  cd chemin/outils/three && npm ci && cd ../../..     # three@0.186.1 et esbuild@0.28.2, épinglés par package-lock.json
+  node chemin/outils/fabriquer-three.mjs              # écrit chemin/vendor/three-chemin.min.js, affiche taille et sha256
+  node chemin/outils/fabriquer-three.mjs --verifier   # n’écrit rien : compare au fichier présent, code 1 s’il diffère
+
+Le script écrit un fichier d’entrée qui réexporte 47 noms de three (ACESFilmicToneMapping, AmbientLight, Box3… WebGLRenderer,
+la liste est dans le script), GLTFLoader (three/examples/jsm/loaders/GLTFLoader.js) et MeshoptDecoder
+(three/examples/jsm/libs/meshopt_decoder.module.js), et le passe à esbuild :
+--bundle --minify --format=esm --target=es2022 --legal-comments=none. Fait ici avec Node 22.22.0 et npm 10.9.4 ; les octets
+ne dépendent pas de la version de Node (esbuild est un binaire, sa version seule compte). Les outils sont libres et locaux.

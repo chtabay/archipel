@@ -171,8 +171,11 @@ Une île de l’archipel peut se relier à d’autres, par des routes sur l’ea
 - **L’intro.** Le chemin se trace au pinceau pendant que le vocabulaire se charge, que le texte se lit et que la première tuile se peint. Un toucher, et on entre.
 - **Gardé.** Les tuiles peintes sont gardées ; une tuile ne se repeint que si elle ou ses voisines changent. Loin de l’écran, son image quitte la mémoire. La lecture de chaque passage est gardée aussi : un roman se rouvre sans tout relire. Le chemin a son propre service worker, qui garde l’app et les objets déjà vus, et ne touche qu’aux caches qui commencent par `chemin-` ; celui de l’archipel ignore le dossier `chemin/`.
 
+**L’extension de navigateur**, dans `chemin/extension/` : le chemin tel quel, d’un clic sur son icône et au coin des sites choisis, plus un glaneur. Après l’accord, et seulement alors, ce qu’on écrit soi-même dans les pages de la journée, un courriel, un message, une note, devient un bloc de plus dans la page du jour, marqué « écrit ailleurs », au moment où l’écrit est posé ; le chemin ouvert se relit et va au bout. Jamais les mots de passe, les cartes, les codes, les identifiants, ce qu’on colle ou cite ; les recherches seulement sur les moteurs choisis ; rien en navigation privée, rien sur l’archipel. Rien ne part de l’ordinateur : ses règles de sécurité n’autorisent que ses propres fichiers. `node chemin/extension/fabriquer.js` l’assemble dans `dist/` (ou `dist-firefox/`, avec `--firefox`), à charger dans le navigateur ; `chemin/extension/LISEZMOI.md` dit comment. Les choix et le plan sont dans `chemin/faisabilite/`.
+
 | Fichier | Rôle |
 | --- | --- |
+| `chemin/extension/` | L’extension : le manifeste, le glaneur, le fond, l’accord et les réglages, la fabrication |
 | `chemin/app.js` | L’intro, la frise, la peinture et la garde des tuiles, le pinceau, le parcours et le déroulé, la page du jour et ses blocs, la relecture |
 | `chemin/sens.js` | Le découpage, les mots porteurs, les objets les plus proches, les champs, le lieu, la tonalité, la météo, l’horizon |
 | `chemin/monde.js` | Le plan de chaque tuile, ses paysages, le sol, l’eau, le lointain, le ciel, les maisons ouvertes, le temps qu’il fait, le rendu en 3D |
@@ -226,7 +229,7 @@ Une île de l’archipel peut se relier à d’autres, par des routes sur l’ea
 | `fonts/` | Nunito (licence SIL OFL 1.1) |
 | `404.html` | Page introuvable ; les anciennes adresses des maquettes et de `limbes/` mènent à l’accueil |
 | `base/archipel.sql` | La base de l’archipel partagé, telle qu’elle est dans le projet de Pyramides : les îles, les liens et les routes, puis le déplacement d’une île |
-| `tests/` | Les tests, dans Chromium avec une 3D logicielle : le parcours, l’intro, le retour, la stabilité, l’archipel partagé, les routes entre les îles, le nom des îles, les îles côte à côte, la carte postale, l’installation, la musique, le menu Plus, le chemin. Ils parlent à un faux serveur, en mémoire, jamais à la vraie base |
+| `tests/` | Les tests, dans Chromium avec une 3D logicielle : le parcours, l’intro, le retour, la stabilité, l’archipel partagé, les routes entre les îles, le nom des îles, les îles côte à côte, la carte postale, l’installation, la musique, le menu Plus, le chemin, l’extension. Ils parlent à un faux serveur, en mémoire, jamais à la vraie base |
 | `package.json` | Seulement pour les tests ; le site n’a besoin de rien |
 | `.nojekyll` | Sert les fichiers tels quels sur GitHub Pages |
 

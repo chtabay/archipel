@@ -15,7 +15,7 @@ function ouvrir() {
       if (!db.objectStoreNames.contains('pages')) db.createObjectStore('pages', { keyPath: 'date' });
       for (const nom of ['tuiles', 'lectures']) if (!db.objectStoreNames.contains(nom)) db.createObjectStore(nom, { keyPath: 'cle' }).createIndex('vu', 'vu');
     };
-    r.onsuccess = () => { r.result.onversionchange = () => r.result.close(); ok(r.result); };
+    r.onsuccess = () => { r.result.onversionchange = () => { r.result.close(); base = null; }; r.result.onclose = () => { base = null; }; ok(r.result); }; // fermée (tout effacer, ou le navigateur) : on rouvrira
     r.onerror = () => ko(r.error); r.onblocked = () => ko(new Error('carnet bloqué'));
   }).catch(e => { console.info('carnet :', e.message); return null; });
   return base;
@@ -26,7 +26,7 @@ const magasin = async (nom, mode = 'readonly') => { const db = await ouvrir(); i
 
 // une page : sa date, son texte, et ses blocs s’il y en a, écrits à des heures différentes ; leur texte bout à bout est celui de la page
 const valide = p => p && typeof p.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(p.date) && typeof p.texte === 'string';
-const enBlocs = b => (Array.isArray(b) && b.length && b.every(x => typeof x?.texte === 'string') ? b.map(x => ({ heure: typeof x.heure === 'string' ? x.heure : '', texte: x.texte })) : null);
+const enBlocs = b => (Array.isArray(b) && b.length && b.every(x => typeof x?.texte === 'string') ? b.map(x => ({ heure: typeof x.heure === 'string' ? x.heure : '', texte: x.texte, ...(x.source === 'glane' && { source: 'glane' }), ...(x.recherche === true && { recherche: true }) })) : null); // source : « glane », un écrit glané ailleurs par l’extension ; recherche : sur un moteur
 const propre = p => { const blocs = enBlocs(p.blocs); return blocs ? { date: p.date, texte: p.texte, blocs } : { date: p.date, texte: p.texte }; };
 const ancien = () => { try { const p = JSON.parse(localStorage.getItem(VIEUX) || '[]'); return Array.isArray(p) ? p.filter(valide) : []; } catch { return []; } };
 export async function lirePages() {
@@ -39,6 +39,20 @@ export async function garderPage(page) {
   const p = propre(page), m = await magasin('pages', 'readwrite');
   if (m) { m.s.put(p); await fini(m.t); return true; }
   try { const x = ancien().filter(y => y.date !== p.date); x.push(p); localStorage.setItem(VIEUX, JSON.stringify(x)); return true; } catch { return false; } // plein : la page reste à l’écran
+}
+// modifie la page d’un jour d’après ce que le carnet contient à cet instant, dans une seule transaction : deux écrivains (la page
+// du chemin, et l’extension qui glane) ne s’effacent pas l’un l’autre. f(page ou null) rend la page à garder, ou null pour l’effacer.
+// Rend la page gardée (ou null) ; rejette si le carnet ne peut pas écrire.
+export async function modifierPage(date, f) {
+  const m = await magasin('pages', 'readwrite');
+  if (m) {
+    const avant = await attendre(m.s.get(date)), apres = f(avant ? propre(avant) : null);
+    if (apres) m.s.put(propre(apres)); else if (avant) m.s.delete(date);
+    await fini(m.t); return apres ? propre(apres) : null;
+  }
+  const p = ancien(), i = p.findIndex(x => x.date === date), apres = f(i >= 0 ? p[i] : null);
+  if (apres) { if (i >= 0) p[i] = apres; else p.push(apres); } else if (i >= 0) p.splice(i, 1);
+  localStorage.setItem(VIEUX, JSON.stringify(p)); return apres;
 }
 // efface la page d’un jour, quand son dernier bloc s’en va
 export async function effacerPage(date) {

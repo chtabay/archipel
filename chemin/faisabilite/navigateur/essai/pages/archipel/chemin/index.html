@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="fr">
+<head><meta charset="utf-8"><title>Faux chemin d’essai</title></head>
+<body>
+<p>Une page qui joue le rôle du chemin pour l’essai : elle reçoit les glanes du pont et les range dans son propre IndexedDB.</p>
+<script>
+  // Ce que le vrai chemin aurait à ajouter : un magasin à part pour les glanes, pour ne jamais remplacer la page du jour.
+  const ouvrir = () => new Promise((ok, ko) => { const r = indexedDB.open('chemin-essai', 1); r.onupgradeneeded = () => r.result.createObjectStore('glanes', { keyPath: 'id' }); r.onsuccess = () => ok(r.result); r.onerror = () => ko(r.error); });
+  const dire = (type, plus = {}) => window.postMessage({ pour: 'chemin-glaneur', type, ...plus }, location.origin);
+  addEventListener('message', async e => {
+    if (e.source !== window || e.origin !== location.origin || e.data?.de !== 'chemin-glaneur') return;
+    if (e.data.type === 'present') dire('pret');
+    if (e.data.type === 'glanes' && Array.isArray(e.data.glanes)) {
+      const db = await ouvrir(), t = db.transaction('glanes', 'readwrite'), ok = [];
+      for (const g of e.data.glanes) if (typeof g?.id === 'string' && typeof g.texte === 'string') { t.objectStore('glanes').put(g); ok.push(g.id); }
+      await new Promise(r => { t.oncomplete = r; });
+      dire('recu', { ids: ok }); window.__recus = ok.length;
+    }
+  });
+  dire('pret');
+</script>
+</body>
+</html>

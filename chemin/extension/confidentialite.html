@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Le chemin : la confidentialité</title>
+  <style>
+    :root { --fond: #f4efe4; --encre: #3b3428; --doux: #6b6150; --accent: #3c6e5a; --ligne: #d9cfbb; }
+    body { margin: 0; background: var(--fond); color: var(--encre); font: 17px/1.55 system-ui, sans-serif; }
+    main { max-width: 38rem; margin: 0 auto; padding: 2rem 16px 4rem; }
+    h1 { font-size: 1.5rem; font-weight: 700; } h2 { font-size: 1.15rem; margin-top: 2rem; color: var(--accent); }
+    li { margin: .3rem 0; } .doux { color: var(--doux); } a { color: var(--accent); }
+    code { font-size: .95em; background: #fbf7ee; padding: 0 .25em; border-radius: .3em; }
+    blockquote { margin: .8rem 0; padding: .6rem 1rem; border-left: 3px solid var(--accent); background: #fbf7ee; border-radius: 0 .6rem .6rem 0; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Le chemin : la confidentialité</h1>
+  <p class="doux">L’extension « Le chemin », pour Chrome, Edge et Firefox. Cette page dit ce qu’elle lit, ce qu’elle garde, et où. Elle vaut depuis le 8 octobre 2026.</p>
+
+  <h2>Ce que l’extension lit, et ce qu’elle ne lit jamais</h2>
+  <p>Rien, tant que tu n’as pas dit oui sur l’écran de l’accord, qui s’ouvre à l’installation. Si tu dis oui, elle lit ce que <strong>tu tapes toi-même</strong> dans les zones de texte des pages : un courriel, un message, une note. Quand tu quittes la zone, ou que tu envoies, elle garde ce que tu as ajouté, comme un bloc de plus dans la page du jour de ton chemin. Elle ne suit pas les touches : elle compare la zone à l’entrée et à la sortie, et ne garde que la différence.</p>
+  <ul>
+    <li><strong>Jamais :</strong> les mots de passe, les cartes bancaires, les codes reçus par SMS, les identifiants, les adresses, l’objet et les destinataires d’un courriel, ce que tu colles, ce que tu cites d’un autre, le code dans un éditeur.</li>
+    <li><strong>Les recherches :</strong> seulement sur les moteurs que tu as choisis dans les réglages, lues dans l’adresse de la page de résultats. Ailleurs, une boîte de recherche n’est jamais lue.</li>
+    <li><strong>Jamais non plus :</strong> en navigation privée, sur les sites que tu as exclus (d’office : les impôts, la santé, l’archipel), et quand l’extension est en pause.</li>
+    <li><strong>Pas lu du tout :</strong> le reste de la page, ce que les autres écrivent, les sites visités, les adresses des pages.</li>
+  </ul>
+
+  <h2>Où vont les données</h2>
+  <p>Nulle part. Elles restent sur cet ordinateur, dans ce navigateur, dans ce profil. L’extension n’a pas de serveur, ne fait aucune requête vers l’extérieur, n’envoie pas de statistiques, ne synchronise rien. Ses règles de sécurité (<code>connect-src 'self'</code>) le lui interdisent : le navigateur bloquerait une telle requête. Le chemin de cet ordinateur n’est pas celui de ton téléphone : ils ne se parlent pas, puisque rien ne part.</p>
+
+  <h2>Ce qui est gardé</h2>
+  <ul>
+    <li>Les pages du journal : la date, et les blocs, chacun avec son heure et son texte. Un bloc venu d’une page web porte la marque « écrit ailleurs » ; le nom du site n’est pas gardé.</li>
+    <li>Les tuiles peintes, pour ne pas les repeindre à chaque fois, et la lecture de chaque passage.</li>
+    <li>Les réglages : l’accord, la pause, les sites exclus, les moteurs de recherche choisis, les sites où montrer l’encart.</li>
+  </ul>
+  <p>Tout cela vit dans le stockage que le navigateur réserve à l’extension (IndexedDB et <code>storage.local</code>), sans chiffrement particulier, comme le reste du profil.</p>
+
+  <h2>Qui peut le voir</h2>
+  <p>Toute personne qui ouvre ce profil de navigateur sur cet ordinateur : elle voit le chemin d’un clic sur l’icône, et la page du jour dessous. Si l’ordinateur est partagé, un profil à soi, ou un verrou de session, protège le chemin comme le reste.</p>
+
+  <h2>Effacer</h2>
+  <ul>
+    <li>Un bloc se modifie dans la page du jour ; vidé, il s’efface.</li>
+    <li>« Tout effacer », dans l’accord et les réglages (l’icône de l’extension), efface pour de bon le chemin de ce navigateur, ses pages, ses tuiles et ses réglages.</li>
+    <li>Désinstaller l’extension : le navigateur supprime son stockage avec elle.</li>
+  </ul>
+
+  <h2>Les permissions, et pourquoi</h2>
+  <ul>
+    <li><strong>Lire et modifier les données sur tous les sites</strong> (<code>&lt;all_urls&gt;</code>) : on écrit partout, et l’extension ne sait pas d’avance où ; elle lit ce que tu tapes dans n’importe quelle page, et pose l’encart au coin des sites choisis. Le script de lecture n’est branché qu’après l’accord, et débranché en pause.</li>
+    <li><strong>scripting</strong> : brancher ou débrancher ce script.</li>
+    <li><strong>storage</strong> et <strong>unlimitedStorage</strong> : garder les pages et les tuiles peintes, qui prennent de la place.</li>
+  </ul>
+  <p>L’extension ne charge aucun code venu d’ailleurs : tout est dans son paquet.</p>
+
+  <h2>Les mises à jour</h2>
+  <p>Le navigateur vérifie de temps en temps, auprès de la boutique où tu l’as installée, ou du site du chemin, s’il existe une nouvelle version. C’est lui qui le fait, comme pour toute extension ; l’extension n’y ajoute rien, et rien de ce que tu écris ne part.</p>
+
+  <h2>Les règles des boutiques</h2>
+  <p>L’usage que l’extension fait des informations qu’elle reçoit respecte la politique de données des utilisateurs du Chrome Web Store, y compris ses exigences d’usage limité. En anglais, la formule demandée par Google :</p>
+  <blockquote lang="en">Le chemin’s use of information received from the browser and from the pages you write in adheres to the Chrome Web Store User Data Policy, including the Limited Use requirements.</blockquote>
+  <p>Concrètement : aucune donnée n’est vendue, transférée, ni lue par quiconque ; aucune ne sert à la publicité, au crédit, ni à autre chose que le chemin lui-même.</p>
+
+  <h2>Pour écrire</h2>
+  <p>Une question, un doute, un bloc qui n’aurait pas dû arriver : <a href="https://github.com/chtabay/archipel/issues">les issues du dépôt</a>. Le code de l’extension est public, dans le même dépôt, dossier <code>chemin/extension/</code>.</p>
+  <p class="doux">L’éditeur est une personne, pas une entreprise. Si cette page change, sa date change aussi.</p>
+</main>
+</body>
+</html>

@@ -1,0 +1,90 @@
+# Persona : Léo, 20 ans, étudiant en L2 de biologie à Rennes, en colocation. Messages courts, abréviations, un peu d’anglais.
+# Journée : lundi 5 octobre 2026. Tout est inventé.
+### chat | 07:48 | WhatsApp Web | Groupe « Coloc 🏠 »
+qui a fini le lait ???
+c'est pas moi jure
+le chat a encore vomi sur le canapé 😭
+je passe à la boulangerie en allant à la fac qqn veut un croissant
+moi !! pain au choc stp
+ok
+### recherche | 08:15 | Google | 
+horaires bus star C4 rennes
+météo rennes aujourd'hui
+### chat | 09:12 | Discord | Serveur « L2 Bio 2026 » #td-bioch
+vous avez compris l'exo 3 sur la mitochondrie ?
+non jsp du tout ce qu'elle veut
+le gradient de protons c'est dans quel sens déjà
+de l'espace intermembranaire vers la matrice
+ah ok merci t'es un boss
+la prof a dit que le partiel c'est le 20 octobre
+quoi ??? déjà
+bro that's so true
+same lol
+### recherche | 10:31 | Google | 
+chaîne respiratoire mitochondriale schéma simple
+how to cite pubmed article apa 7
+atp synthase explained
+### document | 11:02 | Google Docs | Compte rendu TP3 microscopie
+TP3 : observation de cellules végétales et animales
+
+Nous avons observé au microscope optique des cellules d'épiderme d'oignon, colorées au bleu de méthylène, puis des cellules de la muqueuse buccale prélevées avec un coton-tige. Au grossissement x400, on distingue nettement la paroi, le noyau et la vacuole des cellules d'oignon, alors que les cellules buccales sont plus petites, irrégulières, sans paroi.
+Les élodées placées dans l'eau salée montrent une plasmolyse : la vacuole se rétracte et la membrane se décolle de la paroi.
+Hypothèse : la concentration en sel du milieu extérieur fait sortir l'eau de la cellule par osmose.
+Matériel : lames, lamelles, pipette, scalpel, bécher, eau distillée.
+### chat | 12:14 | WhatsApp Web | Inès
+t'es au RU ?
+ouais file de ouf
+le hachis parmentier était infâme mdr
+on se fait une pizza ce soir chez nous ?
+grave, ramène de la bière
+### chat | 13:26 | Discord | Serveur « L2 Bio 2026 » #stats
+quelqu'un peut m'aider pour le TP stats ? R me met une erreur
+```r
+data <- read.csv("tp3_mesures.csv", sep = ";")
+mean(data$taille)
+t.test(taille ~ groupe, data = data)
+```
+Error in t.test.formula : grouping factor must have exactly 2 levels
+t'as 3 groupes dans ta colonne, il faut filtrer avant
+ah ok merci je teste
+### mail | 14:03 | Gmail | Candidature - vendeur week-end
+Bonjour Madame,
+
+Je me permets de vous écrire suite à votre annonce pour un poste de vendeur le week-end à la boulangerie. Je suis étudiant en deuxième année de biologie à Rennes et je suis disponible le samedi et le dimanche matin.
+J'ai déjà travaillé deux étés dans une boulangerie à Vannes : mise en rayon du pain et des viennoiseries, encaissement, nettoyage du fournil. Je suis ponctuel et j'aime le contact avec les clients.
+Vous trouverez mon CV en pièce jointe. Je peux passer vous rencontrer cette semaine si vous le souhaitez.
+
+Bien cordialement,
+Léo Martin
+06 39 98 12 34
+leo.martin.bio@gmail.com
+### chat | 15:34 | Messenger | Jonas (Erasmus)
+hey are you coming to the concert on friday? the band is playing at the Ubu
+yes for sure!! I'll bring my guitar for after
+it's raining again lol this city
+welcome to brittany haha
+### recherche | 16:02 | Google | 
+concert rennes vendredi 9 octobre
+ubu rennes programmation
+### commentaire | 17:05 | YouTube | Commentaire sous une vidéo de biochimie
+this video saved my life, the part about the Krebs cycle is so clear. thank you!!
+### chat | 18:01 | Messenger | Maman
+oui maman j'ai bien mangé
+je rentre ce week-end, je prends le train de 18h vendredi
+ah non samedi en fait, y a le concert
+tu pourras laver mon pull vert ?
+bisous ❤️
+### chat | 19:28 | WhatsApp Web | Groupe « Coloc 🏠 »
+pizza 4 fromages ou reine ?
+les deux
+j'ai pris des bières et des chips
+qui sort la poubelle ce soir ? c'est pas encore mon tour
+le chat dort dans le carton de la pizza 😂
+### chat | 22:34 | WhatsApp Web | Inès
+j'arrive pas à dormir, je stresse pour le partiel
+moi aussi
+on révise à la BU demain ? 9h ?
+ok je prends mon ordi et des gâteaux
+### recherche | 23:12 | Google | 
+comment s'endormir rapidement
+tisane camomille effet

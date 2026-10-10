@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><title>Moteur d’essai</title>
+<style>
+  body { margin: 0; font: 16px/1.5 system-ui, sans-serif; color: #222; background: #fff; }
+  header { display: flex; justify-content: flex-end; gap: 1.2rem; padding: 1rem 1.4rem; font-size: .9rem; color: #555; }
+  main { display: grid; place-items: center; height: 70vh; }
+  .logo { font-size: 4.4rem; font-weight: 700; letter-spacing: -.04em; color: #6b7a8f; margin-bottom: 1.4rem; }
+  form { width: 580px; }
+  textarea { width: 100%; box-sizing: border-box; resize: none; padding: .8rem 1.3rem; font: inherit; border: 1px solid #dadce0; border-radius: 24px; box-shadow: 0 1px 6px rgba(32,33,36,.18); outline: none; }
+  .gestes { display: flex; justify-content: center; gap: .8rem; margin-top: 1.2rem; }
+  .gestes button { font: inherit; font-size: .9rem; padding: .5rem 1rem; border: 1px solid #f8f9fa; border-radius: 4px; background: #f8f9fa; color: #3c4043; }
+  footer { position: fixed; bottom: 0; left: 0; right: 0; padding: 1rem 1.4rem; background: #f2f2f2; font-size: .85rem; color: #70757a; }
+</style></head>
+<body>
+  <header><span>Images</span><span>Actualités</span><span>Cartes</span></header>
+  <main><div><div class="logo">Moteur d’essai</div>
+    <form action="resultats.html" method="get"><textarea name="q" rows="1" spellcheck="false" role="combobox" aria-autocomplete="both" aria-label="Rechercher"></textarea>
+    <div class="gestes"><button type="submit">Rechercher</button><button type="button">J’ai de la chance</button></div></form></div></main>
+  <footer>Un moteur de recherche inventé, pour l’essai. Aucune vraie recherche n’est envoyée nulle part.</footer>
+</body></html>

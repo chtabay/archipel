@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Chemin : recevoir</title>
+  <meta name="robots" content="noindex">
+  <link rel="manifest" href="manifest.webmanifest">
+  <style>
+    body { margin: 0; padding: 16px; font: 16px/1.5 system-ui, sans-serif; background: #f4efe4; color: #3b3428; }
+    h1 { font-size: 1.2rem; margin: 0 0 .5rem; }
+    p.note { font-size: .9rem; color: #6b6150; }
+    li { background: #fffaf0; border-radius: 10px; padding: .6rem .8rem; margin: .5rem 0; list-style: none; white-space: pre-wrap; overflow-wrap: anywhere; }
+    ul { padding: 0; }
+    button { font: inherit; padding: .4rem .8rem; margin: .3rem .3rem 0 0; border-radius: 8px; border: 1px solid #b9a888; background: #fff; }
+  </style>
+</head>
+<body>
+  <!-- Essai de faisabilité, pas une pièce de l’app : trois façons d’apporter un texte au chemin sans qu’il quitte le téléphone.
+       1. Partager (Android, app installée) → POST « recevoir », lu par sw.js.
+       2. Une adresse avec le texte après « # » (raccourci iOS, app native, favori) : le « # » n’est jamais envoyé au serveur.
+       3. Coller, d’un geste. -->
+  <h1>Des mots pour le chemin</h1>
+  <p class="note" id="etat">Rien en attente.</p>
+  <ul id="liste"></ul>
+  <button id="coller" type="button">Coller ce que j’ai copié</button>
+  <p class="note">Rien n’entre dans le chemin sans toi : chaque texte attend ici que tu le gardes ou le laisses.</p>
+  <script type="module">
+    const BASE = 'chemin-depots', MAGASIN = 'depots';
+    const ouvrir = () => new Promise((ok, ko) => { const q = indexedDB.open(BASE, 1); q.onupgradeneeded = () => q.result.createObjectStore(MAGASIN, { keyPath: 'quand' }); q.onsuccess = () => ok(q.result); q.onerror = () => ko(q.error); });
+    const faire = async (mode, f) => { const db = await ouvrir(); return new Promise((ok, ko) => { const t = db.transaction(MAGASIN, mode), s = t.objectStore(MAGASIN); let r; const q = f(s); if (q) q.onsuccess = () => { r = q.result; }; t.oncomplete = () => { db.close(); ok(r); }; t.onerror = () => ko(t.error); }); };
+    const deposer = (texte, source) => faire('readwrite', s => s.put({ quand: Date.now() + Math.random(), texte: texte.slice(0, 100000), source }));
+    const lire = () => faire('readonly', s => s.getAll());
+
+    // 2. le texte après « # » : on le prend, puis on l’efface de l’adresse et de l’entrée d’historique
+    const h = new URLSearchParams(location.hash.slice(1));
+    if (h.get('texte')) { await deposer(h.get('texte'), 'adresse'); history.replaceState(null, '', location.pathname); }
+    if (location.search) history.replaceState(null, '', location.pathname); // « ?recu » ne dit rien, on l’enlève quand même
+
+    async function montrer() {
+      const l = (await lire()).filter(d => !d.garde), ul = document.getElementById('liste');
+      ul.replaceChildren(...l.map(d => { const li = document.createElement('li'); li.dataset.source = d.source; li.textContent = d.texte;
+        const g = document.createElement('button'); g.textContent = 'Garder dans ma page'; g.onclick = async () => { await faire('readwrite', s => s.put({ ...d, garde: true })); montrer(); };
+        const x = document.createElement('button'); x.textContent = 'Laisser'; x.onclick = async () => { await faire('readwrite', s => s.delete(d.quand)); montrer(); };
+        li.append(document.createElement('br'), g, x); return li; }));
+      document.getElementById('etat').textContent = l.length ? `${l.length} texte(s) en attente.` : 'Rien en attente.';
+    }
+    // 3. coller, d’un geste (Chrome demande la permission ; Safari montre « Coller » ; Firefox, un menu)
+    document.getElementById('coller').onclick = async () => { try { const t = await navigator.clipboard.readText(); if (t.trim()) { await deposer(t, 'presse-papiers'); montrer(); } } catch { document.getElementById('etat').textContent = 'Le presse-papiers n’a pas été lu.'; } };
+    montrer();
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+  </script>
+</body>
+</html>

@@ -1,0 +1,270 @@
+# Persona : Nadia, 41 ans, chargée de logistique dans une PME de meubles (Ardoise Mobilier, fictive), près de Lyon.
+# Journée : lundi 5 octobre 2026. Tout est inventé : noms, adresses, numéros (plages réservées à la fiction), commandes.
+# Format : chaque saisie commence par « ### source | heure | outil | sujet » ; cette ligne n’est pas du texte tapé.
+### recherche | 07:52 | Google | 
+trafic périphérique nord lyon ce matin
+### chat | 08:31 | Teams | Karim (entrepôt)
+Salut Karim, tu peux me confirmer le nombre de palettes de chaises Oslo reçues vendredi ? Le bon de livraison dit 12 mais j'en compte 11 dans le système.
+Et si tu as deux minutes, regarde aussi les cartons de lampes, il en manque peut-être un.
+### mail | 08:44 | Outlook | RE: Livraison Villeurbanne - camion immobilisé
+Bonjour Marc,
+
+Merci pour votre retour. Je comprends bien que le camion est immobilisé au garage, mais nous avons trois clients qui attendent leurs meubles cette semaine, dont une cuisine complète à Caluire.
+Pouvez-vous me dire si un autre véhicule peut prendre le relais demain matin ? Sinon je vais devoir louer un utilitaire de notre côté.
+
+Je reste joignable toute la journée au 01 99 00 41 27.
+
+Cordialement,
+
+Nadia Benali
+Responsable logistique
+Ardoise Mobilier
+12 rue des Tanneurs, 69100 Villeurbanne
+Tél. : 01 99 00 41 27 | www.ardoise-mobilier.example
+
+Le lun. 5 oct. 2026 à 07:58, Marc Dubois <marc.dubois@rhone-express.example> a écrit :
+> Bonjour Nadia,
+> Notre camion 19 tonnes est tombé en panne hier soir sur l'A42, il est au garage jusqu'à mercredi au mieux.
+> Les livraisons prévues lundi et mardi sont donc décalées. Désolé pour ce contretemps.
+> Bien à vous,
+> Marc Dubois
+> Transports Rhône Express - Exploitation
+> 01 99 00 77 10
+### mail | 09:02 | Outlook | Votre armoire Nordik - porte rayée
+Bonjour Madame Garnier,
+
+Je suis vraiment désolée d'apprendre que la porte de votre armoire Nordik est arrivée rayée. Nous allons bien sûr la remplacer à nos frais.
+La nouvelle porte partira de notre entrepôt dès que notre transporteur sera de nouveau disponible, normalement d'ici la fin de semaine. Le monteur passera la changer, cela prendra une petite demi-heure.
+Pourriez-vous m'envoyer une photo de la rayure pour notre assurance ? Vous pouvez simplement répondre à ce mail.
+
+Encore toutes nos excuses pour ce désagrément.
+
+Cordialement,
+
+Nadia Benali
+Responsable logistique
+Ardoise Mobilier
+12 rue des Tanneurs, 69100 Villeurbanne
+Tél. : 01 99 00 41 27 | www.ardoise-mobilier.example
+
+Ce message et ses pièces jointes sont confidentiels et destinés exclusivement à leurs destinataires. Si vous avez reçu ce message par erreur, merci de le détruire et d'en avertir l'expéditeur.
+### chat | 09:20 | Teams | Sophie (commerciale)
+coucou, on a encore la table ronde en chêne en stock ?
+la cliente de Bron veut la même avec six chaises
+je regarde
+oui il en reste 2, une au showroom et une au dépôt
+top merci !! je bloque celle du dépôt
+attention le pied est un peu abîmé sur celle du showroom
+ok noté
+### mail | 09:47 | Outlook | Point retards livraisons semaine 41
+Bonjour Julien,
+
+Petit point sur la semaine :
+- le camion de Rhône Express est en panne jusqu'à mercredi, trois livraisons décalées (Caluire, Bron, Vaulx) ;
+- l'armoire de Mme Garnier est arrivée avec une porte rayée, remplacement en cours ;
+- il manque une palette de chaises Oslo sur la réception de vendredi, Karim vérifie.
+
+Je propose de louer un utilitaire 20 m3 pour mardi et mercredi, environ 180 € HT par jour. Tu valides ?
+
+Nadia
+
+-----Message d'origine-----
+De : Julien Morel <j.morel@ardoise-mobilier.example>
+Envoyé : vendredi 2 octobre 2026 17:32
+À : Nadia Benali <n.benali@ardoise-mobilier.example>
+Objet : Point retards livraisons semaine 41
+
+Nadia, tu peux me faire un point lundi matin sur les retards ? Le salon de la maison approche et je veux qu'on soit carrés.
+Merci
+Julien
+### recherche | 10:12 | Google | 
+location utilitaire 20m3 villeurbanne
+location camion 20m3 prix journée
+### mail | 10:21 | Outlook | Demande de réservation utilitaire 20 m3
+Bonjour,
+
+Je souhaiterais réserver un utilitaire de 20 m3 avec hayon pour mardi 6 et mercredi 7 octobre, prise du véhicule à 7h00 à votre agence de Villeurbanne.
+Il s'agit de livrer des meubles (une cuisine, une armoire, des tables et des chaises) dans l'est lyonnais.
+Merci de m'indiquer la disponibilité et le tarif.
+
+Cordialement,
+
+Nadia Benali
+Responsable logistique
+Ardoise Mobilier
+Tél. : 01 99 00 41 27 | www.ardoise-mobilier.example
+### chat | 10:52 | Teams | Groupe « Pot de départ Élodie 🎉 »
+Bon, qui s'occupe du gâteau ? Je peux passer chez le pâtissier jeudi midi
+fraisier ou forêt noire ? 🍰
+fraisier !! elle adore les fraises
+pour le cadeau je propose un bouquet de fleurs et un bon pour un stage de poterie, elle en parle tout le temps
+validé 👍
+j'ai ouvert une cagnotte : https://www.leetchi.com/c/pot-depart-elodie-ard26
+je ramène des bougies et une nappe
+il faudra aussi des verres, on n'en a que six à la salle de pause
+### mail | 11:34 | Outlook | RE: Commande chaises et bancs - Bois & Co
+Bonjour Thomas,
+
+Je vous confirme la commande suivante :
+- 40 chaises Oslo chêne naturel (réf. OSL-CH-NAT)
+- 10 bancs Oslo 160 cm (réf. OSL-BC-160)
+- 6 tabourets hauts (réf. TAB-H-75)
+
+Livraison souhaitée semaine 43, sur palettes filmées s'il vous plaît, la dernière fois deux chaises sont arrivées avec un pied fendu.
+Bon de commande n° BC-2026-0917 en pièce jointe.
+
+Bonne journée,
+Nadia
+
+Nadia Benali | Responsable logistique | Ardoise Mobilier | 01 99 00 41 27
+
+De : Thomas Lefèvre <commandes@boisandco.example>
+Envoyé : jeudi 1 octobre 2026 15:10
+À : Nadia Benali
+Objet : Commande chaises et bancs - Bois & Co
+
+Bonjour Madame Benali,
+Suite à notre échange téléphonique, je vous laisse confirmer les quantités par retour de mail. Nos délais actuels sont de trois semaines.
+Cordialement,
+Thomas Lefèvre
+Service commandes - Bois & Co
+### recherche | 12:08 | Google | 
+vélo enfant 20 pouces occasion lyon
+leboncoin vélo btwin 20 pouces
+https://www.leboncoin.fr/recherche?category=55&text=velo%2020%20pouces&locations=Lyon
+### mail | 12:26 | Gmail | Anniversaire de maman
+Coucou Samia,
+
+Pour les 70 ans de maman le 17, j'ai réservé au restaurant du port à Annecy, une table pour dix à midi. Tu crois qu'elle préférerait un foulard en soie ou un album photo avec les photos de famille ? Moi je pencherais pour l'album, on pourrait mettre les vieilles photos de la maison de Tlemcen et celles des vacances à la mer.
+Adam s'est cassé la figure à vélo samedi, rien de grave mais il a mal à une dent, je lui prends rendez-vous chez le dentiste.
+Le chat va mieux, il remange.
+Bisous, on s'appelle ce soir
+
+Envoyé de mon iPhone
+### formulaire | 13:41 | Doctolib | Prise de rendez-vous dentiste
+Motif : douleur dentaire suite à une chute
+Informations pour le praticien : Mon fils Adam, 9 ans, est tombé de vélo samedi. Il a mal à une incisive en haut quand il mange, la dent ne bouge pas. Il n'a pas d'allergie connue.
+Nom : Benali
+Prénom : Adam
+Date de naissance : 14/03/2017
+Téléphone : 06 39 98 41 27
+### mail | 14:07 | Outlook | Facture transport septembre
+Bonjour Céline,
+
+Je te transmets la facture FA-2026-1187 de Rhône Express pour septembre (2 340,00 € TTC). Attention, la livraison du 24/09 à Écully est facturée deux fois, ligne 14 et ligne 17. J'ai demandé un avoir à Marc.
+
+Merci !
+Nadia
+### chat | 14:33 | Teams | Karim (entrepôt)
+j'ai trouvé la palette manquante, elle était derrière les rouleaux de film
+par contre il y a 3 armoires abîmées au fond, sous la bâche, l'eau a coulé du toit
+tu peux m'envoyer des photos ? je préviens l'assurance
+pour l'inventaire tu peux utiliser =RECHERCHEV(A2;Stock!A:D;4;FAUX) dans le fichier partagé, ça ira plus vite
+### mail | 15:12 | Outlook | RE: Séance photo catalogue printemps
+Bonjour Léa,
+
+Pour la séance photo du catalogue jeudi, je peux faire préparer le canapé vert, les deux lampes en laiton, le tapis berbère et la bibliothèque en noyer. Il faudrait aussi des plantes, je n'en ai pas au dépôt.
+Le photographe peut venir dès 9h, la salle d'exposition sera vide.
+Le planning est ici : https://ardoise.sharepoint.example/sites/marketing/Shared%20Documents/catalogue-printemps-2027.xlsx
+
+Nadia
+
+Le ven. 2 oct. 2026 à 11:20, Léa Fournier <l.fournier@ardoise-mobilier.example> a écrit :
+> Hello Nadia,
+> Pour le shooting du catalogue printemps, peux-tu nous préparer le canapé vert et quelques luminaires ? On voudrait une ambiance salon cosy, avec un tapis et une bibliothèque.
+> Merci beaucoup,
+> Léa
+### mail | 15:48 | Outlook | RE: Livraison Villeurbanne - camion immobilisé
+Marc,
+
+Bonne nouvelle si le camion est réparé plus tôt que prévu. On garde donc la tournée de demain, départ 7h du dépôt, avec la cuisine de Caluire en premier.
+J'annule l'utilitaire.
+
+Merci,
+Nadia
+
+Nadia Benali
+Responsable logistique
+Ardoise Mobilier
+Tél. : 01 99 00 41 27 | www.ardoise-mobilier.example
+
+Le lun. 5 oct. 2026 à 15:30, Marc Dubois <marc.dubois@rhone-express.example> a écrit :
+> Nadia, le garage a trouvé la pièce, le camion sera dispo demain matin.
+> On peut maintenir la tournée.
+> Marc
+### mail | 16:22 | Outlook | Pot de départ d'Élodie - jeudi 17h
+Bonjour à tous,
+
+Élodie nous quitte après huit ans chez Ardoise ! Nous fêterons son départ jeudi à 17h dans la salle de pause, avec un fraisier et quelques bouteilles.
+Pensez à participer à la cagnotte pour son cadeau avant mercredi soir : https://www.leetchi.com/c/pot-depart-elodie-ard26
+Et chut, c'est une surprise.
+
+Nadia
+### recherche | 16:55 | Google | 
+train lyon marseille samedi matin
+sncf connect lyon part dieu marseille saint charles 10 octobre
+### mail | 17:06 | Outlook | Demande de congés vacances de la Toussaint
+Bonjour,
+
+Je souhaiterais poser mes congés du lundi 26 au vendredi 30 octobre inclus (5 jours), pendant les vacances scolaires.
+Sophie assurera le suivi des livraisons en mon absence.
+
+Bien cordialement,
+
+Nadia Benali
+Responsable logistique
+Ardoise Mobilier
+### chat | 17:31 | Teams | Sophie (commerciale)
+je file, la nounou m'attend
+bonne soirée ! demain j'arrive à 8h pour le camion
+### chat | 18:42 | WhatsApp Web | Karim (mari)
+tu peux prendre du pain et des oeufs ? je fais une omelette ce soir
+Adam a foot à 18h30, n'oublie pas son ballon et sa gourde
+et le dentiste c'est jeudi 16h15, j'ai pris le rdv
+### mail | 21:18 | Gmail | Rando dimanche ?
+Hello Fanny,
+
+Ça tient toujours la rando dimanche dans les monts d'Or ? Je pensais à la boucle du mont Thou, deux heures et demie, avec pique-nique au sommet si le temps le permet. Les enfants peuvent venir avec leurs vélos jusqu'au parking.
+J'ai trouvé le parcours ici : https://www.visorando.example/randonnee-boucle-du-mont-thou/
+Grosse journée aujourd'hui, un camion en panne, une armoire rayée, j'ai besoin de marcher en forêt.
+
+Bises,
+Nadia
+--
+Envoyé depuis mon téléphone
+### mail | 09:33 | Outlook | Livraison table ronde chêne - Bron
+Bonjour Monsieur Rousseau,
+
+Sophie m'a transmis votre commande : la table ronde en chêne et ses six chaises. Je peux vous proposer une livraison jeudi 8 octobre entre 8h et 12h, avec montage de la table sur place.
+Merci de vérifier que l'escalier permet le passage d'un plateau de 120 cm.
+
+Cordialement,
+
+Nadia Benali
+Responsable logistique
+Ardoise Mobilier
+12 rue des Tanneurs, 69100 Villeurbanne
+Tél. : 01 99 00 41 27 | www.ardoise-mobilier.example
+### mail | 11:08 | Outlook | Imprimante 2e étage
+Bonjour le support,
+
+L'imprimante du deuxième étage affiche « bourrage papier » alors qu'il n'y a plus de feuille coincée. J'ai éteint et rallumé, sans succès. Ticket ouvert : INC-0048213.
+
+Merci,
+Nadia
+Envoyé depuis Outlook pour Android
+### mail | 14:52 | Outlook | Déclaration de sinistre - dégât des eaux entrepôt
+Bonjour,
+
+Je vous déclare un dégât des eaux survenu ce week-end dans notre entrepôt de Villeurbanne (contrat n° 7841 2290 03). Une fuite de la toiture a abîmé trois armoires en chêne stockées au fond du bâtiment, sous une bâche. Le bois a gonflé et deux portes sont tachées.
+Vous trouverez les photos en pièce jointe. Merci de m'indiquer si un expert doit passer avant que nous déplacions les meubles.
+
+Cordialement,
+
+Nadia Benali
+Responsable logistique
+Ardoise Mobilier
+12 rue des Tanneurs, 69100 Villeurbanne
+Tél. : 01 99 00 41 27 | www.ardoise-mobilier.example
+
+Ce message et ses pièces jointes sont confidentiels et destinés exclusivement à leurs destinataires. Si vous avez reçu ce message par erreur, merci de le détruire et d'en avertir l'expéditeur.

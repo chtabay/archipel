@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <title>Un moteur de recherche d’essai</title>
+</head>
+<body>
+  <!-- Données SYNTHÉTIQUES. Une barre de recherche comme celle d’un grand moteur : un textarea nommé q, en combobox avec complétion ;
+       Entrée envoie le formulaire, et la page change. Sur un moteur choisi, ce qu’on cherche compte pour le chemin. -->
+  <h1 id="ailleurs">Chercher</h1>
+  <form action="resultats.html" method="get">
+    <textarea name="q" id="q" rows="1" role="combobox" aria-autocomplete="both" aria-label="Rechercher"></textarea>
+    <button type="submit">Rechercher</button>
+  </form>
+  <!-- Sur le même hôte, un courriel : seuls les écrits comptent, pas l’objet, ni les destinataires, ni deux mots -->
+  <input id="a" role="combobox" aria-autocomplete="list" aria-label="Destinataires">
+  <input id="objet" name="subjectbox" placeholder="Objet">
+  <div id="corps" contenteditable="true" role="textbox" aria-label="Corps du message"></div>
+  <script>
+    document.getElementById('q').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); e.target.form.requestSubmit(); } });
+  </script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+:root { --fond: #f4efe4; --encre: #3b3428; --doux: #6b6150; --accent: #3c6e5a; --ligne: #d9cfbb; }
+body { margin: 0; background: var(--fond); color: var(--encre); font: 17px/1.55 system-ui, sans-serif; }
+main { max-width: 38rem; margin: 0 auto; padding: 2rem 16px 4rem; }
+h1 { font-size: 1.5rem; font-weight: 700; } h2 { font-size: 1.15rem; margin-top: 2rem; }
+li { margin: .3rem 0; } .doux { color: var(--doux); }
+button { font: inherit; padding: .6rem 1rem; border-radius: .6rem; border: 1px solid var(--accent); background: transparent; color: var(--encre); cursor: pointer; margin: .3rem .5rem .3rem 0; }
+#oui { background: var(--accent); color: var(--fond); } button.grave { border-color: #a85b45; color: #a85b45; }
+textarea { width: 100%; box-sizing: border-box; font: inherit; padding: .5rem; border: 1px solid var(--ligne); border-radius: .6rem; background: #fbf7ee; }
+label { font-weight: 700; }

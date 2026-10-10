@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="fr">
+<head><meta charset="utf-8"><title>Page d’essai : écrire</title></head>
+<body>
+<h1 id="ailleurs">Page d’essai</h1>
+<!-- Données synthétiques seulement. Chaque zone imite un cas réel ; l’essai dit ce qui doit être glané ou non. -->
+<textarea id="journal" rows="3" cols="60"></textarea>
+<input id="mdp" type="password">
+<input id="carte" autocomplete="cc-number">
+<input id="iban" name="iban">
+<input id="otp" autocomplete="one-time-code">
+<input id="recherche" type="search">
+<input id="combo" role="combobox" aria-autocomplete="list">
+<form id="connexion"><input id="pseudo" name="pseudo"><input type="password"></form>
+
+<!-- Un éditeur riche « à la Lexical / ProseMirror » : il annule beforeinput et écrit lui-même, donc pas d’événement input -->
+<div id="riche" contenteditable="true" role="textbox" aria-multiline="true"></div>
+
+<!-- Une réponse « à la Gmail » : le corps, puis le message cité, écrit par quelqu’un d’autre -->
+<div id="mail" contenteditable="true" role="textbox"><div id="mail-corps"><br></div><div class="gmail_quote"><div class="gmail_attr">Le 6 oct., Camille a écrit :</div><blockquote>Texte cité de quelqu’un d’autre qu’il ne faut surtout pas garder ici.</blockquote></div></div>
+
+<div id="ombre-ouverte"></div>
+<div id="ombre-fermee"></div>
+
+<!-- Un fil de discussion : Entrée envoie, et la page vide la zone aussitôt -->
+<input id="chat" placeholder="Écrire un message">
+
+<textarea id="colle" rows="2" cols="60"></textarea>
+<textarea id="prerempli" rows="2" cols="60">Texte déjà là avant moi, écrit par le site.</textarea>
+
+<iframe id="cadre-meme" src="cadre.html"></iframe>
+<iframe id="cadre-autre"></iframe>
+<iframe id="cadre-vide"></iframe>
+
+<script>
+  window.__inputs = 0;
+  const riche = document.getElementById('riche');
+  riche.addEventListener('input', () => { window.__inputs++; });
+  riche.addEventListener('beforeinput', e => { // l’éditeur garde la main sur le DOM
+    if (e.inputType !== 'insertText') return;
+    e.preventDefault();
+    const s = getSelection(), r = s.getRangeAt(0); r.deleteContents();
+    const t = document.createTextNode(e.data); r.insertNode(t); r.setStartAfter(t); r.collapse(true); s.removeAllRanges(); s.addRange(r);
+  });
+
+  document.getElementById('ombre-ouverte').attachShadow({ mode: 'open' }).innerHTML = '<textarea rows="2" cols="40"></textarea>';
+  window.__fermee = document.getElementById('ombre-fermee').attachShadow({ mode: 'closed' });
+  window.__fermee.innerHTML = '<textarea rows="2" cols="40"></textarea>';
+
+  const chat = document.getElementById('chat');
+  chat.addEventListener('keydown', e => { if (e.key === 'Enter') { window.__envoye = chat.value; chat.value = ''; } });
+
+  const autre = new URL(location.href); autre.hostname = autre.hostname === '127.0.0.1' ? 'localhost' : '127.0.0.1';
+  document.getElementById('cadre-autre').src = new URL('cadre.html', autre).href;
+
+  // un cadre vide, rempli par la page, en designMode : comme les zones de saisie cachées des éditeurs à canevas
+  const vide = document.getElementById('cadre-vide').contentDocument;
+  vide.open(); vide.write('<!doctype html><body></body>'); vide.close(); vide.designMode = 'on';
+</script>
+</body>
+</html>

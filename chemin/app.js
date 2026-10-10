@@ -14,6 +14,8 @@ const el = (tag, props = {}, ...kids) => { const n = Object.assign(document.crea
 const deux = n => String(n).padStart(2, '0'), aujourdhui = () => { const d = new Date(); return `${d.getFullYear()}-${deux(d.getMonth() + 1)}-${deux(d.getDate())}`; }; // la date d’ici, pas celle de Greenwich
 const norm = s => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[’‘`´]/g, "'").replace(/\s+/g, ' ');
 const enDemo = new URLSearchParams(location.search).has('demo');
+const enEncart = new URLSearchParams(location.search).has('encart'); // la frise seule, petite, posée par l’extension au coin d’une page
+if (enEncart) document.documentElement.classList.add('encart');
 const dates = new Map(), quand = d => { // « 7 octobre », et l’année si ce n’est pas celle-ci
   if (!dates.has(d)) { const x = new Date(`${d}T12:00:00`); dates.set(d, x.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', ...(x.getFullYear() !== new Date().getFullYear() && { year: 'numeric' }) })); }
   return dates.get(d);
@@ -65,8 +67,7 @@ async function calculer(suivre = () => {}) {
   let t = performance.now();
   const respirer = async () => { if (performance.now() - t > 30) { await souffle(); t = performance.now(); } return g === gen; };
   for (const [n, p] of pages.entries()) {
-    const d = decouper(S, p.texte);
-    (d.length ? d : [{ texte: p.texte, titre: null, porteurs: 0 }]).forEach((x, k) => out.push({ ...x, date: p.date, page: n, premier: k === 0 }));
+    (passagesDe(p).length ? passagesDe(p) : [{ texte: p.texte, titre: null, porteurs: 0 }]).forEach((x, k) => out.push({ ...x, date: p.date, page: n, premier: k === 0 }));
     if (!(await respirer())) return false;
   }
   const manquent = out.filter(x => !lus.has(x.texte)), nouvelles = [];
@@ -285,9 +286,25 @@ function preparerParcours() {
 
 /* ───────── La page d’un jour, sous la frise : ses blocs, chacun à son heure ; aujourd’hui, un bloc de plus ───────── */
 
-// une page : ses blocs ; son texte, qui fait les tuiles, les met bout à bout, comme des paragraphes
-const joindre = (date, blocs) => ({ date, blocs, texte: blocs.map(b => b.texte).join('\n\n') });
+// une page : ses blocs ; son texte, qui fait les tuiles, les met bout à bout, comme des paragraphes. Entre une suite de
+// recherches (glanées sur un moteur par l’extension) et le reste, une coupe : courtes et denses, les recherches font chacune
+// sa tuile, au lieu de se fondre dans celles des courriels
+const COUPE = '\n\n* * *\n\n', genre = b => (b.recherche ? 'recherche' : 'texte');
+const joindre = (date, blocs) => {
+  let texte = ''; const debuts = []; // la place de chaque bloc dans le texte de la page
+  blocs.forEach((b, i) => { if (i) texte += genre(b) !== genre(blocs[i - 1]) ? COUPE : '\n\n'; debuts.push(texte.length); texte += b.texte; });
+  return { date, blocs, texte, debuts };
+};
 const enBlocs = p => joindre(p.date, p.blocs?.length ? p.blocs : [{ heure: '', texte: p.texte }]); // une page d’avant les blocs : un seul, sans heure
+// les passages d’une page : le texte se découpe en passages d’environ 14 porteurs ; chaque recherche est un passage à elle seule
+function passagesDe(p) {
+  const out = []; let groupe = [];
+  const vider = () => { if (groupe.length) { for (const x of decouper(S, groupe.map(b => b.texte).join('\n\n'))) out.push(x); groupe = []; } };
+  for (const b of p.blocs || [{ texte: p.texte }]) {
+    if (b.recherche) { vider(); out.push({ texte: b.texte, titre: null, porteurs: lirePage(S, b.texte).mots.length }); } else groupe.push(b);
+  }
+  vider(); return out;
+}
 const maintenant = () => { const d = new Date(); return `${deux(d.getHours())}:${deux(d.getMinutes())}`; };
 const aLHeure = h => (h ? `${+h.slice(0, 2)} h ${h.slice(3, 5)}` : '');
 let vu = null, edition = null, cible = null, brouillon = ''; // le jour montré ; le bloc qu’on modifie ; le passage de la tuile touchée ; ce qu’on écrivait avant
@@ -321,12 +338,13 @@ function montrerPage() { // le jour montré, aujourd’hui ou celui d’une tuil
   $('#retour').hidden = jour === auj;
   let o = 0;
   $('#blocs').replaceChildren(...(page?.blocs || []).map((b, i) => {
-    const d = o, f = o + b.texte.length, texte = el('p', { className: 'texte' }); o = f + 2; // la place du bloc dans le texte de la page
+    const d = page.debuts ? page.debuts[i] : o, f = d + b.texte.length, texte = el('p', { className: 'texte' }); o = f + 2; // la place du bloc dans le texte de la page
     if (r && r[0] < f && r[1] > d) { const a = Math.max(r[0], d) - d, z = Math.min(r[1], f) - d; texte.append(b.texte.slice(0, a), el('mark', { textContent: b.texte.slice(a, z) }), b.texte.slice(z)); }
     else texte.textContent = b.texte;
     const long = b.texte.length > 600, ouvert = !!texte.firstElementChild, gestes = el('p', { className: 'gestes-bloc' });
-    const bloc = el('article', { className: ['bloc', long && 'long', ouvert && 'ouvert', edition?.date === jour && edition.i === i && 'en-cours'].filter(Boolean).join(' ') },
-      ...(b.heure ? [el('p', { className: 'heure', textContent: aLHeure(b.heure) })] : []), texte, gestes);
+    const glane = b.source === 'glane', heure = [aLHeure(b.heure), glane && 'écrit ailleurs'].filter(Boolean).join(' · '); // glané par l’extension, dans une page du navigateur
+    const bloc = el('article', { className: ['bloc', long && 'long', ouvert && 'ouvert', glane && 'glane', edition?.date === jour && edition.i === i && 'en-cours'].filter(Boolean).join(' ') },
+      ...(heure ? [el('p', { className: 'heure', textContent: heure })] : []), texte, gestes);
     if (long) gestes.append(el('button', { type: 'button', className: 'lien', textContent: ouvert ? 'Replier' : 'Lire tout', onclick: e => { e.target.textContent = bloc.classList.toggle('ouvert') ? 'Replier' : 'Lire tout'; } }));
     if (!edition) gestes.append(el('button', { type: 'button', className: 'lien', textContent: 'Modifier', ariaLabel: b.heure ? `Modifier le bloc de ${aLHeure(b.heure)}` : 'Modifier ce bloc', onclick: () => modifier(jour, i) }));
     return bloc;
@@ -354,12 +372,18 @@ function preparerEcriture() {
     const texte = zone.value.replace(/\r\n?/g, '\n').trim(), e = edition;
     if (!texte && !e) { zone.focus(); return; }
     aide(texte); bouton.disabled = true;
-    const jour = e?.date || aujourdhui(), i = pages.findIndex(p => p.date === jour), premiere = !pages.length, blocs = i >= 0 ? [...pages[i].blocs] : [];
-    if (!e) blocs.push({ heure: maintenant(), texte }); else if (texte) blocs[e.i] = { ...blocs[e.i], texte }; else blocs.splice(e.i, 1);
-    const page = joindre(jour, blocs);
-    if (i < 0) pages.push(page); else if (blocs.length) pages[i] = page; else pages.splice(i, 1);
+    const jour = e?.date || aujourdhui(), premiere = !pages.length;
+    const changer = p => { // d’après la page telle qu’elle est : un bloc glané entre-temps par l’extension du navigateur reste
+      const blocs = p ? [...enBlocs(p).blocs] : [];
+      if (!e) blocs.push({ heure: maintenant(), texte }); else if (texte) blocs[e.i] = { ...blocs[e.i], texte }; else blocs.splice(e.i, 1);
+      return blocs.length ? joindre(jour, blocs) : null;
+    };
+    let page = null, garde = true;
+    if (enDemo) page = changer(pages.find(p => p.date === jour));
+    else { try { page = await carnet.modifierPage(jour, changer); } catch { garde = false; page = changer(pages.find(p => p.date === jour)); } }
+    const i = pages.findIndex(p => p.date === jour), blocs = page?.blocs || [];
+    if (!page) { if (i >= 0) pages.splice(i, 1); } else if (i < 0) pages.push(enBlocs(page)); else pages[i] = enBlocs(page);
     pages.sort((a, b) => a.date.localeCompare(b.date));
-    const garde = enDemo || await (blocs.length ? carnet.garderPage(page) : carnet.effacerPage(jour)).catch(() => false);
     if (premiere && !enDemo) carnet.proteger();
     edition = cible = null; vu = blocs.length && jour !== aujourdhui() ? jour : null; zone.value = e ? brouillon : ''; brouillon = ''; montrerPage(); // une page partie : retour à aujourd’hui
     dit(texte.length > 3000 ? 'Le texte se lit…' : e ? 'Le chemin change…' : 'Le chemin s’allonge…');
@@ -376,10 +400,20 @@ function preparerEcriture() {
   montrerPage();
 }
 
+// Un bloc est arrivé d’ailleurs (l’extension du navigateur a glané un écrit) : relire le carnet, et aller au bout du chemin
+async function rafraichir() {
+  if (enDemo || !S) return;
+  pages = (await carnet.lirePages()).map(enBlocs);
+  if (!edition) { vu = cible = null; $('#jour').textContent = ''; } // comme un bloc écrit à la main aujourd’hui : retour à aujourd’hui
+  dit('Un écrit de plus : le chemin s’allonge…');
+  if (await calculer((n, t) => dit(`Le texte se lit : ${n} passages sur ${t}`))) { montrer(); allerA(); dit('Un écrit de plus. Le chemin s’allonge.'); }
+  if (!edition) montrerPage();
+}
+
 /* ───────── Hors ligne : le service worker garde l’app et les objets déjà vus ───────── */
 
 function garderHorsLigne() {
-  if (!('serviceWorker' in navigator)) return;
+  if (!('serviceWorker' in navigator) || !/^https?:$/.test(location.protocol)) return; // dans l’extension, pas de service worker à la page
   navigator.serviceWorker.register('sw.js').then(() => navigator.serviceWorker.ready)
     .then(r => r.active?.postMessage({ type: 'garder', urls: performance.getEntriesByType('resource').map(e => e.name) }))
     .catch(() => {}); // sans service worker, l’app marche pareil, en ligne
@@ -395,7 +429,8 @@ function garderHorsLigne() {
     dit(pages.length ? 'Chaque page devient un bout de chemin.' : 'Écris ta première page : le chemin commence là.');
     pret = premiere;
   } catch (e) { console.error(e); dit('Le chemin ne s’ouvre pas sur cet appareil.'); }
-  await intro.quand(pret);
-  window.chemin = { get plans() { return plans; }, get passages() { return passages; }, get pages() { return pages; }, get tuiles() { return tuiles; }, get style() { return style; }, S, F, atelier, carnet }; // pour les essais
+  await intro.quand(pret, enEncart ? 0 : undefined); // en encart, pas d’intro
+  window.chemin = { get plans() { return plans; }, get passages() { return passages; }, get pages() { return pages; }, get tuiles() { return tuiles; }, get style() { return style; }, S, F, atelier, carnet, rafraichir }; // pour les essais, et pour l’extension
+  dispatchEvent(new Event('chemin:pret'));
   if (document.readyState === 'complete') garderHorsLigne(); else addEventListener('load', garderHorsLigne);
 })();
