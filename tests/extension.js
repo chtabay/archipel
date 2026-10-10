@@ -62,6 +62,9 @@ const JAMAIS = {
   const ORDINAIRE = `${BASE}tests/extension/page.html`, MOTEUR = `http://localhost:${moteur.port}/recherche.html`;
   const profil = fs.mkdtempSync(path.join(os.tmpdir(), 'chemin-ext-'));
   const ctx = await chromium.launchPersistentContext(profil, { channel: 'chromium', headless: true, args: [`--disable-extensions-except=${DIST}`, `--load-extension=${DIST}`, ...GL], viewport: { width: 1100, height: 800 } });
+  // sans carte graphique, les pages du chemin peignent dans le processus de l’extension, que partagent l’accord et l’encart :
+  // sur une machine à deux cœurs, comme celles de GitHub, une action y attend parfois son tour plus de 30 s
+  ctx.setDefaultTimeout(120000);
   const dehors = [], LOCAL = /^http:\/\/(127\.0\.0\.1|localhost)(:\d+)?\//, INTERNE = /^(chrome-extension:|chrome:|devtools:|data:|blob:|about:)/;
   ctx.on('request', r => { const u = r.url(); if (!LOCAL.test(u) && !INTERNE.test(u)) dehors.push(u); });
 
