@@ -9,6 +9,7 @@ function fabriquer() {
   fs.rmSync(DIST, { recursive: true, force: true });
   for (const f of ['aquarelle.js', 'outils.js', 'contenu.js', 'fonts']) copier(path.join(RACINE, f), path.join(DIST, f)); // ce que le chemin emprunte à l’archipel
   for (const f of ['app.js', 'sens.js', 'monde.js', 'carnet.js', 'demo.js', 'style.css', 'catalogue.json', 'vendor', 'sens', 'objets']) copier(path.join(RACINE, 'chemin', f), path.join(DIST, 'chemin', f));
+  copier(path.join(RACINE, 'vendor/LICENSE-three.txt'), path.join(DIST, 'vendor/LICENSE-three.txt')); // la licence de three.js, que chemin/vendor/LISEZMOI.txt cite
   // la page du chemin, avec ce que l’extension y ajoute ; sans sw.js : une page d’extension n’a pas de service worker à elle
   const html = fs.readFileSync(path.join(RACINE, 'chemin/index.html'), 'utf8').replace('</body>', '  <script type="module" src="onglet.js"></script>\n</body>').replace('href="extension/confidentialite.html"', 'href="../confidentialite.html"'); // dans le paquet, la politique est à la racine
   fs.writeFileSync(path.join(DIST, 'chemin/index.html'), html);

@@ -1,17 +1,19 @@
 # L’extension du chemin : fabriquée par GitHub à chaque changement, pour qu’on n’ait rien à installer sur son ordinateur.
-# Sur une branche de travail, le zip est une pièce jointe de l’exécution (onglet Actions, connecté à GitHub).
-# Sur main, il est aussi publié dans la version « extension-essai », téléchargeable par un lien, pour les personnes invitées.
+# Sur une branche de travail, le dossier fabriqué est une pièce jointe de l’exécution (onglet Actions, connecté à GitHub).
+# Sur main, la version « extension-essai » reçoit ce qu’on dépose dans les boutiques : chemin-<version>.zip (Chrome, Edge,
+# Firefox), chemin-<version>-sources.zip (pour les relecteurs de Mozilla), et chemin-<version>.xpi, signé par Mozilla,
+# dès que les secrets AMO_JWT_ISSUER et AMO_JWT_SECRET existent (voir chemin/extension/BOUTIQUES.md, « La liste des pas »).
 name: Extension
 on:
   push:
-    paths: ['chemin/**', 'aquarelle.js', 'outils.js', 'contenu.js', 'fonts/**', 'icones/**', '.github/workflows/extension.yml']
+    paths: ['chemin/**', 'aquarelle.js', 'outils.js', 'contenu.js', 'fonts/**', 'icones/**', 'vendor/LICENSE-three.txt', '.github/workflows/extension.yml']
   workflow_dispatch:
 permissions:
   contents: write
 jobs:
   fabriquer:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 45 # la signature de Mozilla peut prendre plusieurs minutes ; sans elle, tout tient en deux ou trois
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -20,17 +22,58 @@ jobs:
       - run: cd chemin/outils/three && npm ci && cd ../../.. && node chemin/outils/fabriquer-three.mjs --verifier # le three.js embarqué se refait à l’identique
       - run: node chemin/extension/fabriquer.js
       - run: npx --yes addons-linter --self-hosted chemin/extension/dist # les règles de Mozilla : une erreur arrête tout, un avertissement non
-      - run: cd chemin/extension/dist && zip -qr ../chemin-extension.zip . && ls -la ../chemin-extension.zip
+      - id: version
+        name: la version, et sa place dans updates.json
+        run: |
+          V=$(node -p "require('./chemin/extension/manifest.json').version")
+          node -e "const v='$V', u=require('./chemin/extension/updates.json').addons['chemin@chtabay.github.io'].updates; if (!u.some(x => x.version === v && x.update_link.endsWith('/chemin-' + v + '.xpi'))) { console.error('updates.json ne connaît pas la version ' + v + ' : Firefox ne la recevrait pas'); process.exit(1); }"
+          echo "v=$V" >> "$GITHUB_OUTPUT"
+      - name: le paquet des boutiques, et le paquet de sources qui le refait à l’identique
+        run: |
+          V=${{ steps.version.outputs.v }}
+          (cd chemin/extension/dist && zip -qr ../chemin-$V.zip .)
+          git archive --format=zip --output=chemin/extension/chemin-$V-sources.zip --add-file=chemin/extension/SOURCES.md HEAD aquarelle.js outils.js contenu.js fonts icones vendor/LICENSE-three.txt chemin
+          rm -rf "$RUNNER_TEMP/sources" && mkdir "$RUNNER_TEMP/sources" && unzip -q chemin/extension/chemin-$V-sources.zip -d "$RUNNER_TEMP/sources"
+          node "$RUNNER_TEMP/sources/chemin/extension/fabriquer.js" > /dev/null
+          diff -r "$RUNNER_TEMP/sources/chemin/extension/dist" chemin/extension/dist && echo "le paquet de sources refait le paquet à l’identique"
+          ls -la chemin/extension/chemin-$V*.zip
       - uses: actions/upload-artifact@v4 # GitHub zippe lui-même la pièce jointe : on lui donne le dossier, un seul dézippage
         with:
           name: chemin-extension
           path: chemin/extension/dist
           retention-days: 30
+      - id: amo
+        name: Firefox, faut-il signer ?
+        if: github.ref == 'refs/heads/main'
+        env:
+          CLE: ${{ secrets.AMO_JWT_ISSUER }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          V=${{ steps.version.outputs.v }}
+          if [ -z "$CLE" ]; then echo "Pas encore de clés AMO dans les secrets du dépôt : la signature Firefox attendra."; echo "signer=non" >> "$GITHUB_OUTPUT"; exit 0; fi
+          if gh release view extension-essai --json assets --jq '.assets[].name' 2>/dev/null | grep -qx "chemin-$V.xpi"; then echo "chemin-$V.xpi est déjà signé."; echo "signer=non" >> "$GITHUB_OUTPUT"; exit 0; fi
+          echo "signer=oui" >> "$GITHUB_OUTPUT"
+      - name: Firefox, la signature par Mozilla (auto-distribuée)
+        if: steps.amo.outputs.signer == 'oui'
+        env: # les clés ne sont données qu’ici, à l’outil de Mozilla
+          WEB_EXT_API_KEY: ${{ secrets.AMO_JWT_ISSUER }}
+          WEB_EXT_API_SECRET: ${{ secrets.AMO_JWT_SECRET }}
+        run: |
+          V=${{ steps.version.outputs.v }}
+          npx --yes web-ext@10.6.0 sign --channel=unlisted --source-dir chemin/extension/dist --artifacts-dir "$RUNNER_TEMP/signe" --upload-source-code chemin/extension/chemin-$V-sources.zip --approval-timeout 1800000
+          mv "$RUNNER_TEMP"/signe/*.xpi chemin/extension/chemin-$V.xpi && ls -la chemin/extension/chemin-$V.xpi
       - if: github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: extension-essai
           name: Le chemin, l’extension (essai)
           prerelease: true
-          body: "L’extension du chemin, fabriquée depuis main. Dézipper, puis dans Chrome ou Edge : chrome://extensions, mode développeur, « Charger l’extension non empaquetée », le dossier dézippé. Dans Firefox : about:debugging, « Charger un module temporaire », le fichier manifest.json."
-          files: chemin/extension/chemin-extension.zip
+          body: |
+            L’extension du chemin, fabriquée depuis main.
+            - chemin-<version>.zip : le paquet à déposer au Chrome Web Store, dans les modules d’Edge et sur addons.mozilla.org. Pour l’essayer sans boutique : le dézipper, puis dans Chrome ou Edge, le mode développeur, « Charger l’extension non empaquetée », le dossier.
+            - chemin-<version>-sources.zip : le paquet de sources, pour les relecteurs de Mozilla.
+            - chemin-<version>.xpi : l’extension pour Firefox, signée par Mozilla. L’enregistrer, puis dans Firefox, about:addons, la roue dentée, « Installer un module depuis un fichier ». Les mises à jour arrivent ensuite toutes seules.
+          files: |
+            chemin/extension/chemin-${{ steps.version.outputs.v }}.zip
+            chemin/extension/chemin-${{ steps.version.outputs.v }}-sources.zip
+            chemin/extension/chemin-${{ steps.version.outputs.v }}.xpi
