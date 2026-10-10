@@ -73,7 +73,7 @@ Avant de dormir, j’ai écrit une lettre à ma mère, sur le bureau, avec un st
 
   // 2. le découpage, dans la page : une page courte reste entière ; les dates, les séparateurs coupent
   const d = await p.evaluate(async () => {
-    const { decouper } = await import('./sens.js?v=4'), S = window.chemin.S;
+    const { decouper } = await import('./sens.js?v=8'), S = window.chemin.S;
     return {
       court: decouper(S, 'Café au soleil sur le balcon, le chat dort sur le canapé.').length, vide: decouper(S, '  \n ').length,
       dates: decouper(S, 'Lundi 3 mars\n\nRéveil difficile, métro bondé, bureau, réunion.\n\nMardi 4 mars\n\nRien.\n\nMercredi 5 mars\n\nForêt, champignons, mousse.').map(x => x.titre),
@@ -87,7 +87,7 @@ Avant de dormir, j’ai écrit une lettre à ma mère, sur le bureau, avec un st
 
   // 2 bis. au-delà des choses : un verbe conjugué trouve sa pose, le temps qu’il fait change le ciel, les mots mènent ailleurs
   const v = await p.evaluate(async () => {
-    const { lirePage, objetsDeLaPage, lieuDeLaPage } = await import('./sens.js?v=4'), { climatDe, planifier } = await import('./monde.js?v=3'), S = window.chemin.S, F = window.chemin.F;
+    const { lirePage, objetsDeLaPage, lieuDeLaPage } = await import('./sens.js?v=8'), { climatDe, planifier } = await import('./monde.js?v=7'), S = window.chemin.S, F = window.chemin.F;
     const lire = t => { const l = lirePage(S, t), o = objetsDeLaPage(S, l); return { l, o, mots: l.mots.map(x => x.m), lieu: lieuDeLaPage(l, o) }; };
     const mer = lire('Une baleine au loin, des mouettes dans le ciel, et nous avons nagé.');
     const plan = planifier({ i: 0, date: '2026-07-01', lieu: 'rivage', objets: mer.o, climat: climatDe(mer.l) }, null, F, new Map());
@@ -95,13 +95,40 @@ Avant de dormir, j’ai écrit une lettre à ma mère, sur le bureau, avec un st
     return { dormi: lire('Hier soir, j’ai dormi longtemps.').mots, marche: lire('J’ai marché jusqu’au marché.').mots, lit: lire('Il lit dans son lit.').mots,
       pluie: climatDe(lire('Il pleut, une averse, nous sommes trempés.').l).meteo, neige: climatDe(lire('Il neigeait, des flocons partout.').l),
       nuit: climatDe(lire('La nuit, les étoiles.').l).meteo, desert: lire('Le désert, le sable, les dunes, un chameau près de l’oasis.').lieu,
-      ciel: plan.items.filter(it => it.vol).map(it => it.id), eau: plan.items.filter(it => it.eau).map(it => it.id), eauAuxChamps: champs.items.filter(it => it.eau).length };
+      ciel: plan.items.filter(it => it.vol).map(it => it.id), eau: plan.items.filter(it => it.eau).map(it => it.id), eauAuxChamps: champs.items.filter(it => it.eau).length,
+      loin: lire('Depuis la colline, on voyait la mer au loin et les sommets enneigés.').l.horizon, fondMer: plan.fond,
+      fondMontagne: planifier({ i: 2, date: '2026-01-10', lieu: 'montagne', objets: [], climat: climatDe(lire('Le sommet.').l), horizon: {} }, null, F, new Map()).fond,
+      symboles: (() => { const x = lire('Le temps passe. Ma soeur et mon grand-père sont là, et j’ai peur.'); return { mots: x.mots, porteurs: x.l.mots.filter(m => m.p > .3).length, objets: x.o.map(o => `${o.mot}:${o.objet.id.split('/')[1]}`) }; })(),
+      pictos: (() => { const x = lire('Une idée me trotte : une question de justice. J’ai mis ma robe et mes bottes.'), q = planifier({ i: 3, date: '2026-05-04', lieu: 'champs', objets: x.o, climat: climatDe(x.l), horizon: {} }, null, F, new Map());
+        return { objets: x.o.map(o => o.objet.id), poses: q.items.filter(it => /^pictos\//.test(it.id)).map(it => ({ plan: it.plan, ry: it.ry })), tous: lire('Tout le monde était là.').o.map(o => o.objet.id), monde: lire('Le monde est vaste.').o.map(o => o.objet.id) }; })(),
+      varie: (() => { // un même mot, d’une page à l’autre : des modèles qui changent ; la même page, le même modèle
+        const x = lire('Une maison, une femme.'), tirage = g => objetsDeLaPage(S, x.l, { graine: g, saison: 'printemps' }).map(o => o.objet.id).join(' + ');
+        const tirages = Array.from({ length: 12 }, (_, k) => tirage(`2026-04-${k + 1}:${k}`)), dos = lire('J’ai mal au dos.'), q = planifier({ i: 4, date: '2026-04-20', lieu: 'champs', objets: dos.o, climat: climatDe(dos.l), horizon: {} }, null, F, new Map()).items.find(it => /^poses\/dos-/.test(it.id));
+        return { maisons: new Set(tirages.map(t => t.split(' + ').find(id => /maison|building|House|Story/.test(id)))).size, femmes: new Set(tirages.map(t => t.split(' + ').find(id => /female|femme/.test(id)))).size, stable: tirage('2026-04-3:2') === tirage('2026-04-3:2'), dos: dos.o.map(o => o.objet.id), ry: q?.ry };
+      })(),
+      reperes: (() => { // vingt-quatre jours de champs, vingt-quatre de rivage : ce qui se pose au second plan
+        const voir = (lieu, n) => { const recents = new Map(), out = []; let veille = null; for (let i = 0; i < n; i++) { const q = planifier({ i, date: `2026-03-${String(1 + i).padStart(2, '0')}`, lieu, objets: [], climat: climatDe(lire('Une journée.').l), horizon: {} }, veille, F, recents); veille = q; out.push(...q.items); } return out; };
+        const champs = voir('champs', 24), rivage = voir('rivage', 24);
+        return { champs: champs.filter(it => it.plan === 'fond' && /windmill|church|tower|castle|Silo|WaterTower|Barn/i.test(it.id)).map(it => it.id.split('/')[1]), vie: champs.filter(it => /poses\/(marche|course)|train-kit|tractor/.test(it.id)).length,
+          large: rivage.filter(it => it.plan === 'fond' && /ship|Sail_ship|Viking|BoatWSail|phare/.test(it.id)).map(it => it.id.split('/')[1]), surEau: rivage.filter(it => it.plan === 'milieu' && /poses\/(marche|course)/.test(it.id)).length };
+      })() };
   });
   verifier(v.dormi.includes('dormir') && v.marche.includes('marcher') && v.marche.includes('marché') && v.lit.includes('lire') && v.lit.includes('lit'),
     `un verbe conjugué compte par son infinitif ; « marché » et « lit » restent des noms, sauf après un auxiliaire ou un pronom (${v.marche.join(', ')} ; ${v.lit.join(', ')})`);
   verifier(v.pluie[0] >= .5 && v.neige.meteo[1] >= .5 && v.nuit[3] === 1, `le temps qu’il fait vient des mots : la pluie, la neige, la nuit (${v.pluie} · ${v.neige.meteo} · ${v.nuit})`);
   verifier(v.desert === 'desert', 'les mots mènent ailleurs : le sable, les dunes et le chameau font le désert');
   verifier(v.ciel.some(id => /mouette/.test(id)) && v.eau.some(id => /whale/.test(id)) && !v.eauAuxChamps, `au bord de l’eau, les mouettes volent et la baleine nage (${v.ciel.concat(v.eau).join(', ')}) ; loin de l’eau, pas de baleine`);
+  verifier(v.loin.mer >= .5 && v.loin.montagnes >= .5 && v.loin.collines >= .5 && v.fondMontagne.montagnes >= .8 && v.fondMer.mer === 1,
+    `le lointain vient du lieu et des mots : la mer, les sommets, la colline (${Object.entries(v.loin).map(([k, x]) => k + ' ' + x).join(', ')}) ; en montagne, des sommets ; au bord de l’eau, la mer jusqu’à l’horizon`);
+  verifier(['temps', 'sœur', 'grand-père', 'peur'].every(m => v.symboles.mots.includes(m)) && /temps:hourglass/.test(v.symboles.objets) && /sœur:.*female/.test(v.symboles.objets) && /grand-père:.*oldclassy-male/.test(v.symboles.objets) && /peur:.*wolf/.test(v.symboles.objets),
+    `un mot sans objet à lui en trouve un par son symbole, et garde son nom : ${v.symboles.objets.join(', ')} ; « soeur » se lit sœur, « grand-père » est connu`);
+  const pictos = v.pictos.objets.filter(id => /^pictos\/(ampoule|question|balance|robe|bottes)$/.test(id));
+  verifier(pictos.length >= 4 && v.pictos.poses.length >= 4 && v.pictos.poses.every(p => p.plan === 'bord' && Math.abs(p.ry) <= .26) && !v.pictos.tous.includes('pictos/globe') && v.pictos.monde.includes('pictos/globe'),
+    `ce qui n’a pas d’objet en 3D a son picto, planté au bord du chemin, face à nous : ${pictos.join(', ')} ; « tout le monde » est des gens (${v.pictos.tous.join(', ') || 'rien'}), « le monde », le globe`);
+  verifier(v.varie.maisons >= 3 && v.varie.femmes >= 3 && v.varie.stable && v.varie.dos.some(id => /^poses\/dos-/.test(id)) && Math.abs((v.varie.ry ?? 0) - Math.PI) < .2,
+    `pour un même mot, le modèle change d’une page à l’autre (${v.varie.maisons} maisons, ${v.varie.femmes} femmes sur douze pages), et reste le même pour la même page ; « le dos », c’est une personne de dos (${v.varie.dos.join(', ')}), tournée d’un demi-tour`);
+  verifier(v.reperes.champs.length >= 2 && v.reperes.vie >= 1 && v.reperes.large.length >= 1 && !v.reperes.surEau,
+    `au second plan, des repères : sur vingt-quatre jours de champs, ${v.reperes.champs.length} au fond (${[...new Set(v.reperes.champs)].slice(0, 4).join(', ')}) et ${v.reperes.vie} promeneurs, tracteurs ou trains au milieu ; au bord de l’eau, ${v.reperes.large.length} navires ou phares au large (${[...new Set(v.reperes.large)].slice(0, 3).join(', ')}), et personne ne marche sur l’eau`);
 
   // 3. la première page : gardée sur le téléphone, une tuile de plus, peinte
   await p.fill('#page', PAGE); await p.click('#garder');
@@ -200,6 +227,14 @@ Avant de dormir, j’ai écrit une lettre à ma mère, sur le bureau, avec un st
   await attendre(dm, () => dm.evaluate(() => /sans être gardée/.test(document.querySelector('#dit').textContent)), 30000);
   const ecrite = await dm.evaluate(async () => ({ dit: document.querySelector('#dit').textContent, pages: (await window.chemin.carnet.lirePages()).map(x => x.texte) }));
   verifier(ecrite.dit.startsWith('Démo') && ecrite.pages.length === 1 && ecrite.pages[0] === LONG, `une page écrite dans la démo s’ajoute au chemin sans être gardée ; le journal du téléphone n’a pas bougé (« ${ecrite.dit} »)`);
+  // le lointain, dans la scène : les sommets au-dessus du sol en montagne, la mer jusqu’à l’horizon au rivage, le ciel ouvert dans la plaine
+  const loin = await dm.evaluate(async () => {
+    const C = window.chemin, k = i => C.plans.findIndex(q => q.passage.texte.startsWith(i));
+    const ligne = async (k, y) => { const v = await C.atelier.tuile(C.plans, k), s = v.silhouette, d = s.getContext('2d').getImageData(0, Math.round(s.height * y), s.width, 1).data; let r = 0, vert = 0; for (let i = 0; i < d.length; i += 4) { if (d[i] > 128) r++; if (d[i + 1] > 128) vert++; } return { terre: Math.round(r / s.width * 100) / 100, eau: Math.round(vert / s.width * 100) / 100, lieu: C.plans[k].lieu, fond: C.plans[k].fond }; };
+    return { montagne: await ligne(k('Randonnée en montagne'), .2), mer: await ligne(k('Baignade'), .22), plaine: await ligne(k('J’ai fait du vélo'), .1) };
+  });
+  verifier(loin.montagne.fond.montagnes >= .5 && loin.montagne.terre >= .4 && loin.mer.lieu === 'rivage' && loin.mer.eau >= .5 && loin.plaine.lieu === 'champs' && loin.plaine.terre <= .1,
+    `le lointain se voit : la page de montagne (${loin.montagne.lieu}) a des sommets sur ${Math.round(loin.montagne.terre * 100)} % de la largeur à 80 % de hauteur ; au rivage, la mer jusqu’à l’horizon (${Math.round(loin.mer.eau * 100)} %) ; dans la plaine (${loin.plaine.lieu}), le ciel reste ouvert (${Math.round(loin.plaine.terre * 100)} % de terre à 90 %)`);
   await dm.click('.tuile >> nth=3');
   const lue = await dm.evaluate(() => { const x = window.chemin.plans[3].passage; return { titre: document.querySelector('#titre-page').textContent, etiquette: document.querySelectorAll('.tuile .date')[3].textContent, blocs: [...document.querySelectorAll('#blocs .texte')].map(b => b.textContent).join('\n\n'), page: window.chemin.pages[x.page].texte, retour: !document.querySelector('#retour').hidden, zone: !document.querySelector('#page').hidden }; });
   await dm.screenshot({ path: path.join(OUT, 'relire.png') });
@@ -237,7 +272,7 @@ Avant de dormir, j’ai écrit une lettre à ma mère, sur le bureau, avec un st
 
   // 10. sur un grand écran : le titre, les commandes, la ligne du jour et l’écriture partagent une colonne ; la frise garde toute la
   // largeur, et le chemin part du bord quand il déborde (Début : la première tuile au bord gauche ; Fin : la dernière au bord droit) ;
-  // sur une page neuve, hors démo, la tuile du départ, seule, se tient au milieu, et les commandes restent cachées
+  // sur une page neuve, hors démo, la tuile du départ, seule, se tient au milieu, et Début, Dérouler, Fin restent cachés
   await o.setViewportSize({ width: 1920, height: 1020 }); // l’écran du porteur
   const bords = () => o.evaluate(() => { const W = document.documentElement.clientWidth, g = s => document.querySelector(s).getBoundingClientRect(); return { W, tete: g('.tete').left, parcours: g('.parcours').left, jour: g('.jour').left, ecrire: g('.ecrire').left, frise: g('#frise').width, deborde: document.querySelector('#frise').scrollWidth > W, premiere: g('.tuile:first-child').left, derniere: g('.tuile:last-child').right }; });
   await o.click('#debut'); const b0 = await bords(); await o.click('#fin'); const b1 = await bords();
@@ -245,12 +280,36 @@ Avant de dormir, j’ai écrit une lettre à ma mère, sur le bureau, avec un st
   const seul = await co.newPage(); surveiller(seul, e, x); await seul.setViewportSize({ width: 1920, height: 1020 });
   await seul.goto(BASE + 'chemin/'); // la démo ne range rien dans le carnet : ici, la tuile du départ est seule
   await attendre(seul, () => seul.evaluate(() => document.querySelectorAll('.tuile').length === 1), 30000); // la tuile est là bien avant d’être peinte
-  const milieu = await seul.evaluate(() => { const W = document.documentElement.clientWidth, t = document.querySelector('.tuile')?.getBoundingClientRect(), g = s => document.querySelector(s).getBoundingClientRect().left; return t && { W, tuiles: document.querySelectorAll('.tuile').length, centre: t.left + t.width / 2, largeur: t.width, parcours: document.querySelector('#parcours').hidden, colonne: Math.abs(g('.tete') - g('.ecrire')) < 1 }; });
+  const milieu = await seul.evaluate(() => { const W = document.documentElement.clientWidth, t = document.querySelector('.tuile')?.getBoundingClientRect(), g = s => document.querySelector(s).getBoundingClientRect().left; return t && { W, tuiles: document.querySelectorAll('.tuile').length, centre: t.left + t.width / 2, largeur: t.width, parcours: ['#debut', '#derouler', '#fin'].every(id => document.querySelector(id).hidden), colonne: Math.abs(g('.tete') - g('.ecrire')) < 1 }; });
   verifier(colonne && b0.tete > 300 && b0.frise === b0.W && b0.deborde && Math.abs(b0.premiere) <= 1 && Math.abs(b1.derniere - b1.W) <= 2 && !!milieu && milieu.tuiles === 1 && milieu.parcours && milieu.colonne && Math.abs(milieu.centre - milieu.W / 2) <= 1,
     `sur un grand écran (${b0.W} de large), le titre, les commandes et l’écriture partagent une colonne (bord à ${Math.round(b0.tete)}) ; la frise garde toute la largeur, et le chemin part du bord quand il déborde ; seule, la tuile du départ (${Math.round(milieu?.largeur || 0)} de large) se tient au milieu`);
   await attendre(seul, () => seul.evaluate(() => document.querySelector('#intro').hidden && ['faite', 'rate'].includes(window.chemin?.tuiles[0]?.etat)), 60000); // fermer en pleine peinture couperait des chargements
   await seul.close();
   await co.close();
+
+  // 11. trois pinceaux : la ligne claire et le croquis repeignent la tuile autrement ; l’aquarelle revient du carnet ; le choix reste
+  const cp = await b.newContext(TELEPHONE), q3 = await cp.newPage(); surveiller(q3, e, x);
+  await q3.goto(BASE + 'chemin/?demo');
+  await attendre(q3, () => q3.evaluate(() => document.querySelector('#intro').hidden && window.chemin?.tuiles.length > 2), 60000);
+  const empreinte = async () => { // la tuile du milieu de l’écran, peinte : d’où vient son image, et un résumé de ses pixels
+    await attendre(q3, () => q3.evaluate(() => { const f = document.querySelector('#frise'), t = [...f.querySelectorAll('.tuile')].find(t => { const a = t.getBoundingClientRect(), g = f.getBoundingClientRect(); return a.left <= g.left + g.width / 2 && a.right > g.left + g.width / 2; }); return t?.classList.contains('peinte') && t.querySelector('img[src]')?.complete; }), PEINTURE);
+    return q3.evaluate(() => { const f = document.querySelector('#frise'), t = [...f.querySelectorAll('.tuile')].find(t => { const a = t.getBoundingClientRect(), g = f.getBoundingClientRect(); return a.left <= g.left + g.width / 2 && a.right > g.left + g.width / 2; }), i = t.querySelector('img'), c = document.createElement('canvas'); c.width = 48; c.height = 36; const g = c.getContext('2d'); g.drawImage(i, 0, 0, 48, 36); const d = g.getImageData(0, 0, 48, 36).data; let h = 7; for (let n = 0; n < d.length; n += 4) h = (h * 31 + d[n] * 3 + d[n + 1] * 5 + d[n + 2] * 7) % 1000000007; return { k: t.dataset.k, source: t.dataset.source, h, cle: window.chemin.tuiles[+t.dataset.k].cle }; });
+  };
+  const aqua = await empreinte();
+  await q3.selectOption('#style', 'ligne'); const ligne = await empreinte();
+  await q3.screenshot({ path: path.join(OUT, 'ligne-claire.png') });
+  await q3.selectOption('#style', 'croquis'); const croquis = await empreinte();
+  await q3.screenshot({ path: path.join(OUT, 'croquis.png') });
+  await q3.selectOption('#style', 'enfant'); const enfant = await empreinte();
+  await q3.screenshot({ path: path.join(OUT, 'dessin-enfant.png') });
+  await q3.selectOption('#style', 'aquarelle'); const retour = await empreinte();
+  await q3.reload(); await attendre(q3, () => q3.evaluate(() => document.querySelector('#intro').hidden && window.chemin?.tuiles.length > 2), 60000);
+  await q3.selectOption('#style', 'croquis'); await q3.reload(); await attendre(q3, () => q3.evaluate(() => document.querySelector('#intro').hidden && window.chemin?.tuiles.length > 2), 60000);
+  const garde = await q3.evaluate(() => ({ style: window.chemin.style, choix: document.querySelector('#style').value, dit: document.querySelector('#dit').textContent }));
+  verifier(aqua.k === ligne.k && ligne.k === croquis.k && croquis.k === enfant.k && new Set([aqua.h, ligne.h, croquis.h, enfant.h]).size === 4 && [ligne, croquis, enfant].every(x => x.source === 'pinceau') && /:ligne:/.test(ligne.cle) && /:croquis:/.test(croquis.cle) && /:enfant:/.test(enfant.cle),
+    `la même tuile, peinte de quatre façons : aquarelle, ligne claire, croquis, dessin d’enfant (${[aqua, ligne, croquis, enfant].map(x => x.source).join(', ')})`);
+  verifier(retour.h === aqua.h && retour.source === 'carnet' && garde.style === 'croquis' && garde.choix === 'croquis', `revenir à l’aquarelle la rend telle quelle, du carnet ; le pinceau choisi reste d’une visite à l’autre (${garde.style})`);
+  await cp.close();
 
   verifier(!calme(e).length, `aucune erreur dans la console${calme(e).length ? ' : ' + calme(e).slice(0, 4).join(' | ') : ''}`);
   verifier(!x.length, `aucune requête vers l’extérieur${x.length ? ' : ' + x.slice(0, 3).join(' ') : ''}`);

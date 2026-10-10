@@ -2,11 +2,11 @@
 // choisissent le lieu, les objets et le temps qu’il fait. Une page courte fait une tuile ; un long texte, un roman collé
 // d’un coup, se découpe en passages d’environ 14 mots porteurs, une tuile chacun. Les pages restent ici ; rien ne part.
 
-import { chargerSens, decouper, lirePage, candidats, objetsDeLaPage, lieuDeLaPage, LECTURE } from './sens.js?v=4';
-import { familles, planifier, climatDe, Atelier, Modeles, LARGE, HAUT, MARGE, MOTEUR } from './monde.js?v=3';
+import { chargerSens, decouper, lirePage, candidats, objetsDeLaPage, lieuDeLaPage, LECTURE } from './sens.js?v=8';
+import { familles, planifier, climatDe, saisonDe, Atelier, Modeles, LARGE, HAUT, MARGE, MOTEUR } from './monde.js?v=7';
 import { demo } from './demo.js?v=2';
 import * as carnet from './carnet.js?v=2';
-import { peindreFrise } from '../aquarelle.js?v=3';
+import { peindreFrise } from '../aquarelle.js?v=5';
 import { LEX, HUMANS } from '../contenu.js?v=2';
 
 const $ = s => document.querySelector(s);
@@ -80,9 +80,10 @@ async function calculer(suivre = () => {}) {
   for (const [i, x] of out.entries()) {
     let l = lus.get(x.texte);
     if (!l) { const lecture = lirePage(S, x.texte); l = { lecture, liste: candidats(S, lecture) }; lus.set(x.texte, l); nouvelles.push([cleLue(x.texte), ecrire(l)]); }
-    const objets = objetsDeLaPage(S, l.lecture, { recents, jour: i, liste: l.liste });
+    const climat = climatDe(l.lecture), saison = climat.meteo[1] >= .5 ? 'hiver' : saisonDe(x.date); // comme le plan du jour
+    const objets = objetsDeLaPage(S, l.lecture, { recents, jour: i, liste: l.liste, graine: `${x.date}:${i}`, saison });
     for (const o of objets) recents.set(o.objet.id, i);
-    const lieu = x.depart ? 'champs' : lieuDeLaPage(l.lecture, objets, veille?.lieu), jour = { i, date: x.date, lieu, objets, climat: climatDe(l.lecture) };
+    const lieu = x.depart ? 'champs' : lieuDeLaPage(l.lecture, objets, veille?.lieu), jour = { i, date: x.date, lieu, objets, climat, horizon: l.lecture.horizon };
     veille = planifier(jour, veille, F, decor); veille.lecture = l.lecture; veille.objets = objets; veille.passage = x;
     faits.push(veille);
     if (i % 20 === 0) suivre(i, out.length);
@@ -98,8 +99,11 @@ const cleLue = texte => `${LECTURE}:${empreinte(texte)}:${texte.length}`;
 const ecrire = l => ({ l: { ...l.lecture, contexte: [...l.lecture.contexte] }, o: l.liste.map(o => [o.objet.id, o.brut, o.mot]) });
 const relire = v => ({ lecture: { ...v.l, contexte: Float32Array.from(v.l.contexte) }, liste: v.o.map(([id, brut, mot]) => ({ objet: F.parId.get(id), brut, mot })).filter(o => o.objet) });
 // la clé d’une tuile peinte : tout ce dont dépend sa peinture, elle et ses deux voisines, et la version du peintre
-const signe = p => (p ? JSON.stringify([p.i, p.date, p.lieu, p.saison, p.climat, p.items, p.piece, p.sol]) : '');
-const cle = k => `${MOTEUR}:${empreinte(`${signe(plans[k - 1])}|${signe(plans[k])}|${signe(plans[k + 1])}`)}`;
+const signe = p => (p ? JSON.stringify([p.i, p.date, p.lieu, p.saison, p.climat, p.items, p.piece, p.sol, p.fond]) : '');
+const cle = k => `${MOTEUR}${style === 'aquarelle' ? '' : ':' + style}:${empreinte(`${signe(plans[k - 1])}|${signe(plans[k])}|${signe(plans[k + 1])}`)}`;
+// le pinceau : aquarelle, ligne claire ou croquis ; choisi sous la frise, gardé sur ce téléphone
+const PINCEAUX = { aquarelle: 'Aquarelle', ligne: 'Ligne claire', croquis: 'Croquis', enfant: 'Dessin d’enfant' };
+let style = (() => { try { const s = localStorage.getItem('chemin:style'); return PINCEAUX[s] ? s : 'aquarelle'; } catch { return 'aquarelle'; } })();
 
 /* ───────── La frise : une tuile par passage, peinte quand elle approche, gardée une fois peinte ───────── */
 
@@ -122,7 +126,7 @@ function montrer() {
   }, { root: frise, rootMargin: '0px 150% 0px 150%' });
   tuiles.forEach(u => { u.t.dataset.k = u.k; vues.observe(u.t); });
   if (!tuiles.length) premiere.pret();
-  $('#parcours').hidden = tuiles.length < 2;
+  $('#parcours').hidden = !tuiles.length; for (const id of ['#debut', '#derouler', '#fin']) $(id).hidden = tuiles.length < 2;
   if (enDemo) return; // la démo ne range pas le carnet : ce qu’il garde du journal y reste
   carnet.elaguer('tuiles', new Set(tuiles.map(u => u.cle))).catch(() => {});
   carnet.elaguer('lectures', new Set(passages.map(x => cleLue(x.texte)))).catch(() => {});
@@ -167,7 +171,7 @@ async function file() { // une tuile à la fois, la plus proche du milieu de l�
 }
 async function peindre(k) {
   const vue = await atelier.tuile(plans, k), jour = j => { const p = plans[Math.max(0, Math.min(plans.length - 1, j))]; return { x: (j + .5) * LARGE, teinte: p.climat.teinte, ciel: p.climat.ciel, meteo: p.climat.meteo, astres: p.climat.astres }; };
-  const peinte = await peindreFrise(vue, { graine: 7, decalage: [k * LARGE - MARGE, 0], jours: [jour(k - 1), jour(k), jour(k + 1)] });
+  const peinte = await peindreFrise(vue, { graine: 7, decalage: [k * LARGE - MARGE, 0], jours: [jour(k - 1), jour(k), jour(k + 1)], style });
   const c = el('canvas', { width: LARGE, height: HAUT }); c.getContext('2d').drawImage(peinte, MARGE, 0, LARGE, HAUT, 0, 0, LARGE, HAUT);
   for (const x of [peinte, vue.image, vue.silhouette]) x.width = x.height = 0; // la mémoire, tout de suite
   const image = await new Promise(ok => c.toBlob(b => (b?.type === 'image/webp' ? ok(b) : c.toBlob(ok, 'image/jpeg', .9)), 'image/webp', .88));
@@ -238,6 +242,11 @@ function arreter() {
   if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
 }
 function preparerParcours() {
+  $('#style').value = style;
+  $('#style').addEventListener('change', e => { // un autre pinceau : les tuiles se repeignent, ou reviennent du carnet si elles l’ont déjà été
+    style = PINCEAUX[e.target.value] ? e.target.value : 'aquarelle'; try { localStorage.setItem('chemin:style', style); } catch { /* sans effet */ }
+    const c = centre(); montrer(); auCentre(c); dit(`Le pinceau change : ${PINCEAUX[style].toLowerCase().replace('dessin d’enfant', 'un dessin d’enfant')}.`);
+  });
   $('#debut').addEventListener('click', () => { frise.scrollLeft = 0; });
   $('#fin').addEventListener('click', () => allerA());
   $('#derouler').addEventListener('click', derouler);
@@ -421,7 +430,7 @@ function garderHorsLigne() {
     pret = premiere;
   } catch (e) { console.error(e); dit('Le chemin ne s’ouvre pas sur cet appareil.'); }
   await intro.quand(pret, enEncart ? 0 : undefined); // en encart, pas d’intro
-  window.chemin = { get plans() { return plans; }, get passages() { return passages; }, get pages() { return pages; }, get tuiles() { return tuiles; }, S, F, atelier, carnet, rafraichir }; // pour les essais, et pour l’extension
+  window.chemin = { get plans() { return plans; }, get passages() { return passages; }, get pages() { return pages; }, get tuiles() { return tuiles; }, get style() { return style; }, S, F, atelier, carnet, rafraichir }; // pour les essais, et pour l’extension
   dispatchEvent(new Event('chemin:pret'));
   if (document.readyState === 'complete') garderHorsLigne(); else addEventListener('load', garderHorsLigne);
 })();

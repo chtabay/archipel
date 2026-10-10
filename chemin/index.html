@@ -8,8 +8,8 @@
   <title>Le chemin</title>
   <meta name="description" content="Un journal : chaque page devient un bout de chemin, peint à l’aquarelle. Rien ne quitte ce téléphone.">
   <link rel="preload" href="../fonts/nunito.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="style.css?v=5">
-  <script type="module" src="app.js?v=6"></script>
+  <link rel="stylesheet" href="style.css?v=6">
+  <script type="module" src="app.js?v=14"></script>
 </head>
 <body class="accueil">
   <div class="intro trace" id="intro" aria-hidden="true">
@@ -44,6 +44,7 @@
     <button type="button" class="discret" id="debut"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1.5 1.5h1.8v9H1.5zM10.5 1.5v9L4 6z"/></svg>Début</button>
     <button type="button" class="discret" id="derouler"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 1.2v9.6L10.5 6z"/></svg>Dérouler</button>
     <button type="button" class="discret" id="fin">Fin<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1.5 1.5v9L8 6zM8.7 1.5h1.8v9H8.7z"/></svg></button>
+    <select class="discret" id="style" aria-label="Le pinceau"><option value="aquarelle">Aquarelle</option><option value="ligne">Ligne claire</option><option value="croquis">Croquis</option><option value="enfant">Dessin d’enfant</option></select>
   </nav>
   <aside class="recit" id="recit" aria-live="polite" hidden>
     <p class="quand" id="recit-quand"></p>

@@ -4,8 +4,8 @@
 // passage et sa tonalité. Les vecteurs viennent de fastText, alignés et réduits : voir outils/sens.py.
 
 export const D = 96, PORTEURS = 14; // un passage, une tuile : environ 14 mots porteurs
-export const LECTURE = 3; // la version de la lecture d’un passage : on l’augmente quand un même passage se lirait autrement
-const IMAGE = Math.round(.55 * 255); // un mot fait une image s’il est à plus de 0,55 d’un objet
+export const LECTURE = 7; // la version de la lecture d’un passage : on l’augmente quand un même passage se lirait autrement
+const IMAGE = Math.round(.55 * 255), OBJET = Math.round(.7 * 255); // un mot fait une image s’il est à plus de 0,55 d’un objet ; à 0,7, il le nomme
 const SEUIL = .7; // un objet vient sur la tuile si son score dépasse 0,7 : son nom est tout près d’un mot du passage
 const ECHELLE = 127 * 127; // les vecteurs sont quantifiés sur un octet, de longueur 127
 const MOT = /[a-zàâäçéèêëîïôöùûüÿœæ]+(?:-[a-zàâäçéèêëîïôöùûüÿœæ]+)*/g;
@@ -30,6 +30,14 @@ const METEO = Object.fromEntries(Object.entries({
   neige: 'neige neiges neigeait neiger neigé neigeux enneigé enneigée flocon flocons poudreuse verglas givre gel gelé gelée bonhomme-de-neige',
   brume: 'brume brumes brumeux brumeuse brouillard brouillards embrumé embrumée',
   soleil: 'soleil ensoleillé ensoleillée chaleur chaud chaude canicule brûlant brûlante radieux radieuse lumineux',
+}).map(([k, v]) => [k, new Set(v.split(/\s+/))]));
+// ce qu’on voit au loin, entre le bout du sol et le ciel : des mots, et leurs formes ; deux mentions, et c’est tout l’horizon
+const HORIZON = Object.fromEntries(Object.entries({
+  mer: 'mer océan horizon voile voiles voilier voiliers phare île îles baie côte falaise falaises marée',
+  montagnes: 'montagne montagnes sommet sommets pic pics cime cimes crête crêtes alpes pyrénées glacier glaciers volcan',
+  collines: 'colline collines vallon vallons vallée vallées coteau coteaux plateau dune dunes plaine plaines',
+  lisiere: 'forêt forêts bois lisière orée sapins pins futaie bosquet bosquets',
+  toits: 'ville toits clocher église cathédrale immeubles gratte-ciel usine cheminées faubourg banlieue',
 }).map(([k, v]) => [k, new Set(v.split(/\s+/))]));
 
 // Les champs de la vie ordinaire : quelques mots chacun, le reste vient des voisins dans l’espace des vecteurs
@@ -63,16 +71,21 @@ const TON = {
   lent: 'calme lent paisible doux repos silence tranquille sieste lenteur',
 };
 
-export const FICHIERS_SENS = ['sens/mots.txt?v=4', 'sens/vecteurs.bin?v=4', 'sens/objets.bin?v=4', 'sens/images.bin?v=3', 'catalogue.json?v=4', 'sens/formes.txt?v=1'];
+export const FICHIERS_SENS = ['sens/mots.txt?v=4', 'sens/vecteurs.bin?v=4', 'sens/objets.bin?v=6', 'sens/images.bin?v=5', 'catalogue.json?v=6', 'sens/formes.txt?v=1', 'sens/symboles.txt?v=3'];
 export async function chargerSens(base = './') {
   const lire = (f, comment) => fetch(new URL(f, new URL(base, location.href))).then(r => { if (!r.ok) throw new Error(`${f} : ${r.status}`); return r[comment](); });
-  const [mots, V, O, I, catalogue, formes] = await Promise.all(FICHIERS_SENS.map((f, n) => lire(f, ['text', 'arrayBuffer', 'arrayBuffer', 'arrayBuffer', 'json', 'text'][n])));
-  return preparer(mots, V, O, catalogue, I, formes);
+  const [mots, V, O, I, catalogue, formes, symboles] = await Promise.all(FICHIERS_SENS.map((f, n) => lire(f, ['text', 'arrayBuffer', 'arrayBuffer', 'arrayBuffer', 'json', 'text', 'text'][n])));
+  return preparer(mots, V, O, catalogue, I, formes, symboles);
 }
-export function preparer(mots, V, O, catalogue, I, formes = '') { // aussi pour les essais, hors du navigateur
+export function preparer(mots, V, O, catalogue, I, formes = '', symboles = '') { // aussi pour les essais, hors du navigateur
   const liste = mots.split('\n').filter(Boolean), index = new Map(liste.map((m, i) => [m, i]));
-  const S = { liste, index, V: new Int8Array(V), O: new Int8Array(O), I: new Uint8Array(I), catalogue, proche: new Float32Array(liste.length).fill(NaN), formes: new Map() };
+  const S = { liste, index, V: new Int8Array(V), O: new Int8Array(O), I: new Uint8Array(I), catalogue, proche: new Float32Array(liste.length).fill(NaN), formes: new Map(), symboles: new Map() };
   for (const l of formes.split('\n')) { const [f, lemme, ambigu] = l.split(' '), i = index.get(lemme); if (f && i != null) S.formes.set(f, { i, ambigu: !!ambigu }); } // « dormi » : dormir
+  for (const l of symboles.split('\n')) { // « temps sablier » : le temps se montre par un sablier ; les symboles sont des mots du vocabulaire
+    if (!l || l.startsWith('#')) continue;
+    const [mot, ...syms] = l.trim().split(/\s+/), is = syms.map(x => index.get(x) ?? index.get(x.replace(/oe/g, 'œ'))).filter(i => i != null);
+    if (mot && is.length) S.symboles.set(mot, is);
+  }
   if (S.O.length !== catalogue.length * D) throw new Error('le catalogue et ses vecteurs ne correspondent pas');
   if (S.I.length !== liste.length || S.V.length !== liste.length * D) throw new Error('les mots et leurs vecteurs ne correspondent pas');
   const N = catalogue.length; S.OT = new Float32Array(D * N); // les objets, rangés axe par axe : un mot se compare à tous d’un seul passage
@@ -103,31 +116,46 @@ export function porteur(S, i) {
 // Un verbe conjugué compte par son infinitif, s’il fait une image : « j’ai dormi » trouve le dormeur. Une forme qui est
 // aussi un nom, comme « marché » ou « lit », n’est un verbe qu’après un auxiliaire ou un pronom : « j’ai marché », « il lit ».
 const SUJETS = new Set('je j tu il elle on nous vous ils elles me m te t se s en ai as a avons avez ont avais avait avions aviez avaient eu aurai auras aura aurons aurez auront aurais aurait suis es est sommes êtes sont étais était étions étiez étaient'.split(' '));
+// Un mot qui a ses symboles (sens/symboles.txt) compte par le premier qui nomme un objet : « le temps » met un sablier, « la
+// peur », un loup. Il compte même s’il est vide ailleurs, ou inconnu du vocabulaire : « grand-père » se montre en papi.
+const LOCUTIONS = new Map([['tout le monde', 'gens'], ['sac à dos', 'randonnée']]); // « tout le monde » : des gens, pas la planète ; « sac à dos » : un sac de randonnée, pas une personne de dos
 function* jetons(S, texte) {
-  let avant = '';
-  for (const m of mots(texte)) {
-    const sujet = SUJETS.has(avant); avant = m;
-    if (m.length < 3 || VIDES.has(m)) continue;
-    let i = S.index.get(m);
+  let avant = '', avant2 = '';
+  for (const lu of mots(texte)) {
+    const sujet = SUJETS.has(avant), m = LOCUTIONS.get(`${avant2} ${avant} ${lu}`) ?? lu; avant2 = avant; avant = lu;
+    if ((m.length < 3 || VIDES.has(m)) && !S.symboles.has(m)) continue; // un mot court ou vide ne compte pas, sauf s’il a ses symboles : « un an »
+    let i = S.index.get(m), via = null;
+    if (m.includes('oe')) { const j = S.index.get(m.replace(/oe/g, 'œ')); if (j != null && (i == null || S.I[j] > S.I[i])) i = j; } // « soeur », « coeur » : sœur, cœur
     const f = S.formes?.get(m);
-    if (f && (!f.ambigu || sujet) && !VIDES.has(S.liste[f.i]) && (i == null || f.ambigu || S.I[f.i] > S.I[i])) i = f.i;
-    else if (m.length > 4 && /[sx]$/.test(m)) { const j = S.index.get(m.slice(0, -1)); if (j != null && (i == null || S.I[j] > S.I[i])) i = j; }
-    if (i != null) yield [m, i];
+    if (f && (!f.ambigu || sujet) && !VIDES.has(S.liste[f.i]) && (i == null || f.ambigu || S.I[f.i] > S.I[i])) { i = f.i; via = 'forme'; }
+    else if (m.length > 4 && /[sx]$/.test(m)) { const j = S.index.get(m.slice(0, -1)); if (j != null && (i == null || S.I[j] > S.I[i])) { i = j; via = 'pluriel'; } }
+    const nom = i != null ? S.liste[i] : m, syms = S.symboles.get(nom) || S.symboles.get(m); // nom : le mot tel qu’on le montre, sa forme de base
+    if (syms) { i = syms.find(j => S.I[j] >= OBJET) ?? syms.reduce((a, b) => (S.I[b] > S.I[a] ? b : a)); via = 'symbole'; }
+    if (i != null) yield [m, i, via, nom];
   }
 }
+// Un mot seul : ce qu’il devient, et l’objet le plus proche ; pour mesurer ce que le catalogue couvre (outils/couverture.mjs)
+export function regarder(S, mot) {
+  const t = jetons(S, mot).next().value; if (!t) return { mot, i: null, via: VIDES.has(mot) ? 'vide' : null, image: 0, porteur: false, score: 0, objet: null };
+  const [, i, via] = t, N = S.catalogue.length; let best = -1, j0 = -1;
+  for (let j = 0; j < N; j++) { let s = 0; for (let k = 0; k < D; k++) s += S.V[i * D + k] * S.O[j * D + k]; if (s > best) { best = s; j0 = j; } }
+  return { mot, i, via, lemme: S.liste[i], image: S.I[i] / 255, porteur: porteur(S, i), score: best / ECHELLE, objet: S.catalogue[j0] };
+}
 
-// Lire un passage : ses mots porteurs, son contexte, ses champs, sa tonalité, son heure, le temps qu’il fait
+// Lire un passage : ses mots porteurs, son contexte, ses champs, sa tonalité, son heure, le temps qu’il fait, ce qu’on voit au loin
 export function lirePage(S, texte) {
   const brut = mots(texte), n = new Map();
-  let heure = null; const meteo = {};
+  let heure = null; const meteo = {}, horizon = {};
   for (const m of brut) {
     if (QUAND[m]) heure = QUAND[m];
     for (const [k, l] of Object.entries(METEO)) if (l.has(m)) meteo[k] = Math.min(1, (meteo[k] || 0) + .5);
+    for (const [k, l] of Object.entries(HORIZON)) if (l.has(m)) horizon[k] = Math.min(1, (horizon[k] || 0) + .5);
   }
-  for (const [, i] of jetons(S, texte)) n.set(i, (n.get(i) || 0) + 1);
+  const noms = new Map(); // un mot venu par son symbole garde son nom : « temps », pas « sablier »
+  for (const [, i, via, nom] of jetons(S, texte)) { n.set(i, (n.get(i) || 0) + 1); if (via === 'symbole' && !noms.has(i)) noms.set(i, nom); }
   const liste = [...n].map(([i, k]) => ({ i, k, poids: (1 + Math.log(k)) * Math.log(1 + i / 60) * (porteur(S, i) ? 1 : .3) })); // les porteurs d’abord ; les autres, s’il en manque
   const choisis = liste.sort((a, b) => b.poids - a.poids).slice(0, PORTEURS);
-  const max = choisis[0]?.poids || 1, pris = choisis.map(x => ({ m: S.liste[x.i], i: x.i, poids: x.poids, p: x.poids / max })); // p : de 0 à 1
+  const max = choisis[0]?.poids || 1, pris = choisis.map(x => ({ m: noms.get(x.i) ?? S.liste[x.i], i: x.i, poids: x.poids, p: x.poids / max })); // p : de 0 à 1
   const contexte = new Float32Array(D);
   for (const x of pris) for (let k = 0; k < D; k++) contexte[k] += x.p * S.V[x.i * D + k];
   const ctx = unite(contexte), champs = {};
@@ -138,7 +166,7 @@ export function lirePage(S, texte) {
     for (const x of pris) { s += 2.5 * x.p * (scal(S.V, x.i, S.ton[a]) - scal(S.V, x.i, S.ton[b])); t += x.p; }
     return Math.max(-1, Math.min(1, s / Math.max(2, t)));
   };
-  return { mots: pris, contexte: ctx, champs, valence: axe('plus', 'moins'), energie: axe('vif', 'lent'), heure, meteo };
+  return { mots: pris, contexte: ctx, champs, valence: axe('plus', 'moins'), energie: axe('vif', 'lent'), heure, meteo, horizon };
 }
 
 // Les objets les plus proches des mots du passage, au-dessus d’un seuil ; un objet vu récemment est moins probable.
@@ -159,12 +187,30 @@ export function candidats(S, lecture, seuil = SEUIL) {
   }
   return out;
 }
-export function objetsDeLaPage(S, lecture, { seuil = SEUIL, max = 6, recents = new Map(), jour = 0, liste = null } = {}) {
-  const out = (liste || candidats(S, lecture, seuil)).map(o => { const vu = recents.get(o.objet.id), oubli = vu == null ? 1 : 1 - .8 * Math.exp(-(jour - vu) / 5); return { ...o, score: o.brut * oubli }; });
-  out.sort((a, b) => b.score - a.score);
-  const pris = new Set(), choisis = [];
-  for (const o of out) { if (pris.has(o.mot)) continue; pris.add(o.mot); choisis.push(o); if (choisis.length >= max) break; } // un objet par mot : la place va aux autres mots
-  return choisis;
+// Un objet par mot, et la place va aux autres mots. Avec une graine, celle du jour : parmi les modèles presque aussi proches
+// du mot et du même rôle, un au hasard, le même pour la même page ; ceux du lieu que disent les mots, et de la saison,
+// plus souvent. « maison » n’est pas toujours la même maison, ni « femme » la même femme
+const graineDe = s => { let h = 2166136261; for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619); return h >>> 0; };
+const alea = s => { let t = graineDe(s) + 0x6D2B79F5; t = Math.imul(t ^ t >>> 15, t | 1); t ^= t + Math.imul(t ^ t >>> 7, t | 61); return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+export function objetsDeLaPage(S, lecture, { seuil = SEUIL, max = 6, recents = new Map(), jour = 0, liste = null, graine = null, saison = null } = {}) {
+  const parMot = new Map();
+  for (const c of liste || candidats(S, lecture, seuil)) {
+    const vu = recents.get(c.objet.id), oubli = vu == null ? 1 : 1 - .8 * Math.exp(-(jour - vu) / 5), o = { ...c, score: c.brut * oubli };
+    if (!parMot.has(o.mot)) parMot.set(o.mot, []); parMot.get(o.mot).push(o);
+  }
+  const choix = [], lieu = graine != null ? lieuDeLaPage(lecture, []) : null; // le lieu que disent les mots seuls
+  for (const [mot, l] of parMot) {
+    l.sort((a, b) => b.score - a.score); let o = l[0];
+    if (graine != null && l.length > 1) {
+      const haut = Math.max(...l.map(x => x.brut)), pool = l.filter(x => x.brut >= haut - .1 && x.objet.role === o.objet.role);
+      const poids = pool.map(x => Math.exp((x.score - o.score) / .05) * (x.objet.saison && saison && x.objet.saison !== saison ? .05 : 1) // hors de sa saison, presque jamais
+        * (!x.objet.lieux?.length || x.objet.lieux.includes(lieu) ? 1 : .15)); // d’un autre lieu, rarement
+      let u = alea(`${graine}|${mot}`) * poids.reduce((a, b) => a + b, 0);
+      for (let k = 0; k < pool.length; k++) { u -= poids[k]; if (u <= 0) { o = pool[k]; break; } }
+    }
+    choix.push([l[0].score, o]);
+  }
+  return choix.sort((a, b) => b[0] - a[0]).slice(0, max).map(([, o]) => o);
 }
 
 // Le lieu du passage : celui de ses champs, et de ses objets ; sinon celui d’avant, pour que le chemin ne saute pas

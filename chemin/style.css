@@ -74,6 +74,8 @@ html.encart .frise { height: 100vh; }
 .discret svg { width: .62rem; height: .62rem; fill: currentColor; }
 .discret:hover { color: var(--accent); }
 .discret:focus-visible { color: var(--accent); outline: 2px solid var(--accent); outline-offset: 1px; border-radius: .3rem; }
+select.discret { max-width: 7.5rem; padding-right: .2rem; text-overflow: ellipsis; } /* le pinceau : un choix, discret lui aussi */
+.parcours > [hidden] { display: none; }
 
 /* Le chemin qui se déroule : la frise en grand, le texte de la tuile du milieu dessous, ou à côté en paysage */
 body.deroule { overflow: hidden; }
